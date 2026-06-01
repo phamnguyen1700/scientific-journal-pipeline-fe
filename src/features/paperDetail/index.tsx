@@ -56,6 +56,7 @@ export function PaperDetailPage({ id }: { id: string }) {
           {paper.doi && (
             <Button
               render={<a href={`https://doi.org/${paper.doi}`} target="_blank" rel="noreferrer" />}
+              nativeButton={false}
               variant="outline"
               size="sm"
             >
