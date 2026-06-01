@@ -21,4 +21,4 @@ export { StatusBadge } from "@/components/common/statusBadge";
 export { StatusDot } from "@/components/common/statusDot";
 export { Tag } from "@/components/common/tag";
 export { UserAvatar } from "@/components/common/userAvatar";
-export type { CommonSize, CommonStatus } from "@/components/common/types";
+export type { CommonSize, CommonStatus } from "@/types/common";

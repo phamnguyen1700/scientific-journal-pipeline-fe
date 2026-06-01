@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { StatusDot } from "@/components/common/statusDot";
-import type { CommonSize, CommonStatus } from "@/components/common/types";
+import type { CommonSize, CommonStatus } from "@/types/common";
 
 const avatarSizes: Record<CommonSize, string> = {
   xs: "size-6 text-[10px]",

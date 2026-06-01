@@ -1,7 +1,14 @@
 import { cn } from "@/lib/utils";
 import { StatusDot } from "@/components/common/statusDot";
-import type { CommonStatus } from "@/components/common/types";
-import { statusLabels } from "@/components/common/types";
+import type { CommonStatus } from "@/types/common";
+
+const statusLabels: Record<CommonStatus, string> = {
+  active: "Active",
+  inactive: "Inactive",
+  pending: "Pending",
+  error: "Error",
+  warning: "Warning",
+};
 
 export function StatusBadge({
   status,
