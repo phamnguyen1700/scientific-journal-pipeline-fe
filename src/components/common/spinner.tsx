@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { CommonSize } from "@/components/common/types";
+import type { CommonSize } from "@/types/common";
 
 export function Spinner({
   size = "sm",

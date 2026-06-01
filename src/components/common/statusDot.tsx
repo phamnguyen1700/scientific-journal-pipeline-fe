@@ -1,6 +1,13 @@
 import { cn } from "@/lib/utils";
-import type { CommonStatus } from "@/components/common/types";
-import { statusStyles } from "@/components/common/types";
+import type { CommonStatus } from "@/types/common";
+
+const statusStyles: Record<CommonStatus, string> = {
+  active: "bg-emerald-500",
+  inactive: "bg-slate-400",
+  pending: "bg-blue-500",
+  error: "bg-red-500",
+  warning: "bg-amber-500",
+};
 
 export function StatusDot({
   status,

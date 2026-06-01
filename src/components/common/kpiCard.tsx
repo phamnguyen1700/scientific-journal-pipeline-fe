@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-
-type Trend = "up" | "down" | "flat";
+import type { Trend } from "@/types/common";
 
 export function KpiCard({
   icon,

@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
-
-type ProgressColor = "primary" | "success" | "warning" | "danger";
+import type { ProgressColor } from "@/types/common";
 
 export function ProgressBar({
   value,
