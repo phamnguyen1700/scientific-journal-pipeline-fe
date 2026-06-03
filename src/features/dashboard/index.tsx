@@ -1,3 +1,5 @@
+"use client";
+
 import { Bell, Bookmark, BookMarked, FileText } from "lucide-react";
 
 import {
@@ -11,10 +13,11 @@ import {
 import type {
   BookmarkedPaper,
   DashboardKpi,
-  RecentPaper,
   TrendingTopic,
   TrendPoint,
 } from "@/types/dashboard";
+import { toPaperSearchResult } from "@/features/paperSearch/paperMapper";
+import { usePapers } from "@/hooks/papers";
 
 const dashboardKpis: DashboardKpi[] = [
   {
@@ -69,45 +72,6 @@ const trendingTopics: TrendingTopic[] = [
   { name: "Federated Learning", count: 1247, growth: 42.8, color: "#EF4444" },
 ];
 
-const recentPapers: RecentPaper[] = [
-  {
-    id: 1,
-    title: "Large Language Models in Scientific Discovery: A Systematic Review",
-    authors: "Chen, L., Wang, H., Liu, Y.",
-    journal: "Nature Machine Intelligence",
-    year: 2024,
-    citations: 148,
-    tags: ["LLM", "AI", "Science"],
-  },
-  {
-    id: 2,
-    title: "CRISPR-Cas9 Applications in Therapeutic Genomics: Recent Advances",
-    authors: "Patel, R., Kumar, S., Sharma, A.",
-    journal: "Cell",
-    year: 2024,
-    citations: 312,
-    tags: ["CRISPR", "Genomics", "Therapy"],
-  },
-  {
-    id: 3,
-    title: "Graph Neural Networks for Drug-Target Interaction Prediction",
-    authors: "Zhou, M., Li, X., Zhang, W.",
-    journal: "Journal of Chemical Information",
-    year: 2024,
-    citations: 87,
-    tags: ["GNN", "Drug Discovery", "ML"],
-  },
-  {
-    id: 4,
-    title: "Climate Change Impacts on Biodiversity: A Meta-analysis",
-    authors: "Muller, K., Jacobs, F., Martin, C.",
-    journal: "Science",
-    year: 2024,
-    citations: 224,
-    tags: ["Climate", "Ecology"],
-  },
-];
-
 const bookmarkedPapers: BookmarkedPaper[] = [
   { title: "Attention Is All You Need - Revisited", journal: "arXiv", saved: "2 days ago" },
   { title: "Protein Structure Prediction with AlphaFold 3", journal: "Nature", saved: "1 week ago" },
@@ -115,16 +79,40 @@ const bookmarkedPapers: BookmarkedPaper[] = [
 ];
 
 export function StudentDashboardPage() {
+  const papersQuery = usePapers();
+  const apiRecentPapers = papersQuery.papers.slice(0, 4).map((paper, index) => {
+    const result = toPaperSearchResult(paper, index);
+
+    return {
+      id: result.id,
+      title: result.title,
+      authors: result.authors.join(", "),
+      journal: result.journal,
+      year: result.year,
+      citations: result.citations,
+      tags: result.tags,
+    };
+  });
+  const kpiItems = dashboardKpis.map((item) =>
+    item.label === "New Papers" && apiRecentPapers.length
+      ? { ...item, value: String(papersQuery.papers.length), sub: "from current paper index" }
+      : item
+  );
+
   return (
     <div className="dashboard-page">
       <DashboardHeader name="Minh" />
-      <DashboardKpiGrid items={dashboardKpis} />
+      <DashboardKpiGrid items={kpiItems} />
       <div className="dashboard-grid">
         <PublicationTrendsCard data={trendData} />
         <HotTopicsCard topics={trendingTopics} />
       </div>
       <div className="dashboard-grid">
-        <RecentPapersCard papers={recentPapers} />
+        <RecentPapersCard
+          error={papersQuery.error}
+          loading={papersQuery.loading}
+          papers={apiRecentPapers}
+        />
         <BookmarksCard papers={bookmarkedPapers} />
       </div>
     </div>
@@ -134,7 +122,6 @@ export function StudentDashboardPage() {
 export {
   bookmarkedPapers,
   dashboardKpis,
-  recentPapers,
   trendingTopics,
   trendData,
 };

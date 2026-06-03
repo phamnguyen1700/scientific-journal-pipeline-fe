@@ -25,7 +25,7 @@ export type TrendingTopic = {
 };
 
 export type RecentPaper = {
-  id: number;
+  id: string;
   title: string;
   authors: string;
   journal: string;
