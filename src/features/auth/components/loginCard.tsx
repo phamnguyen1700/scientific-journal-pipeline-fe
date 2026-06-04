@@ -24,6 +24,7 @@ export function LoginCard({
   email,
   password,
   loading,
+  error,
   roleOpen,
   onRoleChange,
   onRoleOpenChange,
@@ -37,6 +38,7 @@ export function LoginCard({
   email: string;
   password: string;
   loading: boolean;
+  error?: string | null;
   roleOpen: boolean;
   onRoleChange: (role: LoginRole) => void;
   onRoleOpenChange: (open: boolean) => void;
@@ -98,10 +100,12 @@ export function LoginCard({
               "Sign in"
             )}
           </Button>
+
+          {error && <p className="auth-error-message">{error}</p>}
         </form>
 
         <p className="auth-demo-note">
-          Demo: click Sign in with any role to explore the platform
+          Use your registered account credentials to sign in.
         </p>
       </div>
     </section>

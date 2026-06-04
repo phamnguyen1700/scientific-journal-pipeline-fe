@@ -12,7 +12,8 @@ import {
   type LoginRoleOption,
   type LoginStatItem,
 } from "@/features/auth/components";
-import { useRole } from "@/providers/role-provider";
+import { env } from "@/config/env";
+import { loginService } from "@/service/auth";
 
 const loginRoles: LoginRoleOption[] = [
   {
@@ -64,18 +65,38 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [roleOpen, setRoleOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleLogin(event: FormEvent<HTMLFormElement>) {
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
+    setError(null);
 
-    window.setTimeout(() => {
-      // Set the role in the global RoleProvider BEFORE redirecting
-      // This ensures the role is already loaded when the page renders
-      setGlobalRole(role);
-      setLoading(false);
+    try {
+      const response = await loginService({
+        identifier: email,
+        password,
+      });
+      const accessToken = getAccessToken(response);
+
+      if (!accessToken) {
+        throw new Error("Login succeeded but no access token was returned.");
+      }
+
+      window.localStorage.setItem(env.authTokenStorageKey, accessToken);
+
+      const refreshToken = getRefreshToken(response);
+
+      if (refreshToken) {
+        window.localStorage.setItem("refreshToken", refreshToken);
+      }
+
       router.push(roleRedirects[role]);
-    }, 800);
+    } catch (requestError) {
+      setError(getLoginErrorMessage(requestError));
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -93,6 +114,7 @@ export function LoginPage() {
         email={email}
         password={password}
         loading={loading}
+        error={error}
         roleOpen={roleOpen}
         onRoleChange={setRole}
         onRoleOpenChange={setRoleOpen}
@@ -110,6 +132,46 @@ export function LoginPage() {
       </section>
     </main>
   );
+}
+
+function getAccessToken(response: Awaited<ReturnType<typeof loginService>>) {
+  const result = response.result ?? response.Result;
+
+  if (typeof result === "string") return result;
+  if (typeof result === "object" && result !== null) {
+    return (
+      result.accessToken ??
+      result.AccessToken ??
+      result.token ??
+      result.Token
+    );
+  }
+
+  return (
+    response.accessToken ??
+    response.AccessToken ??
+    response.token ??
+    response.Token
+  );
+}
+
+function getRefreshToken(response: Awaited<ReturnType<typeof loginService>>) {
+  const result = response.result ?? response.Result;
+
+  if (typeof result === "object" && result !== null) {
+    return result.refreshToken ?? result.RefreshToken;
+  }
+
+  return (
+    response.refreshToken ??
+    response.RefreshToken
+  );
+}
+
+function getLoginErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+
+  return "Unable to sign in. Please check your credentials and try again.";
 }
 
 export { loginFeatures, loginRoles, loginStats };
