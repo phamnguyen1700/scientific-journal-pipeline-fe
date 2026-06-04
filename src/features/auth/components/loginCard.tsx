@@ -6,40 +6,18 @@ import type { FormEvent } from "react";
 import { Spinner } from "@/components/common";
 import { Button } from "@/shared/ui/button";
 import { AuthTextField } from "@/features/auth/components/authTextField";
-import {
-  RoleSelector,
-  type LoginRole,
-  type LoginRoleOption,
-} from "@/features/auth/components/roleSelector";
-
-type DemoUser = {
-  name: string;
-  email: string;
-};
 
 export function LoginCard({
-  roles,
-  demoUsers,
-  role,
   email,
   password,
   loading,
-  roleOpen,
-  onRoleChange,
-  onRoleOpenChange,
   onEmailChange,
   onPasswordChange,
   onSubmit,
 }: {
-  roles: LoginRoleOption[];
-  demoUsers: Record<LoginRole, DemoUser>;
-  role: LoginRole;
   email: string;
   password: string;
   loading: boolean;
-  roleOpen: boolean;
-  onRoleChange: (role: LoginRole) => void;
-  onRoleOpenChange: (open: boolean) => void;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -48,29 +26,19 @@ export function LoginCard({
     <section className="auth-panel-shell">
       <div className="auth-panel">
         <div>
-          <h2 className="auth-panel-title">
-            Welcome back
-          </h2>
+          <h2 className="auth-panel-title">Welcome back</h2>
           <p className="auth-panel-description">
             Sign in to your account to continue
           </p>
         </div>
 
         <form onSubmit={onSubmit} className="auth-form">
-          <RoleSelector
-            roles={roles}
-            value={role}
-            open={roleOpen}
-            onOpenChange={onRoleOpenChange}
-            onChange={onRoleChange}
-          />
-
           <AuthTextField
-            label="Email address"
-            type="email"
+            label="Email or username"
+            type="text"
             value={email}
             onChange={(event) => onEmailChange(event.target.value)}
-            placeholder={demoUsers[role].email}
+            placeholder="Your email or username"
             icon={<Mail size={15} />}
           />
 
@@ -88,7 +56,11 @@ export function LoginCard({
             }
           />
 
-          <Button type="submit" disabled={loading} className="h-10 w-full rounded-xl">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="h-10 w-full rounded-xl"
+          >
             {loading ? (
               <>
                 <Spinner size="xs" className="text-white" />
@@ -101,7 +73,7 @@ export function LoginCard({
         </form>
 
         <p className="auth-demo-note">
-          Demo: click Sign in with any role to explore the platform
+          Use your registered account credentials to access the platform
         </p>
       </div>
     </section>

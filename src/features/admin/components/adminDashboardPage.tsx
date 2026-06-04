@@ -1,8 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { Users, TrendingUp, Database, Activity, Clock, ArrowUpRight } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { PageHeader, KpiCard, StatusBadge, StatusDot } from "@/components/common";
 
 const userGrowthData = [
   { month: "Jan", students: 1240, researchers: 320, admins: 8 },
@@ -116,9 +116,9 @@ export function AdminDashboardPage() {
               <p className="font-semibold text-foreground">User Growth</p>
               <p className="mt-0.5 text-xs text-muted-foreground">Monthly registrations by role</p>
             </div>
-            <a href="/admin/users" className="flex items-center gap-1 text-xs text-primary hover:underline">
+            <Link href="/admin/users" className="flex items-center gap-1 text-xs text-primary hover:underline">
               Manage users <ArrowUpRight size={12} />
-            </a>
+            </Link>
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={userGrowthData}>
@@ -147,9 +147,9 @@ export function AdminDashboardPage() {
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="mb-4 flex items-center justify-between">
             <p className="font-semibold text-foreground">API Calls</p>
-            <a href="/admin/api" className="flex items-center gap-1 text-xs text-primary hover:underline">
+            <Link href="/admin/api" className="flex items-center gap-1 text-xs text-primary hover:underline">
               Manage <ArrowUpRight size={12} />
-            </a>
+            </Link>
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={apiUsageData}>
@@ -169,9 +169,9 @@ export function AdminDashboardPage() {
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <p className="font-semibold text-foreground">Recent Registrations</p>
-            <a href="/admin/users" className="text-xs text-primary hover:underline">
+            <Link href="/admin/users" className="text-xs text-primary hover:underline">
               View all
-            </a>
+            </Link>
           </div>
           <div className="divide-y divide-border">
             {recentUsers.map((user) => (
@@ -199,9 +199,9 @@ export function AdminDashboardPage() {
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <p className="font-semibold text-foreground">API Status</p>
-            <a href="/admin/api" className="text-xs text-primary hover:underline">
+            <Link href="/admin/api" className="text-xs text-primary hover:underline">
               Manage
-            </a>
+            </Link>
           </div>
           <div className="divide-y divide-border">
             {apiStatus.map((api) => (

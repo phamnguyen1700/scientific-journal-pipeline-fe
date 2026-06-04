@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, ChevronDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, ChevronDown, MoreHorizontal, Pencil } from "lucide-react";
 import type { AdminUser, UserStatus } from "@/types/admin";
+import { isAdminRole, type UserRole } from "@/types/role";
 import { mockUsers } from "../index";
 
 const statusColors: Record<UserStatus, string> = {
@@ -11,10 +12,12 @@ const statusColors: Record<UserStatus, string> = {
   Suspended: "bg-red-100 text-red-700",
 };
 
-const roleColors: Record<string, string> = {
-  student: "bg-purple-100 text-purple-700",
-  researcher: "bg-blue-100 text-blue-700",
-  admin: "bg-orange-100 text-orange-700",
+const roleColors: Record<UserRole, string> = {
+  Student: "bg-purple-100 text-purple-700",
+  Lecturer: "bg-sky-100 text-sky-700",
+  Researcher: "bg-blue-100 text-blue-700",
+  "System Administrator": "bg-orange-100 text-orange-700",
+  Admin: "bg-red-100 text-red-700",
 };
 
 export function UserManagementPage() {
@@ -25,7 +28,7 @@ export function UserManagementPage() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const filtered = users.filter((u) => {
-    const matchRole = roleFilter === "All" || u.role === roleFilter.toLowerCase();
+    const matchRole = roleFilter === "All" || u.role === roleFilter;
     const matchStatus = statusFilter === "All" || u.status === statusFilter;
     const matchSearch =
       !search ||
@@ -36,8 +39,9 @@ export function UserManagementPage() {
 
   const stats = {
     total: users.length,
-    students: users.filter((u) => u.role === "student").length,
-    researchers: users.filter((u) => u.role === "researcher").length,
+    students: users.filter((u) => u.role === "Student" || u.role === "Lecturer").length,
+    researchers: users.filter((u) => u.role === "Researcher").length,
+    admins: users.filter((u) => isAdminRole(u.role)).length,
     suspended: users.filter((u) => u.status === "Suspended").length,
   };
 
@@ -110,10 +114,12 @@ export function UserManagementPage() {
             onChange={(e) => setRoleFilter(e.target.value)}
             className="appearance-none rounded-lg border border-border bg-card py-2 pl-3 pr-8 text-sm text-foreground outline-none focus:border-primary"
           >
-            <option>All Roles</option>
-            <option>Student</option>
-            <option>Researcher</option>
-            <option>Admin</option>
+            <option value="All">All Roles</option>
+            <option value="Student">Student</option>
+            <option value="Lecturer">Lecturer</option>
+            <option value="Researcher">Researcher</option>
+            <option value="System Administrator">System Administrator</option>
+            <option value="Admin">Admin</option>
           </select>
           <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
         </div>
@@ -161,7 +167,7 @@ export function UserManagementPage() {
                 </td>
                 <td className="px-5 py-3.5">
                   <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${roleColors[user.role] || "bg-gray-100 text-gray-700"}`}>
-                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                    {user.role}
                   </span>
                 </td>
                 <td className="px-5 py-3.5">

@@ -3,40 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Atom, BarChart2, BookOpen } from "lucide-react";
+import toast from "react-hot-toast";
 
 import {
   LoginBrandPanel,
   LoginCard,
   type LoginFeatureItem,
-  type LoginRole,
-  type LoginRoleOption,
   type LoginStatItem,
 } from "@/features/auth/components";
-import { useRole } from "@/providers/role-provider";
-
-const loginRoles: LoginRoleOption[] = [
-  {
-    value: "student",
-    label: "Student / Lecturer",
-    description: "Discover papers & track topics",
-  },
-  {
-    value: "researcher",
-    label: "Researcher",
-    description: "Advanced analytics & trend research",
-  },
-  {
-    value: "admin",
-    label: "Administrator",
-    description: "System management & configuration",
-  },
-];
-
-const demoUsers: Record<LoginRole, { name: string; email: string }> = {
-  student: { name: "Minh Nguyen", email: "minh.nguyen@university.edu" },
-  researcher: { name: "Dr. Lan Tran", email: "l.tran@research.ac.vn" },
-  admin: { name: "Admin System", email: "admin@scitrend.io" },
-};
+import { useLogin } from "@/hooks/auth";
+import { getApiErrorMessage } from "@/service/apiError";
+import { getDefaultRouteByRole } from "@/types/role";
 
 const loginFeatures: LoginFeatureItem[] = [
   { icon: <BarChart2 size={14} />, label: "Trend Analytics" },
@@ -50,32 +27,34 @@ const loginStats: LoginStatItem[] = [
   { value: "850K", label: "Researchers" },
 ];
 
-const roleRedirects: Record<LoginRole, string> = {
-  student: "/dashboard",
-  researcher: "/dashboard",
-  admin: "/admin",
-};
-
 export function LoginPage() {
   const router = useRouter();
-  const { setRole: setGlobalRole } = useRole();
-  const [role, setRole] = useState<LoginRole>("student");
+  const loginMutation = useLogin();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [roleOpen, setRoleOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLoading(true);
 
-    window.setTimeout(() => {
-      // Set the role in the global RoleProvider BEFORE redirecting
-      // This ensures the role is already loaded when the page renders
-      setGlobalRole(role);
-      setLoading(false);
-      router.push(roleRedirects[role]);
-    }, 800);
+    const identifier = email.trim();
+
+    if (!identifier || !password) {
+      toast.error("Please enter your email and password.");
+      return;
+    }
+
+    loginMutation.mutate(
+      { identifier, password },
+      {
+        onSuccess: ({ user }) => {
+          toast.success("Signed in successfully.");
+          router.push(getDefaultRouteByRole(user.roleName));
+        },
+        onError: (error) => {
+          toast.error(getApiErrorMessage(error, "Unable to sign in."));
+        },
+      }
+    );
   }
 
   return (
@@ -87,15 +66,9 @@ export function LoginPage() {
       />
       <LoginBrandPanel features={loginFeatures} stats={loginStats} />
       <LoginCard
-        roles={loginRoles}
-        demoUsers={demoUsers}
-        role={role}
         email={email}
         password={password}
-        loading={loading}
-        roleOpen={roleOpen}
-        onRoleChange={setRole}
-        onRoleOpenChange={setRoleOpen}
+        loading={loginMutation.isPending}
         onEmailChange={setEmail}
         onPasswordChange={setPassword}
         onSubmit={handleLogin}
@@ -112,5 +85,4 @@ export function LoginPage() {
   );
 }
 
-export { loginFeatures, loginRoles, loginStats };
-export type { LoginRole };
+export { loginFeatures, loginStats };

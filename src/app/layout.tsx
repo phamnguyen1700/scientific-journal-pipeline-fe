@@ -30,7 +30,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full">
+      <body className="h-full overflow-hidden">
         <AppProvider>
           <LayoutContent>{children}</LayoutContent>
         </AppProvider>

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const SidebarContext = React.createContext<{
@@ -19,7 +20,7 @@ export function SidebarProvider({
 
   return (
     <SidebarContext.Provider value={{ open, setOpen }}>
-      <div className="flex h-screen w-full bg-background">{children}</div>
+      <div className="flex h-dvh w-full overflow-hidden bg-background">{children}</div>
     </SidebarContext.Provider>
   );
 }
@@ -41,7 +42,7 @@ export function Sidebar({
   return (
     <div
       className={cn(
-        "flex flex-col shrink-0 bg-card border-r border-border transition-all duration-200",
+        "flex h-dvh flex-col shrink-0 overflow-hidden bg-card border-r border-border transition-all duration-200",
         className,
       )}
       style={{ width: open ? 240 : 60 }}
@@ -161,17 +162,18 @@ export function SidebarMenuButton({
     className,
   );
 
-  // If it's a Link button, render as anchor
   if (href) {
+    const linkProps = props as Omit<React.ComponentProps<typeof Link>, "href">;
+
     return (
-      <a
+      <Link
+        {...linkProps}
         href={href}
         title={!open ? title : undefined}
         className={buttonClass}
-        {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
       >
         {children}
-      </a>
+      </Link>
     );
   }
 
@@ -212,7 +214,7 @@ export function SidebarInset({
   return (
     <div
       className={cn(
-        "flex flex-col flex-1 overflow-hidden",
+        "flex min-h-0 flex-1 flex-col overflow-hidden",
         className,
       )}
       {...props}

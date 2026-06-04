@@ -4,8 +4,7 @@ import type { ReactNode } from "react";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-
-type TagColor = "purple" | "blue" | "green" | "amber" | "red" | "gray" | "cyan";
+import type { TagColor } from "@/types/common";
 
 const tagColors: Record<TagColor, string> = {
   purple: "bg-purple-100 text-purple-800",
