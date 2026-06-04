@@ -35,7 +35,9 @@ import {
   SidebarHeader,
   useSidebar,
 } from "./sidebar";
-import { useRole } from "@/providers/role-provider";
+import { useLogout } from "@/hooks/auth";
+import { useAuthStore } from "@/store/auth";
+import { isAdminRole, type UserRole } from "@/types/role";
 
 interface NavItem {
   label: string;
@@ -47,24 +49,24 @@ interface NavItem {
 // Student Navigation
 const studentNav: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", section: "Main" },
-  { label: "Paper Search", icon: Search, href: "/papers", section: "Discover" },
-  { label: "Topic Search", icon: Tag, href: "/search", section: "Discover" },
-  { label: "Trending Topics", icon: TrendingUp, href: "/trending", section: "Discover" },
-  { label: "Bookmarked Papers", icon: Bookmark, href: "/bookmarks", section: "Library" },
-  { label: "Followed Topics", icon: BookMarked, href: "/following", section: "Library" },
-  { label: "Notifications", icon: Bell, href: "/notifications", section: "Library" },
+  { label: "Paper Search", icon: Search, href: "/dashboard/papers", section: "Discover" },
+  { label: "Topic Search", icon: Tag, href: "/dashboard/topics", section: "Discover" },
+  { label: "Trending Topics", icon: TrendingUp, href: "/dashboard/trending", section: "Discover" },
+  { label: "Bookmarked Papers", icon: Bookmark, href: "/dashboard/bookmarks", section: "Library" },
+  { label: "Followed Topics", icon: BookMarked, href: "/dashboard/following", section: "Library" },
+  { label: "Notifications", icon: Bell, href: "/dashboard/notifications", section: "Library" },
 ];
 
 // Researcher Navigation
 const researcherNav: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", section: "Main" },
-  { label: "Trend Research", icon: LineChart, href: "/trends", section: "Analytics" },
-  { label: "Topic Compare", icon: BarChart2, href: "/compare", section: "Analytics" },
-  { label: "Topic Cluster", icon: Network, href: "/cluster", section: "Analytics" },
-  { label: "Emerging Topics", icon: Zap, href: "/emerging", section: "Analytics" },
-  { label: "Publication Analytics", icon: Activity, href: "/analytics", section: "Research" },
-  { label: "Reports & Analytics", icon: FileText, href: "/reports", section: "Research" },
-  { label: "Journal Tracker", icon: Radio, href: "/tracker", section: "Research" },
+  { label: "Trend Research", icon: LineChart, href: "/dashboard/trending", section: "Analytics" },
+  { label: "Topic Compare", icon: BarChart2, href: "/dashboard/topics", section: "Analytics" },
+  { label: "Topic Cluster", icon: Network, href: "/dashboard/topics", section: "Analytics" },
+  { label: "Emerging Topics", icon: Zap, href: "/dashboard/trending", section: "Analytics" },
+  { label: "Publication Analytics", icon: Activity, href: "/dashboard/papers", section: "Research" },
+  { label: "Reports & Analytics", icon: FileText, href: "/dashboard/papers", section: "Research" },
+  { label: "Journal Tracker", icon: Radio, href: "/dashboard/following", section: "Research" },
 ];
 
 // Admin Navigation
@@ -77,16 +79,18 @@ const adminNav: NavItem[] = [
 
 
 
-function getNavigation(role: string): NavItem[] {
-  if (role === "researcher") return researcherNav;
-  if (role === "admin") return adminNav;
+function getNavigation(role: UserRole): NavItem[] {
+  if (isAdminRole(role)) return adminNav;
+  if (role === "Researcher") return researcherNav;
   return studentNav;
 }
 
 function AppSidebarContent() {
   const pathname = usePathname();
   const { open } = useSidebar();
-  const { role } = useRole();
+  const user = useAuthStore((state) => state.user);
+  const logout = useLogout();
+  const role = user?.roleName ?? "Student";
 
   // Memoize navigation structure so it only updates when role changes
   const { navigation, sections } = useMemo(() => {
@@ -147,12 +151,17 @@ function AppSidebarContent() {
           </div>
           {open && (
             <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-sm font-medium truncate">Admin User</span>
-              <span className="text-[10px] text-muted-foreground truncate">admin@journal.com</span>
+              <span className="text-sm font-medium truncate">
+                {user?.username ?? "User"}
+              </span>
+              <span className="text-[10px] text-muted-foreground truncate">
+                {user?.email ?? "Signed in"}
+              </span>
             </div>
           )}
         </div>
         <button
+          onClick={logout}
           className="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg text-sm transition-colors text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
           title={open ? undefined : "Logout"}
         >
