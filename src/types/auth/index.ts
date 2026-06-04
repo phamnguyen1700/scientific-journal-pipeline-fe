@@ -1,24 +1,58 @@
 import type { UserRole } from "@/types/role";
 
 export type LoginPayload = {
-  email: string;
+  identifier: string;
   password: string;
-  role?: UserRole;
 };
 
 export type ILoginRequest = LoginPayload;
 
 export type AuthUser = {
   id: string;
+  username: string;
   name: string;
   email: string;
-  role: UserRole;
+  phonenumber?: string;
+  roleName: UserRole;
 };
 
-export type LoginResponse = {
-  accessToken: string;
-  refreshToken?: string;
-  user: AuthUser;
+export type LoginResult = {
+  userId: string;
+  username: string;
+  email: string;
+  phonenumber?: string;
+  roleName: UserRole;
+  token: string;
 };
+
+export type BackendResponse<T> = {
+  succeeded?: boolean;
+  result?: T | null;
+  errors?: string[];
+  Succeeded?: boolean;
+  Result?: T | null;
+  Errors?: string[];
+};
+
+export type LoginResponse = BackendResponse<LoginResult>;
 
 export type ILoginResponse = LoginResponse;
+
+export function normalizeBackendResponse<T>(response: BackendResponse<T>) {
+  return {
+    succeeded: response.succeeded ?? response.Succeeded ?? false,
+    result: response.result ?? response.Result ?? null,
+    errors: response.errors ?? response.Errors ?? [],
+  };
+}
+
+export function mapLoginResultToUser(result: LoginResult): AuthUser {
+  return {
+    id: result.userId,
+    username: result.username,
+    name: result.username,
+    email: result.email,
+    phonenumber: result.phonenumber,
+    roleName: result.roleName,
+  };
+}
