@@ -21,4 +21,23 @@ export { StatusBadge } from "@/components/common/statusBadge";
 export { StatusDot } from "@/components/common/statusDot";
 export { Tag } from "@/components/common/tag";
 export { UserAvatar } from "@/components/common/userAvatar";
-export type { CommonSize, CommonStatus } from "@/types/common";
+export type { CommonSize, CommonStatus } from "@/components/common/types";
+export {
+  AppSidebar,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/common/sidebar";
+export { LayoutContent } from "@/components/common/layout-content";
+export { Navbar } from "@/components/common/navbar";

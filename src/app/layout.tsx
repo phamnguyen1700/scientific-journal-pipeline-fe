@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 import { AppProvider } from "@/providers/app-provider";
+import { LayoutContent } from "@/components/common";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,8 +30,10 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <AppProvider>{children}</AppProvider>
+      <body className="min-h-full">
+        <AppProvider>
+          <LayoutContent>{children}</LayoutContent>
+        </AppProvider>
       </body>
     </html>
   );
