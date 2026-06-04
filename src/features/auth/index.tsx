@@ -12,6 +12,7 @@ import {
   type LoginRoleOption,
   type LoginStatItem,
 } from "@/features/auth/components";
+import { useRole } from "@/providers/role-provider";
 
 const loginRoles: LoginRoleOption[] = [
   {
@@ -57,6 +58,7 @@ const roleRedirects: Record<LoginRole, string> = {
 
 export function LoginPage() {
   const router = useRouter();
+  const { setRole: setGlobalRole } = useRole();
   const [role, setRole] = useState<LoginRole>("student");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,6 +70,9 @@ export function LoginPage() {
     setLoading(true);
 
     window.setTimeout(() => {
+      // Set the role in the global RoleProvider BEFORE redirecting
+      // This ensures the role is already loaded when the page renders
+      setGlobalRole(role);
       setLoading(false);
       router.push(roleRedirects[role]);
     }, 800);

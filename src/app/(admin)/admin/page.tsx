@@ -1,3 +1,6 @@
+import { AdminDashboardPage } from "@/features/admin";
+
 export default function AdminPage() {
-  return <main>Admin Page</main>;
+  return <AdminDashboardPage />;
 }
+
