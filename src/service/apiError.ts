@@ -2,15 +2,9 @@ import { AxiosError } from "axios";
 
 export type ApiErrorPayload = {
   message?: string;
-  Message?: string;
   error?: string;
-  Error?: string;
-  errors?: string[];
-  Errors?: string[];
   code?: string;
-  Code?: string;
   details?: unknown;
-  Details?: unknown;
 };
 
 export class ApiError extends Error {
@@ -51,19 +45,15 @@ export function createApiError(error: AxiosError) {
     : undefined;
   const message =
     payload?.message ??
-    payload?.Message ??
     payload?.error ??
-    payload?.Error ??
-    payload?.errors?.join(", ") ??
-    payload?.Errors?.join(", ") ??
     error.message ??
     "Something went wrong";
 
   return new ApiError({
     message,
     status: error.response?.status,
-    code: payload?.code ?? payload?.Code ?? error.code,
-    details: payload?.details ?? payload?.Details,
+    code: payload?.code ?? error.code,
+    details: payload?.details,
     originalError: error,
   });
 }

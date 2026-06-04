@@ -1,9 +1,9 @@
 export const apiEndpoints = {
   auth: {
-    login: "/Auth/login",
-    adminLogin: "/Auth/login",
-    me: "/User/profile",
-    logout: "/Auth/logout",
+    login: "/auth/login",
+    adminLogin: "/auth/admin/login",
+    me: "/auth/me",
+    logout: "/auth/logout",
   },
   papers: {
     list: "/Paper",

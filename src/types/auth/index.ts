@@ -1,7 +1,7 @@
 import type { UserRole } from "@/types/role";
 
 export type LoginPayload = {
-  identifier: string;
+  email: string;
   password: string;
   role?: UserRole;
 };
@@ -16,31 +16,9 @@ export type AuthUser = {
 };
 
 export type LoginResponse = {
-  accessToken?: string;
-  AccessToken?: string;
-  token?: string;
-  Token?: string;
+  accessToken: string;
   refreshToken?: string;
-  RefreshToken?: string;
-  user?: AuthUser;
-  User?: AuthUser;
+  user: AuthUser;
 };
 
-export type LoginApiResponse = {
-  succeeded?: boolean;
-  Succeeded?: boolean;
-  result?: LoginResponse | string | null;
-  Result?: LoginResponse | string | null;
-  errors?: string[];
-  Errors?: string[];
-  accessToken?: string;
-  AccessToken?: string;
-  token?: string;
-  Token?: string;
-  refreshToken?: string;
-  RefreshToken?: string;
-  user?: AuthUser;
-  User?: AuthUser;
-};
-
-export type ILoginResponse = LoginApiResponse;
+export type ILoginResponse = LoginResponse;
