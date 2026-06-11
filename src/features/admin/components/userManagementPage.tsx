@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Search, ChevronDown, MoreHorizontal, Pencil } from "lucide-react";
-import type { AdminUser, UserStatus } from "@/types/admin";
+import { useMemo, useState } from "react";
+import { Plus, Search, ChevronDown, MoreHorizontal, Pencil, RefreshCw } from "lucide-react";
+import { useAdminUsers } from "@/hooks/admin";
+import type { UserStatus } from "@/types/admin";
 import { isAdminRole, type UserRole } from "@/types/role";
-import { mockUsers } from "../index";
 
 const statusColors: Record<UserStatus, string> = {
   Active: "bg-emerald-100 text-emerald-700",
@@ -21,11 +21,24 @@ const roleColors: Record<UserRole, string> = {
 };
 
 export function UserManagementPage() {
-  const [users, setUsers] = useState<AdminUser[]>(mockUsers);
+  const usersQuery = useAdminUsers();
+  const [deletedUserIds, setDeletedUserIds] = useState<string[]>([]);
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, UserStatus>>({});
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+  const users = useMemo(
+    () =>
+      usersQuery.users
+        .filter((user) => !deletedUserIds.includes(user.id))
+        .map((user) => ({
+          ...user,
+          status: statusOverrides[user.id] ?? user.status,
+        })),
+    [deletedUserIds, statusOverrides, usersQuery.users]
+  );
 
   const filtered = users.filter((u) => {
     const matchRole = roleFilter === "All" || u.role === roleFilter;
@@ -46,18 +59,19 @@ export function UserManagementPage() {
   };
 
   const deleteUser = (id: string) => {
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+    setDeletedUserIds((current) =>
+      current.includes(id) ? current : [...current, id]
+    );
     setOpenMenu(null);
   };
 
   const toggleStatus = (id: string) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === id
-          ? { ...u, status: u.status === "Active" ? "Suspended" : "Active" }
-          : u
-      )
-    );
+    const currentStatus = users.find((user) => user.id === id)?.status;
+
+    setStatusOverrides((current) => ({
+      ...current,
+      [id]: currentStatus === "Active" ? "Suspended" : "Active",
+    }));
     setOpenMenu(null);
   };
 
@@ -68,14 +82,32 @@ export function UserManagementPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">User Management</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {users.length} total users registered on the platform
+            {usersQuery.loading
+              ? "Loading registered users..."
+              : `${users.length} total users registered on the platform`}
           </p>
         </div>
-        <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-          <Plus size={16} />
-          Add User
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => void usersQuery.refetch()}
+            disabled={usersQuery.isFetching}
+            className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <RefreshCw size={16} className={usersQuery.isFetching ? "animate-spin" : ""} />
+            Refresh
+          </button>
+          <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+            <Plus size={16} />
+            Add User
+          </button>
+        </div>
       </div>
+
+      {usersQuery.error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {usersQuery.error}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -129,10 +161,10 @@ export function UserManagementPage() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="appearance-none rounded-lg border border-border bg-card py-2 pl-3 pr-8 text-sm text-foreground outline-none focus:border-primary"
           >
-            <option>All Statuses</option>
-            <option>Active</option>
-            <option>Pending</option>
-            <option>Suspended</option>
+            <option value="All">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="Pending">Pending</option>
+            <option value="Suspended">Suspended</option>
           </select>
           <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
         </div>
@@ -212,7 +244,9 @@ export function UserManagementPage() {
             ))}
           </tbody>
         </table>
-        {filtered.length === 0 && (
+        {usersQuery.loading ? (
+          <div className="py-12 text-center text-sm text-muted-foreground">Loading users...</div>
+        ) : filtered.length === 0 && (
           <div className="py-12 text-center text-sm text-muted-foreground">No users found</div>
         )}
       </div>
