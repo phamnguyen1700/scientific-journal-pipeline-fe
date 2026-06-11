@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 
 import {
   PaperResultCard,
@@ -10,29 +11,59 @@ import {
   PaperSearchToolbar,
 } from "@/features/paperSearch/components";
 import { toPaperSearchResult } from "@/features/paperSearch/paperMapper";
-import { usePapers } from "@/hooks/papers";
+import { usePaperSearch } from "@/hooks/search";
 import type {
   PaperSearchFilters as PaperSearchFiltersValue,
 } from "@/types/search";
 
 const initialFilters: PaperSearchFiltersValue = {
-  keywords: "",
-  author: "",
-  journal: "",
-  year: "",
-  openAccessOnly: false,
+  from: "",
+  to: "",
+  language: "",
+  isOpenAccess: "",
 };
 
-const pageSize = 4;
+const pageSize = 10;
+
+type PaperSearchFormValues = PaperSearchFiltersValue & {
+  q: string;
+  page: number;
+  size: number;
+};
+
+const initialSearchValues: PaperSearchFormValues = {
+  q: "",
+  page: 1,
+  size: pageSize,
+  ...initialFilters,
+};
 
 export function PaperSearchPage() {
-  const paperQuery = usePapers();
-  const [query, setQuery] = useState("");
+  const paperQuery = usePaperSearch({ page: 1, size: pageSize });
+  const { search } = paperQuery;
+  const { control, reset, setValue } = useForm<PaperSearchFormValues>({
+    defaultValues: initialSearchValues,
+  });
+  const formValues = useWatch({ control });
   const [sort, setSort] = useState("relevance");
-  const [filters, setFilters] = useState(initialFilters);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
-  const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const q = formValues.q ?? "";
+  const from = formValues.from ?? "";
+  const to = formValues.to ?? "";
+  const language = formValues.language ?? "";
+  const isOpenAccess = formValues.isOpenAccess ?? "";
+  const page = formValues.page ?? 1;
+  const size = formValues.size ?? pageSize;
+  const filters: PaperSearchFiltersValue = { from, to, language, isOpenAccess };
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      void search(toPaperSearchRequest({ q, from, to, language, isOpenAccess, page, size }));
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
+  }, [from, isOpenAccess, language, page, q, search, size, to]);
 
   const papers = useMemo(
     () =>
@@ -44,65 +75,34 @@ export function PaperSearchPage() {
     [bookmarks, paperQuery.papers]
   );
 
-  const journals = useMemo(
-    () => [...new Set(papers.map((paper) => paper.journal))].sort(),
-    [papers]
-  );
-  const years = useMemo(
-    () => [...new Set(papers.map((paper) => paper.year))].sort((a, b) => b - a),
-    [papers]
-  );
-
-  const filteredPapers = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    const keywords = filters.keywords.trim().toLowerCase();
-    const author = filters.author.trim().toLowerCase();
-
-    return papers
-      .filter((paper) => {
-        const searchable = [
-          paper.title,
-          paper.doi ?? "",
-          paper.journal,
-          ...paper.authors,
-          ...paper.tags,
-        ]
-          .join(" ")
-          .toLowerCase();
-
-        return (
-          (!search || searchable.includes(search)) &&
-          (!keywords || searchable.includes(keywords)) &&
-          (!author || paper.authors.join(" ").toLowerCase().includes(author)) &&
-          (!filters.journal || paper.journal === filters.journal) &&
-          (!filters.year || paper.year === Number(filters.year)) &&
-          (!filters.openAccessOnly || paper.openAccess)
-        );
-      })
-      .sort((first, second) => {
+  const sortedPapers = useMemo(
+    () =>
+      [...papers].sort((first, second) => {
         if (sort === "citations") return second.citations - first.citations;
         if (sort === "newest") return second.year - first.year;
         return first.title.localeCompare(second.title);
-      });
-  }, [filters, papers, query, sort]);
+      }),
+    [papers, sort]
+  );
 
-  const pageCount = Math.max(1, Math.ceil(filteredPapers.length / pageSize));
-  const currentPage = Math.min(page, pageCount);
-  const visiblePapers = filteredPapers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const currentPage = page;
+  const pageCount = Math.max(page, sortedPapers.length === size ? page + 1 : page);
 
   function updateQuery(value: string) {
-    setQuery(value);
-    setPage(1);
+    setValue("q", value);
+    setValue("page", 1);
   }
 
   function updateFilters(value: PaperSearchFiltersValue) {
-    setFilters(value);
-    setPage(1);
+    setValue("from", value.from);
+    setValue("to", value.to);
+    setValue("language", value.language);
+    setValue("isOpenAccess", value.isOpenAccess);
+    setValue("page", 1);
   }
 
   function resetFilters() {
-    setFilters(initialFilters);
-    setPage(1);
+    reset({ ...initialSearchValues, q });
   }
 
   function toggleBookmark(id: string) {
@@ -119,8 +119,6 @@ export function PaperSearchPage() {
       <div className="paper-search-layout">
         <PaperSearchFilters
           filters={filters}
-          journals={journals}
-          years={years}
           open={filtersOpen}
           onChange={updateFilters}
           onReset={resetFilters}
@@ -128,13 +126,12 @@ export function PaperSearchPage() {
 
         <section className="paper-search-results">
           <PaperSearchToolbar
-            query={query}
+            query={q}
             sort={sort}
-            resultCount={filteredPapers.length}
+            resultCount={sortedPapers.length}
             onQueryChange={updateQuery}
             onSortChange={(value) => {
               setSort(value);
-              setPage(1);
             }}
           />
 
@@ -142,9 +139,9 @@ export function PaperSearchPage() {
             <PaperSearchStatus title="Loading papers..." description="Fetching the latest papers from the server." />
           ) : paperQuery.error ? (
             <PaperSearchStatus title="Unable to load papers" description={paperQuery.error} />
-          ) : visiblePapers.length ? (
+          ) : sortedPapers.length ? (
             <div className="paper-search-result-list">
-              {visiblePapers.map((paper) => (
+              {sortedPapers.map((paper) => (
                 <PaperResultCard
                   key={paper.id}
                   paper={paper}
@@ -160,7 +157,7 @@ export function PaperSearchPage() {
             <PaperSearchPagination
               page={currentPage}
               pageCount={pageCount}
-              onChange={setPage}
+              onChange={(nextPage) => setValue("page", nextPage)}
             />
           )}
         </section>
@@ -176,6 +173,27 @@ function PaperSearchStatus({ title, description }: { title: string; description:
       <p>{description}</p>
     </div>
   );
+}
+
+function toPaperSearchRequest(values: PaperSearchFormValues) {
+  return {
+    q: values.q,
+    page: values.page,
+    size: values.size,
+    from: toNumberParam(values.from),
+    to: toNumberParam(values.to),
+    language: values.language,
+    isOpenAccess:
+      values.isOpenAccess === ""
+        ? undefined
+        : values.isOpenAccess === "true",
+  };
+}
+
+function toNumberParam(value: string) {
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) && value.trim() ? parsed : undefined;
 }
 
 export { initialFilters };

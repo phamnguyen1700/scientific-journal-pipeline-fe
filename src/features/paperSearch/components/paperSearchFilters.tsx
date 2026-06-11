@@ -4,21 +4,16 @@ import { RotateCcw } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/button";
-import { Checkbox } from "@/shared/ui/checkbox";
 import { Input } from "@/shared/ui/input";
 import type { PaperSearchFilters as PaperSearchFiltersValue } from "@/types/search";
 
 export function PaperSearchFilters({
   filters,
-  journals,
-  years,
   open,
   onChange,
   onReset,
 }: {
   filters: PaperSearchFiltersValue;
-  journals: string[];
-  years: number[];
   open: boolean;
   onChange: (filters: PaperSearchFiltersValue) => void;
   onReset: () => void;
@@ -42,57 +37,47 @@ export function PaperSearchFilters({
 
       <div className="paper-search-filter-list">
         <label className="paper-search-filter-field">
-          <span>Keywords</span>
+          <span>From year</span>
           <Input
-            value={filters.keywords}
-            onChange={(event) => update("keywords", event.target.value)}
-            placeholder="e.g. machine learning"
+            value={filters.from}
+            onChange={(event) => update("from", event.target.value)}
+            placeholder="2020"
           />
         </label>
 
         <label className="paper-search-filter-field">
-          <span>Author</span>
+          <span>To year</span>
           <Input
-            value={filters.author}
-            onChange={(event) => update("author", event.target.value)}
-            placeholder="Search author"
+            value={filters.to}
+            onChange={(event) => update("to", event.target.value)}
+            placeholder="2024"
           />
         </label>
 
         <label className="paper-search-filter-field">
-          <span>Journal</span>
+          <span>Language</span>
           <select
-            value={filters.journal}
-            onChange={(event) => update("journal", event.target.value)}
+            value={filters.language}
+            onChange={(event) => update("language", event.target.value)}
             className="paper-search-select"
           >
-            <option value="">All journals</option>
-            {journals.map((journal) => (
-              <option key={journal}>{journal}</option>
-            ))}
+            <option value="">Any language</option>
+            <option value="en">English</option>
+            <option value="vi">Vietnamese</option>
           </select>
         </label>
 
         <label className="paper-search-filter-field">
-          <span>Publication year</span>
+          <span>Open access</span>
           <select
-            value={filters.year}
-            onChange={(event) => update("year", event.target.value)}
+            value={filters.isOpenAccess}
+            onChange={(event) => update("isOpenAccess", event.target.value as PaperSearchFiltersValue["isOpenAccess"])}
             className="paper-search-select"
           >
-            <option value="">Any year</option>
-            {years.map((year) => (
-              <option key={year}>{year}</option>
-            ))}
+            <option value="">Any access</option>
+            <option value="true">Open access</option>
+            <option value="false">Not open access</option>
           </select>
-        </label>
-
-        <label className="paper-search-checkbox">
-          <Checkbox
-            checked={filters.openAccessOnly}
-            onCheckedChange={(checked) => update("openAccessOnly", checked)}
-          />
-          <span>Open access only</span>
         </label>
       </div>
     </aside>
