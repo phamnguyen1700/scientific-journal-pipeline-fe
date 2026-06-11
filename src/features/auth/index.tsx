@@ -36,15 +36,15 @@ export function LoginPage() {
   function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const identifier = email.trim();
+    const emailValue = email.trim();
 
-    if (!identifier || !password) {
+    if (!emailValue || !password) {
       toast.error("Please enter your email and password.");
       return;
     }
 
     loginMutation.mutate(
-      { identifier, password },
+      { email: emailValue, password },
       {
         onSuccess: ({ user }) => {
           toast.success("Signed in successfully.");
