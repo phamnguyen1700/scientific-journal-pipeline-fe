@@ -1,86 +1,92 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   getPaperDetailService,
+  getPapersByAuthorService,
   getPapersService,
 } from "@/service/papers";
-import type { PaperApiModel } from "@/types/papers";
+import type { PaperDetailApiResponse, PaperListApiResponse } from "@/types/papers";
+
+export const paperQueryKeys = {
+  all: ["papers"] as const,
+  list: () => [...paperQueryKeys.all, "list"] as const,
+  detail: (id: string) => [...paperQueryKeys.all, "detail", id] as const,
+  byAuthor: (authorId: string) => [...paperQueryKeys.all, "author", authorId] as const,
+};
 
 export function usePapers() {
-  const [papers, setPapers] = useState<PaperApiModel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const query = useQuery({
+    queryKey: paperQueryKeys.list(),
+    queryFn: async () => normalizePaperListResponse(await getPapersService()),
+  });
 
-  useEffect(() => {
-    let active = true;
-
-    getPapersService()
-      .then((response) => {
-        if (!active) return;
-        if (!response.succeeded) {
-          throw new Error(response.errors.join(", ") || "Unable to load papers.");
-        }
-        setPapers(response.result);
-      })
-      .catch((requestError: unknown) => {
-        if (!active) return;
-        setError(getErrorMessage(requestError));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  return { papers, loading, error };
+  return {
+    ...query,
+    papers: query.data ?? [],
+    loading: query.isPending,
+    error: getErrorMessage(query.error),
+  };
 }
 
 export function usePaper(id: string) {
   const listQuery = usePapers();
-  const [paper, setPaper] = useState<PaperApiModel | null>(null);
-  const [detailLoading, setDetailLoading] = useState(!isListPosition(id));
-  const [detailError, setDetailError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (isListPosition(id)) return;
-
-    let active = true;
-
-    getPaperDetailService(id)
-      .then((response) => {
-        if (!active) return;
-        if (!response.succeeded || !response.result) {
-          throw new Error(response.errors.join(", ") || "Paper not found.");
-        }
-        setPaper(response.result);
-      })
-      .catch((requestError: unknown) => {
-        if (active) setDetailError(getErrorMessage(requestError));
-      })
-      .finally(() => {
-        if (active) setDetailLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [id]);
+  const detailQuery = useQuery({
+    queryKey: paperQueryKeys.detail(id),
+    queryFn: async () => normalizePaperDetailResponse(await getPaperDetailService(id)),
+    enabled: Boolean(id) && !isListPosition(id),
+  });
 
   if (isListPosition(id)) {
     const position = Number(id) - 1;
+    const paper = listQuery.papers[position] ?? null;
+
     return {
-      paper: listQuery.papers[position] ?? null,
+      ...listQuery,
+      paper,
       loading: listQuery.loading,
-      error: listQuery.error || (!listQuery.loading && !listQuery.papers[position] ? "Paper not found." : null),
+      error: listQuery.error || (!listQuery.loading && !paper ? "Paper not found." : null),
     };
   }
 
-  return { paper, loading: detailLoading, error: detailError };
+  return {
+    ...detailQuery,
+    paper: detailQuery.data ?? null,
+    loading: detailQuery.isPending,
+    error: getErrorMessage(detailQuery.error),
+  };
+}
+
+export function usePapersByAuthor(authorId: string) {
+  const query = useQuery({
+    queryKey: paperQueryKeys.byAuthor(authorId),
+    queryFn: async () => normalizePaperListResponse(await getPapersByAuthorService(authorId)),
+    enabled: Boolean(authorId),
+  });
+
+  return {
+    ...query,
+    papers: query.data ?? [],
+    loading: query.isPending,
+    error: getErrorMessage(query.error),
+  };
+}
+
+function normalizePaperListResponse(response: PaperListApiResponse) {
+  if (!response.succeeded) {
+    throw new Error(response.errors.join(", ") || "Unable to load papers.");
+  }
+
+  return response.result;
+}
+
+function normalizePaperDetailResponse(response: PaperDetailApiResponse) {
+  if (!response.succeeded || !response.result) {
+    throw new Error(response.errors.join(", ") || "Paper not found.");
+  }
+
+  return response.result;
 }
 
 function isListPosition(id: string) {
@@ -88,5 +94,7 @@ function isListPosition(id: string) {
 }
 
 function getErrorMessage(error: unknown) {
+  if (!error) return null;
+
   return error instanceof Error ? error.message : "Unable to connect to the paper service.";
 }

@@ -9,6 +9,8 @@ type AuthState = {
   user: AuthUser | null;
   token: string | null;
   isAuthenticated: boolean;
+  hasHydrated: boolean;
+  hydrateAuth: () => void;
   setAuth: (payload: { user: AuthUser; token: string }) => void;
   clearAuth: () => void;
 };
@@ -42,16 +44,28 @@ function readStoredUser() {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: readStoredUser(),
-  token: readStoredToken(),
-  isAuthenticated: Boolean(readStoredToken()),
+  user: null,
+  token: null,
+  isAuthenticated: false,
+  hasHydrated: false,
+  hydrateAuth: () => {
+    const user = readStoredUser();
+    const token = readStoredToken();
+
+    set({
+      user,
+      token,
+      isAuthenticated: Boolean(token && user),
+      hasHydrated: true,
+    });
+  },
   setAuth: ({ user, token }) => {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(env.authTokenStorageKey, token);
       window.localStorage.setItem(authUserStorageKey, JSON.stringify(user));
     }
 
-    set({ user, token, isAuthenticated: true });
+    set({ user, token, isAuthenticated: true, hasHydrated: true });
   },
   clearAuth: () => {
     if (typeof window !== "undefined") {
@@ -59,6 +73,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       window.localStorage.removeItem(authUserStorageKey);
     }
 
-    set({ user: null, token: null, isAuthenticated: false });
+    set({ user: null, token: null, isAuthenticated: false, hasHydrated: true });
   },
 }));

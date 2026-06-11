@@ -14,7 +14,7 @@ interface LayoutContentProps {
 export function LayoutContent({ children }: LayoutContentProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, user } = useAuthStore();
+  const { hasHydrated, hydrateAuth, isAuthenticated, user } = useAuthStore();
   
   const isAuthPage =
     pathname.includes("/login") || pathname.includes("/signup") || pathname === "/";
@@ -29,6 +29,12 @@ export function LayoutContent({ children }: LayoutContentProps) {
     pathname.startsWith("/dashboard") && isAuthenticated && isAdminRole(user?.roleName);
 
   useEffect(() => {
+    hydrateAuth();
+  }, [hydrateAuth]);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+
     if (shouldRedirectFromAuth) {
       router.replace(defaultRoute);
       return;
@@ -49,12 +55,17 @@ export function LayoutContent({ children }: LayoutContentProps) {
     }
   }, [
     defaultRoute,
+    hasHydrated,
     router,
     shouldRedirectAdminToAdminHome,
     shouldRedirectFromAdmin,
     shouldRedirectFromAuth,
     shouldRedirectToLogin,
   ]);
+
+  if (!hasHydrated) {
+    return <div className="min-h-screen" />;
+  }
 
   if (
     shouldRedirectFromAuth ||

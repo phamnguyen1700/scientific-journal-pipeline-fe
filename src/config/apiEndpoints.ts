@@ -9,4 +9,7 @@ export const apiEndpoints = {
     detail: (id: string) => `/Paper/${id}`,
     byAuthor: (authorId: string) => `/Paper/author/${authorId}`,
   },
+  search: {
+    papers: "/Search/papers",
+  },
 } as const;
