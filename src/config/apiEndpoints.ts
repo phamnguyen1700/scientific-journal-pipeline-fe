@@ -4,6 +4,9 @@ export const apiEndpoints = {
     adminLogin: "/Auth/login",
     me: "/Auth/me",
   },
+  admin: {
+    users: "/Admin/users",
+  },
   papers: {
     list: "/Paper",
     detail: (id: string) => `/Paper/${id}`,
