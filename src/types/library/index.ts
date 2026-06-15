@@ -1,5 +1,6 @@
 export type SavedPaper = {
-  id: number;
+  id: string | number;
+  apiId?: string;
   title: string;
   authors: string;
   journal: string;
@@ -13,7 +14,8 @@ export type SavedPaper = {
 export type FollowingTab = "topics" | "journals";
 
 export type FollowedTopic = {
-  id: number;
+  id: string | number;
+  apiId?: string;
   name: string;
   category: string;
   papers: number;
@@ -22,7 +24,7 @@ export type FollowedTopic = {
 };
 
 export type FollowedJournal = {
-  id: number;
+  id: string | number;
   name: string;
   publisher: string;
   papers: number;
