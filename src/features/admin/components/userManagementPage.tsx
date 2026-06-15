@@ -1,8 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Search, ChevronDown, MoreHorizontal, Pencil, RefreshCw } from "lucide-react";
-import { useAdminUsers } from "@/hooks/admin";
+import { Search, ChevronDown, MoreHorizontal, RefreshCw } from "lucide-react";
+import {
+  useActivateAdminUser,
+  useAdminUsers,
+  useDeactivateAdminUser,
+  useDeleteAdminUser,
+} from "@/hooks/admin";
 import type { UserStatus } from "@/types/admin";
 import { isAdminRole, type UserRole } from "@/types/role";
 
@@ -22,57 +27,72 @@ const roleColors: Record<UserRole, string> = {
 
 export function UserManagementPage() {
   const usersQuery = useAdminUsers();
-  const [deletedUserIds, setDeletedUserIds] = useState<string[]>([]);
-  const [statusOverrides, setStatusOverrides] = useState<Record<string, UserStatus>>({});
+  const activateUserMutation = useActivateAdminUser();
+  const deactivateUserMutation = useDeactivateAdminUser();
+  const deleteUserMutation = useDeleteAdminUser();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
-  const users = useMemo(
+  const users = usersQuery.users;
+  const manageableUsers = useMemo(
+    () => users.filter((user) => !isAdminRole(user.role)),
+    [users]
+  );
+  const actionError =
+    getErrorMessage(activateUserMutation.error) ||
+    getErrorMessage(deactivateUserMutation.error) ||
+    getErrorMessage(deleteUserMutation.error);
+  const activeActionUserId =
+    activateUserMutation.variables ||
+    deactivateUserMutation.variables ||
+    deleteUserMutation.variables ||
+    null;
+
+  const filtered = useMemo(
     () =>
-      usersQuery.users
-        .filter((user) => !deletedUserIds.includes(user.id))
-        .map((user) => ({
-          ...user,
-          status: statusOverrides[user.id] ?? user.status,
-        })),
-    [deletedUserIds, statusOverrides, usersQuery.users]
+      manageableUsers.filter((u) => {
+        const matchRole = roleFilter === "All" || u.role === roleFilter;
+        const matchStatus = statusFilter === "All" || u.status === statusFilter;
+        const normalizedSearch = search.toLowerCase();
+        const matchSearch =
+          !normalizedSearch ||
+          u.name.toLowerCase().includes(normalizedSearch) ||
+          u.email.toLowerCase().includes(normalizedSearch);
+        return matchRole && matchStatus && matchSearch;
+      }),
+    [manageableUsers, roleFilter, search, statusFilter]
   );
 
-  const filtered = users.filter((u) => {
-    const matchRole = roleFilter === "All" || u.role === roleFilter;
-    const matchStatus = statusFilter === "All" || u.status === statusFilter;
-    const matchSearch =
-      !search ||
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase());
-    return matchRole && matchStatus && matchSearch;
-  });
-
   const stats = {
-    total: users.length,
-    students: users.filter((u) => u.role === "Student" || u.role === "Lecturer").length,
-    researchers: users.filter((u) => u.role === "Researcher").length,
-    admins: users.filter((u) => isAdminRole(u.role)).length,
-    suspended: users.filter((u) => u.status === "Suspended").length,
+    total: manageableUsers.length,
+    students: manageableUsers.filter((u) => u.role === "Student" || u.role === "Lecturer").length,
+    researchers: manageableUsers.filter((u) => u.role === "Researcher").length,
+    suspended: manageableUsers.filter((u) => u.status === "Suspended").length,
   };
 
+  const isUserActionPending = (id: string) =>
+    activeActionUserId === id &&
+    (activateUserMutation.isPending ||
+      deactivateUserMutation.isPending ||
+      deleteUserMutation.isPending);
+
   const deleteUser = (id: string) => {
-    setDeletedUserIds((current) =>
-      current.includes(id) ? current : [...current, id]
-    );
     setOpenMenu(null);
+    deleteUserMutation.mutate(id);
   };
 
   const toggleStatus = (id: string) => {
-    const currentStatus = users.find((user) => user.id === id)?.status;
-
-    setStatusOverrides((current) => ({
-      ...current,
-      [id]: currentStatus === "Active" ? "Suspended" : "Active",
-    }));
+    const currentStatus = manageableUsers.find((user) => user.id === id)?.status;
     setOpenMenu(null);
+
+    if (currentStatus === "Active") {
+      deactivateUserMutation.mutate(id);
+      return;
+    }
+
+    activateUserMutation.mutate(id);
   };
 
   return (
@@ -84,28 +104,22 @@ export function UserManagementPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             {usersQuery.loading
               ? "Loading registered users..."
-              : `${users.length} total users registered on the platform`}
+              : `${manageableUsers.length} manageable users registered on the platform`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => void usersQuery.refetch()}
-            disabled={usersQuery.isFetching}
-            className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <RefreshCw size={16} className={usersQuery.isFetching ? "animate-spin" : ""} />
-            Refresh
-          </button>
-          <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-            <Plus size={16} />
-            Add User
-          </button>
-        </div>
+        <button
+          onClick={() => void usersQuery.refetch()}
+          disabled={usersQuery.isFetching}
+          className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <RefreshCw size={16} className={usersQuery.isFetching ? "animate-spin" : ""} />
+          Refresh
+        </button>
       </div>
 
-      {usersQuery.error && (
+      {(usersQuery.error || actionError) && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {usersQuery.error}
+          {usersQuery.error || actionError}
         </div>
       )}
 
@@ -150,8 +164,6 @@ export function UserManagementPage() {
             <option value="Student">Student</option>
             <option value="Lecturer">Lecturer</option>
             <option value="Researcher">Researcher</option>
-            <option value="System Administrator">System Administrator</option>
-            <option value="Admin">Admin</option>
           </select>
           <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
         </div>
@@ -211,13 +223,11 @@ export function UserManagementPage() {
                 <td className="px-5 py-3.5 text-right text-sm font-medium text-foreground">{user.papers}</td>
                 <td className="px-5 py-3.5 text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <button className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Pencil size={14} />
-                    </button>
                     <div className="relative">
                       <button
                         onClick={() => setOpenMenu(openMenu === user.id ? null : user.id)}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                        disabled={isUserActionPending(user.id)}
+                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <MoreHorizontal size={14} />
                       </button>
@@ -225,13 +235,15 @@ export function UserManagementPage() {
                         <div className="absolute right-0 top-full z-10 mt-1 w-40 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
                           <button
                             onClick={() => toggleStatus(user.id)}
-                            className="w-full px-4 py-2.5 text-left text-xs hover:bg-muted"
+                            disabled={isUserActionPending(user.id)}
+                            className="w-full px-4 py-2.5 text-left text-xs hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {user.status === "Active" ? "Suspend User" : "Activate User"}
                           </button>
                           <button
                             onClick={() => deleteUser(user.id)}
-                            className="w-full px-4 py-2.5 text-left text-xs text-red-600 hover:bg-red-50"
+                            disabled={isUserActionPending(user.id)}
+                            className="w-full px-4 py-2.5 text-left text-xs text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             Delete User
                           </button>
@@ -252,4 +264,12 @@ export function UserManagementPage() {
       </div>
     </div>
   );
+}
+
+function getErrorMessage(error: unknown) {
+  if (!error) return null;
+
+  return error instanceof Error
+    ? error.message
+    : "Unable to complete the user action.";
 }
