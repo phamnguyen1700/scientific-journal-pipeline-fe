@@ -11,9 +11,15 @@ import {
   YAxis,
 } from "recharts";
 
-import type { TrendPoint } from "@/types/dashboard";
+import type { TrendPoint, TrendSeries } from "@/types/dashboard";
 
-export function PublicationTrendsCard({ data }: { data: TrendPoint[] }) {
+export function PublicationTrendsCard({
+  data,
+  series,
+}: {
+  data: TrendPoint[];
+  series: TrendSeries[];
+}) {
   return (
     <section className="dashboard-card dashboard-trends-card">
       <div className="dashboard-card-heading">
@@ -29,35 +35,45 @@ export function PublicationTrendsCard({ data }: { data: TrendPoint[] }) {
         </select>
       </div>
 
-      <div className="dashboard-chart">
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-          minWidth={0}
-          initialDimension={{ width: 720, height: 200 }}
-        >
-          <AreaChart data={data}>
-            <defs>
-              <linearGradient id="aiGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6C4CF1" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#6C4CF1" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="bioGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="#F3F4F6" strokeDasharray="3 3" />
-            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9CA3AF" }} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9CA3AF" }} />
-            <Tooltip contentStyle={{ border: "1px solid #E5E7EB", borderRadius: 8, fontSize: 12 }} />
-            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-            <Area type="monotone" dataKey="ai" name="AI / ML" stroke="#6C4CF1" strokeWidth={2} fill="url(#aiGrad)" />
-            <Area type="monotone" dataKey="bio" name="Biosciences" stroke="#10B981" strokeWidth={2} fill="url(#bioGrad)" />
-            <Area type="monotone" dataKey="climate" name="Climate Science" stroke="#F59E0B" strokeWidth={2} fill="none" strokeDasharray="4 2" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      {data.length && series.length ? (
+        <div className="dashboard-chart">
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            initialDimension={{ width: 720, height: 200 }}
+          >
+            <AreaChart data={data}>
+              <defs>
+                {series.map((item) => (
+                  <linearGradient key={item.key} id={`${item.key}Grad`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={item.color} stopOpacity={0.15} />
+                    <stop offset="95%" stopColor={item.color} stopOpacity={0} />
+                  </linearGradient>
+                ))}
+              </defs>
+              <CartesianGrid stroke="#F3F4F6" strokeDasharray="3 3" />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9CA3AF" }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9CA3AF" }} />
+              <Tooltip contentStyle={{ border: "1px solid #E5E7EB", borderRadius: 8, fontSize: 12 }} />
+              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
+              {series.map((item) => (
+                <Area
+                  key={item.key}
+                  type="monotone"
+                  dataKey={item.key}
+                  name={item.name}
+                  stroke={item.color}
+                  strokeWidth={2}
+                  fill={`url(#${item.key}Grad)`}
+                />
+              ))}
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div className="dashboard-paper-empty">No publication trend data found.</div>
+      )}
     </section>
   );
 }
