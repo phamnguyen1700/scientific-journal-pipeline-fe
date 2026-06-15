@@ -7,7 +7,7 @@ export function toPaperSearchResult(
   paper: PaperApiModel,
   index = 0
 ): PaperSearchResult {
-  const authors = [...paper.paperAuthorResponseModels]
+  const authors = [...(paper.paperAuthorResponseModels ?? [])]
     .sort((first, second) => (first.authorOrder ?? 0) - (second.authorOrder ?? 0))
     .map((author) =>
       author.author?.displayName ??

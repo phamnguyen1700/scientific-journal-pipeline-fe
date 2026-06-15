@@ -12,6 +12,7 @@ import {
 } from "@/features/paperSearch/components";
 import { toPaperSearchResult } from "@/features/paperSearch/paperMapper";
 import { usePaperSearch } from "@/hooks/search";
+import { useUserBookmarks } from "@/hooks/user";
 import type {
   PaperSearchFilters as PaperSearchFiltersValue,
 } from "@/types/search";
@@ -40,13 +41,13 @@ const initialSearchValues: PaperSearchFormValues = {
 
 export function PaperSearchPage() {
   const paperQuery = usePaperSearch({ page: 1, size: pageSize });
+  const bookmarksQuery = useUserBookmarks();
   const { search } = paperQuery;
   const { control, reset, setValue } = useForm<PaperSearchFormValues>({
     defaultValues: initialSearchValues,
   });
   const formValues = useWatch({ control });
   const [sort, setSort] = useState("relevance");
-  const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const q = formValues.q ?? "";
   const from = formValues.from ?? "";
@@ -70,9 +71,9 @@ export function PaperSearchPage() {
       paperQuery.papers.map((paper, index) => {
         const result = toPaperSearchResult(paper, index);
 
-        return { ...result, bookmarked: bookmarks.includes(result.id) };
+        return { ...result, bookmarked: bookmarksQuery.papers.some((bookmark) => String(bookmark.id) === result.id || bookmark.apiId === result.apiId) };
       }),
-    [bookmarks, paperQuery.papers]
+    [bookmarksQuery.papers, paperQuery.papers]
   );
 
   const sortedPapers = useMemo(
@@ -80,13 +81,14 @@ export function PaperSearchPage() {
       [...papers].sort((first, second) => {
         if (sort === "citations") return second.citations - first.citations;
         if (sort === "newest") return second.year - first.year;
-        return first.title.localeCompare(second.title);
+        if (sort === "title") return first.title.localeCompare(second.title);
+        return 0;
       }),
     [papers, sort]
   );
 
   const currentPage = page;
-  const pageCount = Math.max(page, sortedPapers.length === size ? page + 1 : page);
+  const pageCount = Math.max(1, Math.ceil(paperQuery.total / size));
 
   function updateQuery(value: string) {
     setValue("q", value);
@@ -106,11 +108,14 @@ export function PaperSearchPage() {
   }
 
   function toggleBookmark(id: string) {
-    setBookmarks((current) =>
-      current.includes(id)
-        ? current.filter((bookmarkId) => bookmarkId !== id)
-        : [...current, id]
-    );
+    const paper = papers.find((item) => item.id === id);
+    const paperId = paper?.apiId ?? id;
+
+    if (paper?.bookmarked) {
+      bookmarksQuery.removeBookmark(paperId);
+    } else {
+      bookmarksQuery.addBookmark(paperId);
+    }
   }
 
   return (
@@ -128,7 +133,7 @@ export function PaperSearchPage() {
           <PaperSearchToolbar
             query={q}
             sort={sort}
-            resultCount={sortedPapers.length}
+            resultCount={paperQuery.total}
             onQueryChange={updateQuery}
             onSortChange={(value) => {
               setSort(value);
