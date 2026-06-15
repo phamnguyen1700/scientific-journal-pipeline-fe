@@ -29,6 +29,13 @@ export type AdminUsersApiResponse = {
   errors: string[];
 };
 
+export type AdminUserActionApiResponse = {
+  succeeded?: boolean;
+  result?: unknown;
+  errors?: string[];
+  message?: string;
+};
+
 export type UserStats = {
   total: number;
   students: number;
