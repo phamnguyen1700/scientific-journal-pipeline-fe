@@ -7,10 +7,26 @@ export type AdminUser = {
   id: string;
   name: string;
   email: string;
+  phonenumber?: string;
   role: UserRole;
   status: UserStatus;
   joined: string;
   papers: number;
+};
+
+export type AdminUserApiModel = {
+  userId: string;
+  username: string;
+  email: string;
+  phonenumber?: string;
+  roleName: UserRole;
+  isActive: boolean;
+};
+
+export type AdminUsersApiResponse = {
+  succeeded: boolean;
+  result: AdminUserApiModel[];
+  errors: string[];
 };
 
 export type UserStats = {

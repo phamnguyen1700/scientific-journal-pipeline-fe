@@ -1,7 +1,7 @@
 import type { UserRole } from "@/types/role";
 
 export type LoginPayload = {
-  identifier: string;
+  email: string;
   password: string;
 };
 

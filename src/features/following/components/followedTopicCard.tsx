@@ -4,7 +4,7 @@ import { Button } from "@/shared/ui/button";
 import { Switch } from "@/shared/ui/switch";
 import type { FollowedTopic } from "@/types/library";
 
-export function FollowedTopicCard({ topic, onToggleAlert, onRemove }: { topic: FollowedTopic; onToggleAlert: (id: number) => void; onRemove: (id: number) => void }) {
+export function FollowedTopicCard({ topic, onToggleAlert, onRemove }: { topic: FollowedTopic; onToggleAlert: (id: string | number) => void; onRemove: (id: string | number) => void }) {
   return (
     <article className="following-card">
       <div className="following-card-heading">
