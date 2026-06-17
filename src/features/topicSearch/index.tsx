@@ -7,92 +7,34 @@ import {
   TopicGrid,
   TopicSearchHeader,
 } from "@/features/topicSearch/components";
-import type { ResearchTopic } from "@/types/topics";
-
-const initialTopics: ResearchTopic[] = [
-  {
-    id: 1,
-    name: "Large Language Models",
-    description:
-      "Foundation models for language understanding, generation, scientific reasoning, and intelligent assistants.",
-    category: "Artificial Intelligence",
-    color: "purple",
-    papers: 4821,
-    growth: 38.2,
-    trend: "up",
-    followed: true,
-    keywords: ["Transformers", "NLP", "Generative AI"],
-  },
-  {
-    id: 2,
-    name: "Quantum Computing",
-    description:
-      "Quantum algorithms, hardware, error correction, and practical applications for computational science.",
-    category: "Computer Science",
-    color: "blue",
-    papers: 2340,
-    growth: 24.7,
-    trend: "up",
-    followed: false,
-    keywords: ["Qubits", "Algorithms", "Quantum Systems"],
-  },
-  {
-    id: 3,
-    name: "Climate Modeling",
-    description:
-      "Simulation and prediction methods for climate systems, environmental risks, and long-term adaptation.",
-    category: "Earth Science",
-    color: "green",
-    papers: 1892,
-    growth: 18.4,
-    trend: "up",
-    followed: true,
-    keywords: ["Climate Change", "Simulation", "Sustainability"],
-  },
-  {
-    id: 4,
-    name: "CRISPR Gene Editing",
-    description:
-      "Gene editing technologies for genomics, therapeutic applications, agriculture, and bioengineering.",
-    category: "Biotechnology",
-    color: "amber",
-    papers: 1654,
-    growth: 15.1,
-    trend: "up",
-    followed: false,
-    keywords: ["CRISPR-Cas9", "Genomics", "Therapy"],
-  },
-  {
-    id: 5,
-    name: "Federated Learning",
-    description:
-      "Distributed machine learning for privacy-preserving collaboration across organizations and devices.",
-    category: "Machine Learning",
-    color: "red",
-    papers: 1247,
-    growth: 42.8,
-    trend: "up",
-    followed: false,
-    keywords: ["Privacy", "Edge AI", "Distributed Systems"],
-  },
-  {
-    id: 6,
-    name: "Bioinformatics",
-    description:
-      "Computational methods for biological datasets, genomic analysis, protein modeling, and drug discovery.",
-    category: "Life Science",
-    color: "cyan",
-    papers: 2890,
-    growth: 12.8,
-    trend: "stable",
-    followed: false,
-    keywords: ["Genomics", "Proteomics", "Data Science"],
-  },
-];
+import { useTopics } from "@/hooks/topics";
+import { useUserFollowingTopics } from "@/hooks/user";
 
 export function TopicSearchPage() {
   const [query, setQuery] = useState("");
-  const [topics, setTopics] = useState(initialTopics);
+  const topicsQuery = useTopics();
+  const followingTopicsQuery = useUserFollowingTopics();
+  const followedTopicIds = useMemo(
+    () =>
+      new Set(
+        followingTopicsQuery.topics.flatMap((topic) =>
+          [topic.id, topic.apiId, topic.name].filter(Boolean).map(String)
+        )
+      ),
+    [followingTopicsQuery.topics]
+  );
+  const topics = useMemo(
+    () =>
+      topicsQuery.topics.map((topic) => ({
+        ...topic,
+        followed:
+          topic.followed ||
+          followedTopicIds.has(String(topic.id)) ||
+          (topic.apiId ? followedTopicIds.has(topic.apiId) : false) ||
+          followedTopicIds.has(topic.name),
+      })),
+    [followedTopicIds, topicsQuery.topics]
+  );
 
   const visibleTopics = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -116,12 +58,16 @@ export function TopicSearchPage() {
     [topics]
   );
 
-  function toggleFollow(id: number) {
-    setTopics((current) =>
-      current.map((topic) =>
-        topic.id === id ? { ...topic, followed: !topic.followed } : topic
-      )
-    );
+  function toggleFollow(id: string | number) {
+    const topic = topics.find((item) => item.id === id);
+    if (!topic) return;
+
+    const topicId = topic.apiId ?? String(topic.id);
+    if (topic.followed) {
+      followingTopicsQuery.unfollowTopic(topicId);
+    } else {
+      followingTopicsQuery.followTopic(topicId);
+    }
   }
 
   return (
@@ -135,10 +81,14 @@ export function TopicSearchPage() {
             {visibleTopics.length} research topics found
           </p>
         </div>
-        <TopicGrid topics={visibleTopics} onToggleFollow={toggleFollow} />
+        {topicsQuery.loading ? (
+          <div className="paper-search-empty">Loading research topics...</div>
+        ) : topicsQuery.error ? (
+          <div className="paper-search-empty">{topicsQuery.error}</div>
+        ) : (
+          <TopicGrid topics={visibleTopics} onToggleFollow={toggleFollow} />
+        )}
       </section>
     </div>
   );
 }
-
-export { initialTopics };
