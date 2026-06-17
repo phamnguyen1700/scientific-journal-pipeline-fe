@@ -9,7 +9,7 @@ export function TopicCard({
   onToggleFollow,
 }: {
   topic: ResearchTopic;
-  onToggleFollow: (id: string | number) => void;
+  onToggleFollow: (id: number) => void;
 }) {
   return (
     <article className="topic-card">

@@ -13,21 +13,13 @@ export const getTrendingTopicsService = () =>
 export const getAnalyticsDashboardService = () =>
   get<unknown>(apiEndpoints.analytics.dashboard);
 
-export const getDashboardSummaryService = () =>
-  get<unknown>(apiEndpoints.dashboard.summary);
-
 export const getPublicationTrendsService = () =>
   get<unknown>(apiEndpoints.dashboard.publicationTrends);
-
-export const getDashboardHotTopicsService = () =>
-  get<unknown>(apiEndpoints.dashboard.hotTopics);
 
 export const analyticsService = {
   keywordTrends: getKeywordTrendsService,
   topicTrends: getTopicTrendsService,
   trendingTopics: getTrendingTopicsService,
   dashboard: getAnalyticsDashboardService,
-  dashboardSummary: getDashboardSummaryService,
   publicationTrends: getPublicationTrendsService,
-  dashboardHotTopics: getDashboardHotTopicsService,
 };

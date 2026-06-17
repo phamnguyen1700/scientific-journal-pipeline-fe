@@ -3,8 +3,7 @@ import type { TagColor } from "@/types/common";
 export type TopicTrend = "up" | "stable";
 
 export type ResearchTopic = {
-  id: string | number;
-  apiId?: string;
+  id: number;
   name: string;
   description: string;
   category: string;
@@ -19,7 +18,7 @@ export type ResearchTopic = {
 export type TrendingTimeRange = "7-days" | "30-days" | "6-months";
 
 export type TrendingTopicMetric = {
-  id: string | number;
+  id: number;
   name: string;
   category: string;
   color: string;

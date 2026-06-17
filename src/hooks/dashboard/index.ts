@@ -4,8 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import {
   getAnalyticsDashboardService,
-  getDashboardHotTopicsService,
-  getDashboardSummaryService,
   getPublicationTrendsService,
   getTrendingTopicsService,
 } from "@/service/analytics";
@@ -47,47 +45,39 @@ async function getStudentDashboardData(): Promise<StudentDashboardData> {
     bookmarksResponse,
     followingTopicsResponse,
     trendingTopicsResponse,
-    dashboardHotTopicsResponse,
     publicationTrendsResponse,
-    dashboardSummaryResponse,
     analyticsDashboardResponse,
   ] = await Promise.allSettled([
     getUserBookmarksService(),
     getUserFollowingTopicsService(),
     getTrendingTopicsService(),
-    getDashboardHotTopicsService(),
     getPublicationTrendsService(),
-    getDashboardSummaryService(),
     getAnalyticsDashboardService(),
   ]);
 
   const bookmarks = mapBookmarks(getSettledValue(bookmarksResponse));
   const followingTopics = extractArray(getSettledValue(followingTopicsResponse));
-  const dashboardSummary = extractPayload(getSettledValue(dashboardSummaryResponse));
   const analyticsDashboard = extractPayload(getSettledValue(analyticsDashboardResponse));
-  const analyticsRecord = asRecord(dashboardSummary) ?? asRecord(analyticsDashboard);
+  const analyticsRecord = asRecord(analyticsDashboard);
   const publicationTrends = mapPublicationTrends(getSettledValue(publicationTrendsResponse));
-  const hotTopics = mapTrendingTopics(getSettledValue(dashboardHotTopicsResponse));
 
   return {
     bookmarks,
     followedTopicCount:
       readNumber(analyticsRecord, ["followedTopics", "followedTopicCount", "followingTopics"]) ??
       followingTopics.length,
-    trendingTopics: hotTopics.length
-      ? hotTopics
-      : mapTrendingTopics(getSettledValue(trendingTopicsResponse)),
+    trendingTopics: mapTrendingTopics(getSettledValue(trendingTopicsResponse)),
     trendData: publicationTrends.data,
     trendSeries: publicationTrends.series,
     stats: {
       bookmarkedPapers:
-        readNumber(analyticsRecord, ["bookmarkedPapers", "bookmarkCount", "bookmarks", "totalBookmarks"]) ??
+        readNumber(analyticsRecord, ["bookmarkedPapers", "bookmarkCount", "bookmarks"]) ??
         bookmarks.length,
       followedTopics:
-        readNumber(analyticsRecord, ["followedTopics", "followedTopicCount", "followingTopics", "totalFollowedTopics"]) ??
+        readNumber(analyticsRecord, ["followedTopics", "followedTopicCount", "followingTopics"]) ??
         followingTopics.length,
-      journalAlerts: readNumber(analyticsRecord, ["journalAlerts", "alerts", "unreadAlerts", "alertCount"]),
-      newPapers: readNumber(analyticsRecord, ["newPapers", "paperCount", "papers", "totalPapers"]),
+      journalAlerts: readNumber(analyticsRecord, ["journalAlerts", "alerts", "unreadAlerts"]),
+      newPapers: readNumber(analyticsRecord, ["newPapers", "paperCount", "papers"]),
     },
   };
 }

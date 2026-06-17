@@ -1,16 +1,8 @@
 import { Activity, FileText, TrendingUp, Users } from "lucide-react";
 
 import { KpiCard } from "@/components/common";
-import type { TrendingTopicMetric } from "@/types/topics";
 
-export function TrendingTopicKpis({ topics }: { topics: TrendingTopicMetric[] }) {
-  const fastestTopic = topics.reduce<TrendingTopicMetric | null>(
-    (current, topic) => !current || topic.growth > current.growth ? topic : current,
-    null
-  );
-  const totalPapers = topics.reduce((total, topic) => total + topic.papers, 0);
-  const totalFollowers = topics.reduce((total, topic) => total + topic.followers, 0);
-
+export function TrendingTopicKpis() {
   return (
     <div className="trending-topics-kpi-grid">
       <KpiCard
@@ -18,9 +10,9 @@ export function TrendingTopicKpis({ topics }: { topics: TrendingTopicMetric[] })
         iconColor="bg-purple-100"
         iconTextColor="text-purple-600"
         label="Active Topics"
-        value={topics.length.toLocaleString()}
+        value="128"
         trend="up"
-        trendValue={topics.length ? `${topics.length}` : "0"}
+        trendValue="+18"
         sub="this month"
       />
       <KpiCard
@@ -28,9 +20,9 @@ export function TrendingTopicKpis({ topics }: { topics: TrendingTopicMetric[] })
         iconColor="bg-blue-100"
         iconTextColor="text-blue-600"
         label="New Publications"
-        value={formatCompactNumber(totalPapers)}
+        value="14.8K"
         trend="up"
-        trendValue={fastestTopic ? `${fastestTopic.growth}%` : "0%"}
+        trendValue="+21.4%"
         sub="vs previous period"
       />
       <KpiCard
@@ -38,26 +30,19 @@ export function TrendingTopicKpis({ topics }: { topics: TrendingTopicMetric[] })
         iconColor="bg-emerald-100"
         iconTextColor="text-emerald-600"
         label="Fastest Growth"
-        value={fastestTopic ? `${fastestTopic.growth}%` : "0%"}
-        sub={fastestTopic?.name ?? "No topic data"}
+        value="42.8%"
+        sub="Federated Learning"
       />
       <KpiCard
         icon={<Users />}
         iconColor="bg-amber-100"
         iconTextColor="text-amber-600"
         label="New Followers"
-        value={formatCompactNumber(totalFollowers)}
+        value="3.2K"
         trend="up"
-        trendValue={topics.length ? `${topics.length} topics` : "0 topics"}
+        trendValue="+12.6%"
         sub="across trending topics"
       />
     </div>
   );
-}
-
-function formatCompactNumber(value: number) {
-  return new Intl.NumberFormat(undefined, {
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(value);
 }
