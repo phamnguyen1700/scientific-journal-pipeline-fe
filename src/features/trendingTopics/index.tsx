@@ -8,80 +8,11 @@ import {
   TrendingTopicsHeader,
   TrendingTopicsRanking,
 } from "@/features/trendingTopics/components";
+import { useTrendingTopicMetrics } from "@/hooks/trends";
 import type {
   TrendingTimeRange,
   TrendingTopicChartPoint,
-  TrendingTopicMetric,
 } from "@/types/topics";
-
-const trendingTopics: TrendingTopicMetric[] = [
-  {
-    id: 1,
-    name: "Federated Learning",
-    category: "Machine Learning",
-    color: "#EF4444",
-    papers: 1247,
-    growth: 42.8,
-    citations: 38900,
-    followers: 3840,
-    sparkline: [18, 24, 31, 38, 49, 63, 78],
-  },
-  {
-    id: 2,
-    name: "Large Language Models",
-    category: "Artificial Intelligence",
-    color: "#6C4CF1",
-    papers: 4821,
-    growth: 38.2,
-    citations: 142800,
-    followers: 12640,
-    sparkline: [42, 49, 56, 68, 74, 88, 96],
-  },
-  {
-    id: 3,
-    name: "Quantum Computing",
-    category: "Computer Science",
-    color: "#3B82F6",
-    papers: 2340,
-    growth: 24.7,
-    citations: 61200,
-    followers: 5210,
-    sparkline: [31, 35, 43, 46, 55, 61, 69],
-  },
-  {
-    id: 4,
-    name: "Climate Modeling",
-    category: "Earth Science",
-    color: "#10B981",
-    papers: 1892,
-    growth: 18.4,
-    citations: 54800,
-    followers: 4320,
-    sparkline: [39, 42, 44, 51, 54, 58, 64],
-  },
-  {
-    id: 5,
-    name: "CRISPR Gene Editing",
-    category: "Biotechnology",
-    color: "#F59E0B",
-    papers: 1654,
-    growth: 15.1,
-    citations: 73400,
-    followers: 3960,
-    sparkline: [48, 52, 53, 58, 61, 65, 68],
-  },
-  {
-    id: 6,
-    name: "Bioinformatics",
-    category: "Life Science",
-    color: "#06B6D4",
-    papers: 2890,
-    growth: 12.8,
-    citations: 87600,
-    followers: 6120,
-    sparkline: [51, 53, 56, 59, 61, 64, 67],
-  },
-];
 
 const chartDataByRange: Record<TrendingTimeRange, TrendingTopicChartPoint[]> = {
   "7-days": [
@@ -111,16 +42,23 @@ const chartDataByRange: Record<TrendingTimeRange, TrendingTopicChartPoint[]> = {
 
 export function TrendingTopicsPage() {
   const [range, setRange] = useState<TrendingTimeRange>("30-days");
+  const topicsQuery = useTrendingTopicMetrics();
   const chartData = useMemo(() => chartDataByRange[range], [range]);
 
   return (
     <div className="trending-topics-page">
       <TrendingTopicsHeader range={range} onRangeChange={setRange} />
-      <TrendingTopicKpis />
+      <TrendingTopicKpis topics={topicsQuery.topics} />
       <TrendingTopicsChart data={chartData} />
-      <TrendingTopicsRanking topics={trendingTopics} />
+      {topicsQuery.loading ? (
+        <div className="paper-search-empty">Loading trending topics...</div>
+      ) : topicsQuery.error ? (
+        <div className="paper-search-empty">{topicsQuery.error}</div>
+      ) : (
+        <TrendingTopicsRanking topics={topicsQuery.topics} />
+      )}
     </div>
   );
 }
 
-export { chartDataByRange, trendingTopics };
+export { chartDataByRange };

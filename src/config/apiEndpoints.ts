@@ -48,6 +48,8 @@ export const apiEndpoints = {
     dashboard: "/Analytics/dashboard",
   },
   dashboard: {
+    summary: "/Dashboard/summary",
     publicationTrends: "/Dashboard/publication-trends",
+    hotTopics: "/Dashboard/hot-topics",
   },
 } as const;

@@ -1,8 +1,16 @@
 import { Activity, FileText, TrendingUp, Users } from "lucide-react";
 
 import { KpiCard } from "@/components/common";
+import type { TrendingTopicMetric } from "@/types/topics";
 
-export function TrendingTopicKpis() {
+export function TrendingTopicKpis({ topics }: { topics: TrendingTopicMetric[] }) {
+  const fastestTopic = topics.reduce<TrendingTopicMetric | null>(
+    (current, topic) => !current || topic.growth > current.growth ? topic : current,
+    null
+  );
+  const totalPapers = topics.reduce((total, topic) => total + topic.papers, 0);
+  const totalFollowers = topics.reduce((total, topic) => total + topic.followers, 0);
+
   return (
     <div className="trending-topics-kpi-grid">
       <KpiCard
@@ -10,9 +18,9 @@ export function TrendingTopicKpis() {
         iconColor="bg-purple-100"
         iconTextColor="text-purple-600"
         label="Active Topics"
-        value="128"
+        value={topics.length.toLocaleString()}
         trend="up"
-        trendValue="+18"
+        trendValue={topics.length ? `${topics.length}` : "0"}
         sub="this month"
       />
       <KpiCard
@@ -20,9 +28,9 @@ export function TrendingTopicKpis() {
         iconColor="bg-blue-100"
         iconTextColor="text-blue-600"
         label="New Publications"
-        value="14.8K"
+        value={formatCompactNumber(totalPapers)}
         trend="up"
-        trendValue="+21.4%"
+        trendValue={fastestTopic ? `${fastestTopic.growth}%` : "0%"}
         sub="vs previous period"
       />
       <KpiCard
@@ -30,19 +38,26 @@ export function TrendingTopicKpis() {
         iconColor="bg-emerald-100"
         iconTextColor="text-emerald-600"
         label="Fastest Growth"
-        value="42.8%"
-        sub="Federated Learning"
+        value={fastestTopic ? `${fastestTopic.growth}%` : "0%"}
+        sub={fastestTopic?.name ?? "No topic data"}
       />
       <KpiCard
         icon={<Users />}
         iconColor="bg-amber-100"
         iconTextColor="text-amber-600"
         label="New Followers"
-        value="3.2K"
+        value={formatCompactNumber(totalFollowers)}
         trend="up"
-        trendValue="+12.6%"
+        trendValue={topics.length ? `${topics.length} topics` : "0 topics"}
         sub="across trending topics"
       />
     </div>
   );
+}
+
+function formatCompactNumber(value: number) {
+  return new Intl.NumberFormat(undefined, {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
 }
