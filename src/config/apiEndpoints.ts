@@ -6,6 +6,9 @@ export const apiEndpoints = {
   },
   admin: {
     users: "/Admin/users",
+    activateUser: (userId: string) => `/Admin/users/${userId}/activate`,
+    deactivateUser: (userId: string) => `/Admin/users/${userId}/deactivate`,
+    deleteUser: (userId: string) => `/Admin/users/${userId}`,
   },
   papers: {
     list: "/Paper",

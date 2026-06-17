@@ -1,9 +1,19 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getAdminUsersService } from "@/service/admin";
-import type { AdminUser, AdminUserApiModel, AdminUsersApiResponse } from "@/types/admin";
+import {
+  activateAdminUserService,
+  deactivateAdminUserService,
+  deleteAdminUserService,
+  getAdminUsersService,
+} from "@/service/admin";
+import type {
+  AdminUser,
+  AdminUserActionApiResponse,
+  AdminUserApiModel,
+  AdminUsersApiResponse,
+} from "@/types/admin";
 
 export const adminQueryKeys = {
   all: ["admin"] as const,
@@ -24,12 +34,60 @@ export function useAdminUsers() {
   };
 }
 
+export function useActivateAdminUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) =>
+      normalizeAdminUserActionResponse(await activateAdminUserService(userId)),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: adminQueryKeys.users() });
+    },
+  });
+}
+
+export function useDeactivateAdminUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) =>
+      normalizeAdminUserActionResponse(await deactivateAdminUserService(userId)),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: adminQueryKeys.users() });
+    },
+  });
+}
+
+export function useDeleteAdminUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) =>
+      normalizeAdminUserActionResponse(await deleteAdminUserService(userId)),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: adminQueryKeys.users() });
+    },
+  });
+}
+
 function normalizeAdminUsersResponse(response: AdminUsersApiResponse): AdminUser[] {
   if (!response.succeeded) {
     throw new Error(response.errors.join(", ") || "Unable to load users.");
   }
 
   return response.result.map(mapAdminUser);
+}
+
+function normalizeAdminUserActionResponse(response?: AdminUserActionApiResponse) {
+  if (!response) {
+    return response;
+  }
+
+  if (response.succeeded === false) {
+    throw new Error(response.errors?.join(", ") || response.message || "Unable to update user.");
+  }
+
+  return response;
 }
 
 function mapAdminUser(user: AdminUserApiModel): AdminUser {
