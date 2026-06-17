@@ -7,7 +7,7 @@ export function TopicGrid({
   onToggleFollow,
 }: {
   topics: ResearchTopic[];
-  onToggleFollow: (id: number) => void;
+  onToggleFollow: (id: string | number) => void;
 }) {
   if (!topics.length) {
     return (

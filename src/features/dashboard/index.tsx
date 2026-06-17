@@ -14,6 +14,7 @@ import type { DashboardKpi } from "@/types/dashboard";
 import { toPaperSearchResult } from "@/features/paperSearch/paperMapper";
 import { useStudentDashboard } from "@/hooks/dashboard";
 import { usePaperSearch } from "@/hooks/search";
+import { useUserProfile } from "@/hooks/user";
 
 const dashboardKpis: DashboardKpi[] = [
   {
@@ -53,7 +54,9 @@ const dashboardKpis: DashboardKpi[] = [
 export function StudentDashboardPage() {
   const papersQuery = usePaperSearch({ page: 1, size: 4 });
   const dashboardQuery = useStudentDashboard();
+  const profileQuery = useUserProfile();
   const studentDashboard = dashboardQuery.data;
+  const displayName = profileQuery.profile?.username ?? "Researcher";
   const apiRecentPapers = papersQuery.papers.map((paper, index) => {
     const result = toPaperSearchResult(paper, index);
 
@@ -78,7 +81,7 @@ export function StudentDashboardPage() {
 
   return (
     <div className="dashboard-page">
-      <DashboardHeader name="Minh" />
+      <DashboardHeader name={displayName} />
       <DashboardKpiGrid items={kpiItems} />
       <div className="dashboard-grid">
         <PublicationTrendsCard data={studentDashboard.trendData} series={studentDashboard.trendSeries} />

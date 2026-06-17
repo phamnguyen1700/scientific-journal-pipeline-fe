@@ -5,18 +5,44 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { dashboardQueryKeys } from "@/hooks/dashboard";
 import {
   addUserBookmarkService,
+  followTopicService,
   getUserBookmarksService,
   getUserFollowingTopicsService,
+  getUserProfileService,
   removeUserBookmarkService,
   unfollowTopicService,
 } from "@/service/user";
 import type { SavedPaper, FollowedTopic } from "@/types/library";
 
+export type UserProfile = {
+  userId?: string;
+  username?: string;
+  email?: string;
+  phonenumber?: string;
+  roleName?: string;
+  isActive?: boolean;
+};
+
 export const userQueryKeys = {
   all: ["user"] as const,
+  profile: () => [...userQueryKeys.all, "profile"] as const,
   bookmarks: () => [...userQueryKeys.all, "bookmarks"] as const,
   followingTopics: () => [...userQueryKeys.all, "following", "topics"] as const,
 };
+
+export function useUserProfile() {
+  const query = useQuery({
+    queryKey: userQueryKeys.profile(),
+    queryFn: async () => mapUserProfile(await getUserProfileService()),
+  });
+
+  return {
+    ...query,
+    profile: query.data ?? null,
+    loading: query.isPending,
+    error: getErrorMessage(query.error),
+  };
+}
 
 export function useUserBookmarks() {
   const queryClient = useQueryClient();
@@ -59,14 +85,22 @@ export function useUserFollowingTopics() {
       void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.student() });
     },
   });
+  const followTopic = useMutation({
+    mutationFn: (id: string | number) => followTopicService(String(id)),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: userQueryKeys.followingTopics() });
+      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.student() });
+    },
+  });
 
   return {
     ...query,
     topics: query.data ?? [],
     loading: query.isPending,
     error: getErrorMessage(query.error),
+    followTopic: followTopic.mutate,
     unfollowTopic: unfollowTopic.mutate,
-    saving: unfollowTopic.isPending,
+    saving: followTopic.isPending || unfollowTopic.isPending,
   };
 }
 
@@ -111,6 +145,20 @@ function mapBookmarks(response: unknown): SavedPaper[] {
       ].filter((tag): tag is string => Boolean(tag)),
     };
   });
+}
+
+function mapUserProfile(response: unknown): UserProfile | null {
+  const record = asRecord(extractPayload(response));
+  if (!record) return null;
+
+  return {
+    userId: readString(record, ["userId", "id"]),
+    username: readString(record, ["username", "name", "fullName"]),
+    email: readString(record, ["email"]),
+    phonenumber: readString(record, ["phonenumber", "phoneNumber"]),
+    roleName: readString(record, ["roleName", "role"]),
+    isActive: readBoolean(record, ["isActive", "active"]),
+  };
 }
 
 function mapFollowedTopics(response: unknown): FollowedTopic[] {
