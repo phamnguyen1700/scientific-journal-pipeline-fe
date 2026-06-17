@@ -37,6 +37,10 @@ export const apiEndpoints = {
     followingTopics: "/User/following/topics",
     followingTopic: (topicId: string) => `/User/following/topics/${topicId}`,
   },
+  topics: {
+    list: "/Topic",
+    detail: (id: string) => `/Topic/${id}`,
+  },
   analytics: {
     keywordTrends: "/Analytics/keyword-trends",
     topicTrends: "/Analytics/topic-trends",
@@ -44,6 +48,8 @@ export const apiEndpoints = {
     dashboard: "/Analytics/dashboard",
   },
   dashboard: {
+    summary: "/Dashboard/summary",
     publicationTrends: "/Dashboard/publication-trends",
+    hotTopics: "/Dashboard/hot-topics",
   },
 } as const;
