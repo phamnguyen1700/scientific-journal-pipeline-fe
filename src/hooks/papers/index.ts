@@ -7,7 +7,7 @@ import {
   getPapersByAuthorService,
   getPapersService,
 } from "@/service/papers";
-import type { PaperDetailApiResponse, PaperListApiResponse } from "@/types/papers";
+import type { PaperApiModel, PaperDetailApiResponse, PaperListApiResponse } from "@/types/papers";
 
 export const paperQueryKeys = {
   all: ["papers"] as const,
@@ -73,20 +73,32 @@ export function usePapersByAuthor(authorId: string) {
   };
 }
 
-function normalizePaperListResponse(response: PaperListApiResponse) {
-  if (!response.succeeded) {
-    throw new Error(response.errors.join(", ") || "Unable to load papers.");
+function normalizePaperListResponse(response: PaperListApiResponse): PaperApiModel[] {
+  const succeeded = response.succeeded ?? response.Succeeded ?? true;
+  const result = response.result ?? response.Result ?? [];
+  const errors = response.errors ?? response.Errors ?? [];
+
+  if (!succeeded) {
+    throw new Error(errors.join(", ") || "Unable to load papers.");
   }
 
-  return response.result;
+  if (Array.isArray(result)) {
+    return result;
+  }
+
+  return result.data ?? result.items ?? result.papers ?? result.records ?? [];
 }
 
 function normalizePaperDetailResponse(response: PaperDetailApiResponse) {
-  if (!response.succeeded || !response.result) {
-    throw new Error(response.errors.join(", ") || "Paper not found.");
+  const succeeded = response.succeeded ?? response.Succeeded ?? true;
+  const result = response.result ?? response.Result ?? null;
+  const errors = response.errors ?? response.Errors ?? [];
+
+  if (!succeeded || !result) {
+    throw new Error(errors.join(", ") || "Paper not found.");
   }
 
-  return response.result;
+  return result;
 }
 
 function isListPosition(id: string) {

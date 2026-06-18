@@ -12,9 +12,13 @@ export type DashboardKpi = {
 
 export type TrendPoint = {
   month: string;
-  ai: number;
-  bio: number;
-  climate: number;
+  [topicKey: string]: string | number;
+};
+
+export type TrendSeries = {
+  key: string;
+  name: string;
+  color: string;
 };
 
 export type TrendingTopic = {
@@ -35,7 +39,22 @@ export type RecentPaper = {
 };
 
 export type BookmarkedPaper = {
+  id?: string;
   title: string;
   journal: string;
   saved: string;
+};
+
+export type StudentDashboardData = {
+  bookmarks: BookmarkedPaper[];
+  followedTopicCount: number;
+  trendingTopics: TrendingTopic[];
+  trendData: TrendPoint[];
+  trendSeries: TrendSeries[];
+  stats: {
+    bookmarkedPapers?: number;
+    followedTopics?: number;
+    journalAlerts?: number;
+    newPapers?: number;
+  };
 };

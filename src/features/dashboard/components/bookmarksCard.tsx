@@ -3,7 +3,17 @@ import Link from "next/link";
 
 import type { BookmarkedPaper } from "@/types/dashboard";
 
-export function BookmarksCard({ papers }: { papers: BookmarkedPaper[] }) {
+export function BookmarksCard({
+  error,
+  loading,
+  papers,
+  total,
+}: {
+  error?: string | null;
+  loading?: boolean;
+  papers: BookmarkedPaper[];
+  total: number;
+}) {
   return (
     <section className="dashboard-list-card">
       <div className="dashboard-list-header">
@@ -13,17 +23,25 @@ export function BookmarksCard({ papers }: { papers: BookmarkedPaper[] }) {
         </Link>
       </div>
       <div className="divide-y divide-border">
-        {papers.map((paper) => (
-          <article key={paper.title} className="dashboard-bookmark">
-            <p className="dashboard-bookmark-title">{paper.title}</p>
-            <div className="dashboard-bookmark-meta">
-              <span className="text-primary">{paper.journal}</span>
-              <span>{paper.saved}</span>
-            </div>
-          </article>
-        ))}
+        {loading ? (
+          <div className="dashboard-paper-empty">Loading bookmarks...</div>
+        ) : error ? (
+          <div className="dashboard-paper-empty">{error}</div>
+        ) : papers.length ? (
+          papers.map((paper) => (
+            <article key={paper.id ?? paper.title} className="dashboard-bookmark">
+              <p className="dashboard-bookmark-title">{paper.title}</p>
+              <div className="dashboard-bookmark-meta">
+                <span className="text-primary">{paper.journal}</span>
+                <span>{paper.saved}</span>
+              </div>
+            </article>
+          ))
+        ) : (
+          <div className="dashboard-paper-empty">No bookmarked papers yet.</div>
+        )}
       </div>
-      <p className="dashboard-bookmark-total">47 papers saved total</p>
+      <p className="dashboard-bookmark-total">{total} papers saved total</p>
     </section>
   );
 }

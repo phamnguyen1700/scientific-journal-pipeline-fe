@@ -26,23 +26,40 @@ export type PaperApiModel = {
   page: string | null;
   isOpenAccess: boolean;
   isRetracted: boolean;
+  highlight?: {
+    title?: string[];
+    abstract?: string[];
+  } | null;
   journalId: string | null;
   journal: {
     name?: string;
     title?: string;
     journalName?: string;
   } | null;
-  paperAuthorResponseModels: PaperAuthor[];
+  paperAuthorResponseModels?: PaperAuthor[];
 };
 
 export type PaperListApiResponse = {
-  succeeded: boolean;
-  result: PaperApiModel[];
-  errors: string[];
+  succeeded?: boolean;
+  Succeeded?: boolean;
+  result?: PaperApiModel[] | PaperListResult;
+  Result?: PaperApiModel[] | PaperListResult;
+  errors?: string[];
+  Errors?: string[];
 };
 
 export type PaperDetailApiResponse = {
-  succeeded: boolean;
-  result: PaperApiModel | null;
-  errors: string[];
+  succeeded?: boolean;
+  Succeeded?: boolean;
+  result?: PaperApiModel | null;
+  Result?: PaperApiModel | null;
+  errors?: string[];
+  Errors?: string[];
+};
+
+export type PaperListResult = {
+  data?: PaperApiModel[];
+  items?: PaperApiModel[];
+  papers?: PaperApiModel[];
+  records?: PaperApiModel[];
 };

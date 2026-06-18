@@ -10,7 +10,7 @@ export function BookmarkedPaperCard({
   onRemove,
 }: {
   paper: SavedPaper;
-  onRemove: (id: number) => void;
+  onRemove: (id: string | number) => void;
 }) {
   return (
     <article className="saved-paper-card">

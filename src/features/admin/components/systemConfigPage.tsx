@@ -93,21 +93,30 @@ export function SystemConfigPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const updateGeneral = (key: keyof typeof config.general, value: any) => {
+  const updateGeneral = (
+    key: keyof SystemConfig["general"],
+    value: SystemConfig["general"][keyof SystemConfig["general"]]
+  ) => {
     setConfig((prev) => ({
       ...prev,
       general: { ...prev.general, [key]: value },
     }));
   };
 
-  const updateEmail = (key: keyof typeof config.email, value: any) => {
+  const updateEmail = (
+    key: keyof SystemConfig["email"],
+    value: SystemConfig["email"][keyof SystemConfig["email"]]
+  ) => {
     setConfig((prev) => ({
       ...prev,
       email: { ...prev.email, [key]: value },
     }));
   };
 
-  const updateSecurity = (key: keyof typeof config.security, value: any) => {
+  const updateSecurity = (
+    key: keyof SystemConfig["security"],
+    value: SystemConfig["security"][keyof SystemConfig["security"]]
+  ) => {
     setConfig((prev) => ({
       ...prev,
       security: { ...prev.security, [key]: value },
@@ -115,8 +124,8 @@ export function SystemConfigPage() {
   };
 
   const updateNotifications = (
-    key: keyof typeof config.notifications,
-    value: any
+    key: keyof SystemConfig["notifications"],
+    value: SystemConfig["notifications"][keyof SystemConfig["notifications"]]
   ) => {
     setConfig((prev) => ({
       ...prev,

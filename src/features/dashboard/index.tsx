@@ -10,14 +10,11 @@ import {
   PublicationTrendsCard,
   RecentPapersCard,
 } from "@/features/dashboard/components";
-import type {
-  BookmarkedPaper,
-  DashboardKpi,
-  TrendingTopic,
-  TrendPoint,
-} from "@/types/dashboard";
+import type { DashboardKpi } from "@/types/dashboard";
 import { toPaperSearchResult } from "@/features/paperSearch/paperMapper";
-import { usePapers } from "@/hooks/papers";
+import { useStudentDashboard } from "@/hooks/dashboard";
+import { usePaperSearch } from "@/hooks/search";
+import { useUserProfile } from "@/hooks/user";
 
 const dashboardKpis: DashboardKpi[] = [
   {
@@ -25,62 +22,42 @@ const dashboardKpis: DashboardKpi[] = [
     iconColor: "bg-purple-100",
     iconTextColor: "text-purple-600",
     label: "Bookmarked Papers",
-    value: "47",
-    trendValue: "+3",
-    sub: "this week",
+    value: "0",
+    sub: "saved in your library",
   },
   {
     icon: BookMarked,
     iconColor: "bg-blue-100",
     iconTextColor: "text-blue-600",
     label: "Followed Topics",
-    value: "12",
-    sub: "2 new alerts",
+    value: "0",
+    sub: "topics you follow",
   },
   {
     icon: Bell,
     iconColor: "bg-amber-100",
     iconTextColor: "text-amber-600",
     label: "Journal Alerts",
-    value: "5",
-    sub: "3 unread",
+    value: "0",
+    sub: "from analytics dashboard",
   },
   {
     icon: FileText,
     iconColor: "bg-emerald-100",
     iconTextColor: "text-emerald-600",
     label: "New Papers",
-    value: "23",
-    sub: "Since last visit",
+    value: "0",
+    sub: "from search index",
   },
 ];
 
-const trendData: TrendPoint[] = [
-  { month: "Jan", ai: 1240, bio: 890, climate: 540 },
-  { month: "Feb", ai: 1380, bio: 920, climate: 610 },
-  { month: "Mar", ai: 1520, bio: 980, climate: 590 },
-  { month: "Apr", ai: 1690, bio: 1040, climate: 680 },
-  { month: "May", ai: 1830, bio: 1100, climate: 720 },
-  { month: "Jun", ai: 2010, bio: 1180, climate: 800 },
-];
-
-const trendingTopics: TrendingTopic[] = [
-  { name: "Large Language Models", count: 4821, growth: 38.2, color: "#6C4CF1" },
-  { name: "Quantum Computing", count: 2340, growth: 24.7, color: "#8B5CF6" },
-  { name: "Climate Modeling", count: 1892, growth: 18.4, color: "#10B981" },
-  { name: "CRISPR Gene Editing", count: 1654, growth: 15.1, color: "#F59E0B" },
-  { name: "Federated Learning", count: 1247, growth: 42.8, color: "#EF4444" },
-];
-
-const bookmarkedPapers: BookmarkedPaper[] = [
-  { title: "Attention Is All You Need - Revisited", journal: "arXiv", saved: "2 days ago" },
-  { title: "Protein Structure Prediction with AlphaFold 3", journal: "Nature", saved: "1 week ago" },
-  { title: "Diffusion Models for Scientific Simulation", journal: "NeurIPS 2024", saved: "2 weeks ago" },
-];
-
 export function StudentDashboardPage() {
-  const papersQuery = usePapers();
-  const apiRecentPapers = papersQuery.papers.slice(0, 4).map((paper, index) => {
+  const papersQuery = usePaperSearch({ page: 1, size: 4 });
+  const dashboardQuery = useStudentDashboard();
+  const profileQuery = useUserProfile();
+  const studentDashboard = dashboardQuery.data;
+  const displayName = profileQuery.profile?.username ?? "Researcher";
+  const apiRecentPapers = papersQuery.papers.map((paper, index) => {
     const result = toPaperSearchResult(paper, index);
 
     return {
@@ -94,18 +71,21 @@ export function StudentDashboardPage() {
     };
   });
   const kpiItems = dashboardKpis.map((item) =>
-    item.label === "New Papers" && apiRecentPapers.length
-      ? { ...item, value: String(papersQuery.papers.length), sub: "from current paper index" }
-      : item
+    mapDashboardKpi(item, {
+      bookmarkedPapers: studentDashboard.stats.bookmarkedPapers ?? studentDashboard.bookmarks.length,
+      followedTopics: studentDashboard.stats.followedTopics ?? studentDashboard.followedTopicCount,
+      journalAlerts: studentDashboard.stats.journalAlerts,
+      newPapers: studentDashboard.stats.newPapers ?? papersQuery.total,
+    })
   );
 
   return (
     <div className="dashboard-page">
-      <DashboardHeader name="Minh" />
+      <DashboardHeader name={displayName} />
       <DashboardKpiGrid items={kpiItems} />
       <div className="dashboard-grid">
-        <PublicationTrendsCard data={trendData} />
-        <HotTopicsCard topics={trendingTopics} />
+        <PublicationTrendsCard data={studentDashboard.trendData} series={studentDashboard.trendSeries} />
+        <HotTopicsCard topics={studentDashboard.trendingTopics} />
       </div>
       <div className="dashboard-grid">
         <RecentPapersCard
@@ -113,15 +93,42 @@ export function StudentDashboardPage() {
           loading={papersQuery.loading}
           papers={apiRecentPapers}
         />
-        <BookmarksCard papers={bookmarkedPapers} />
+        <BookmarksCard
+          error={dashboardQuery.error}
+          loading={dashboardQuery.loading}
+          papers={studentDashboard.bookmarks}
+          total={studentDashboard.stats.bookmarkedPapers ?? studentDashboard.bookmarks.length}
+        />
       </div>
     </div>
   );
 }
 
-export {
-  bookmarkedPapers,
-  dashboardKpis,
-  trendingTopics,
-  trendData,
-};
+function mapDashboardKpi(
+  item: DashboardKpi,
+  stats: {
+    bookmarkedPapers?: number;
+    followedTopics?: number;
+    journalAlerts?: number;
+    newPapers?: number;
+  }
+): DashboardKpi {
+  if (item.label === "Bookmarked Papers" && stats.bookmarkedPapers !== undefined) {
+    return { ...item, value: String(stats.bookmarkedPapers), sub: "saved in your library" };
+  }
+
+  if (item.label === "Followed Topics" && stats.followedTopics !== undefined) {
+    return { ...item, value: String(stats.followedTopics), sub: "topics you follow" };
+  }
+
+  if (item.label === "Journal Alerts" && stats.journalAlerts !== undefined) {
+    return { ...item, value: String(stats.journalAlerts), sub: "from analytics dashboard" };
+  }
+
+  if (item.label === "New Papers" && stats.newPapers !== undefined) {
+    return { ...item, value: String(stats.newPapers), sub: "from search index" };
+  }
+
+  return item;
+}
+
