@@ -4,8 +4,8 @@ import { ArrowUpRight, BarChart2, Bell, Clock, FileText, Tag, TrendingUp } from 
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useAuthStore } from "@/store/auth";
 import { useAnalyticsDashboard, useCitationsByYear, usePapersByYear, useTopTopics } from "@/hooks/analytics";
-import { citationVelocityData, dashboardTrendData, topicPalette, topTopics } from "@/features/researcher/components/researcherData";
-import { chartTooltip, ResearcherKpiCard } from "@/features/researcher/components/researcherShared";
+import { topicPalette } from "@/features/researcher/components/researcherData";
+import { chartTooltip, ResearcherKpiCard, ResearcherLoadingState } from "@/features/researcher/components/researcherShared";
 
 export function ResearcherDashboardPage() {
   const user = useAuthStore((state) => state.user);
@@ -15,12 +15,14 @@ export function ResearcherDashboardPage() {
   const citationsQuery = useCitationsByYear();
   const topicsQuery = useTopTopics(5);
   const liveTrendData = mergeYearlyMetrics(papersQuery.data, citationsQuery.data);
-  const publicationData: Array<Record<string, string | number>> = liveTrendData.length ? liveTrendData : dashboardTrendData;
-  const citationData: Array<Record<string, string | number>> = liveTrendData.length ? liveTrendData : citationVelocityData;
-  const topicData = topicsQuery.data?.length
-    ? topicsQuery.data.map((topic) => ({ name: topic.key, papers: topic.value }))
-    : topTopics;
+  const publicationData: Array<Record<string, string | number>> = liveTrendData;
+  const citationData: Array<Record<string, string | number>> = liveTrendData;
+  const topicData = topicsQuery.data?.map((topic) => ({ name: topic.key, papers: topic.value })) ?? [];
   const totalPapers = papersQuery.data?.reduce((total, item) => total + item.value, 0) ?? 0;
+
+  if ([dashboardQuery, papersQuery, citationsQuery, topicsQuery].some((query) => query.isPending)) {
+    return <div className="space-y-6 p-6"><h1 className="text-xl font-semibold text-foreground">Research Intelligence Dashboard</h1><ResearcherLoadingState label="Loading research dashboard" /></div>;
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -35,7 +37,7 @@ export function ResearcherDashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <ResearcherKpiCard icon={<FileText size={17} className="text-purple-600" />} label="Papers Indexed" value={(papersQuery.data ? totalPapers : 1284).toLocaleString()} delta="All years" color="bg-purple-100" />
+        <ResearcherKpiCard icon={<FileText size={17} className="text-purple-600" />} label="Papers Indexed" value={totalPapers.toLocaleString()} delta="All years" color="bg-purple-100" />
         <ResearcherKpiCard icon={<Tag size={17} className="text-blue-600" />} label="Followed Topics" value={(dashboardQuery.data?.followedTopics ?? 0).toLocaleString()} delta="Your library" color="bg-blue-100" />
         <ResearcherKpiCard icon={<Bell size={17} className="text-amber-600" />} label="New Matching Papers" value={(dashboardQuery.data?.newPapersInFollowedTopics ?? 0).toLocaleString()} delta="Followed topics" color="bg-amber-100" />
         <ResearcherKpiCard icon={<BarChart2 size={17} className="text-emerald-600" />} label="Bookmarked Papers" value={(dashboardQuery.data?.bookmarkedPapers ?? 0).toLocaleString()} delta="Saved" color="bg-emerald-100" />
@@ -55,20 +57,11 @@ export function ResearcherDashboardPage() {
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={publicationData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
-              <XAxis dataKey={liveTrendData.length ? "year" : "month"} tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="year" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={chartTooltip()} />
               <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-              {liveTrendData.length ? (
-                <Line type="monotone" dataKey="papers" name="Papers" stroke={topicPalette.purple} strokeWidth={2} dot={false} />
-              ) : (
-                <>
-                  <Line type="monotone" dataKey="llm" name="AI / LLM" stroke={topicPalette.purple} strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="bio" name="Biosciences" stroke={topicPalette.emerald} strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="quantum" name="Quantum" stroke={topicPalette.blue} strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="climate" name="Climate" stroke={topicPalette.amber} strokeWidth={2} strokeDasharray="4 2" dot={false} />
-                </>
-              )}
+              <Line type="monotone" dataKey="papers" name="Papers" stroke={topicPalette.purple} strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -87,7 +80,7 @@ export function ResearcherDashboardPage() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
-              <XAxis dataKey={liveTrendData.length ? "year" : "month"} tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="year" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={chartTooltip()} />
               <Area type="monotone" dataKey="citations" name="Citations" stroke={topicPalette.purple} strokeWidth={2} fill="url(#researcherCitationGradient)" />
