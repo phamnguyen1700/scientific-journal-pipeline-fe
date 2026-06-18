@@ -19,12 +19,15 @@ export function LayoutContent({ children }: LayoutContentProps) {
   const isAuthPage =
     pathname.includes("/login") || pathname.includes("/signup") || pathname === "/";
   const isAdminPage = pathname.startsWith("/admin");
+  const isResearcherPage = pathname.startsWith("/researcher");
   const isProtectedPage = !isAuthPage;
   const defaultRoute = getDefaultRouteByRole(user?.roleName);
   const shouldRedirectFromAuth = isAuthPage && isAuthenticated;
   const shouldRedirectToLogin = isProtectedPage && !isAuthenticated;
   const shouldRedirectFromAdmin =
     isAdminPage && isAuthenticated && !isAdminRole(user?.roleName);
+  const shouldRedirectFromResearcher =
+    isResearcherPage && isAuthenticated && user?.roleName !== "Researcher";
   const shouldRedirectAdminToAdminHome =
     pathname.startsWith("/dashboard") && isAuthenticated && isAdminRole(user?.roleName);
 
@@ -50,6 +53,11 @@ export function LayoutContent({ children }: LayoutContentProps) {
       return;
     }
 
+    if (shouldRedirectFromResearcher) {
+      router.replace(defaultRoute);
+      return;
+    }
+
     if (shouldRedirectAdminToAdminHome) {
       router.replace("/admin");
     }
@@ -60,6 +68,7 @@ export function LayoutContent({ children }: LayoutContentProps) {
     shouldRedirectAdminToAdminHome,
     shouldRedirectFromAdmin,
     shouldRedirectFromAuth,
+    shouldRedirectFromResearcher,
     shouldRedirectToLogin,
   ]);
 
@@ -71,6 +80,7 @@ export function LayoutContent({ children }: LayoutContentProps) {
     shouldRedirectFromAuth ||
     shouldRedirectToLogin ||
     shouldRedirectFromAdmin ||
+    shouldRedirectFromResearcher ||
     shouldRedirectAdminToAdminHome
   ) {
     return <div className="min-h-screen" />;
