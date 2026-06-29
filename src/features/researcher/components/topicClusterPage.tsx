@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import { Network, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
-import { clusterAreas, clusterEdges, clusterNodes, topicPalette } from "@/features/researcher/components/researcherData";
-import { InfoMetric, MetricRow, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
+import { topicPalette } from "@/features/researcher/components/researcherData";
+import { InfoMetric, MetricRow, ResearcherEmptyState, ResearcherLoadingState, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
 import { useAuthorCollaborationNetwork, useKeywordCoOccurrence } from "@/hooks/analytics";
 import type { AnalyticsNetwork } from "@/types/analytics";
 
@@ -13,8 +13,16 @@ export function TopicClusterPage() {
   const [filterArea, setFilterArea] = useState<string | null>(null);
   const keywordNetworkQuery = useKeywordCoOccurrence(50);
   const authorNetworkQuery = useAuthorCollaborationNetwork(50);
+
+  if (keywordNetworkQuery.isPending || authorNetworkQuery.isPending) {
+    return <div className="space-y-6 p-6"><ResearcherPageShell title="Topic Cluster Visualization" description="Interactive network of research topics and their relationships" icon={<Network size={18} className="text-primary" />} /><ResearcherLoadingState label="Loading topic network" /></div>;
+  }
+
   const liveNetwork = keywordNetworkQuery.data?.nodes?.length ? keywordNetworkQuery.data : authorNetworkQuery.data;
-  const layout = liveNetwork?.nodes?.length ? layoutNetwork(liveNetwork) : { nodes: clusterNodes, edges: clusterEdges, areas: clusterAreas };
+  if (!liveNetwork?.nodes?.length) {
+    return <div className="space-y-6 p-6"><ResearcherPageShell title="Topic Cluster Visualization" description="Interactive network of research topics and their relationships" icon={<Network size={18} className="text-primary" />} /><ResearcherEmptyState title="No network data" description="The collaboration and keyword co-occurrence services returned no connected topics." /></div>;
+  }
+  const layout = layoutNetwork(liveNetwork);
   const activeNode = selected !== null ? layout.nodes.find((node) => node.id === selected) : null;
   const connectedIds = selected !== null ? new Set(layout.edges.filter((edge) => edge.includes(selected)).flat()) : null;
   const visibleNodes = filterArea ? layout.nodes.filter((node) => node.area === filterArea) : layout.nodes;

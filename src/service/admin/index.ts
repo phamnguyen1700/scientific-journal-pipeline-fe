@@ -1,6 +1,33 @@
 import { apiEndpoints } from "@/config/apiEndpoints";
 import { deleteRequest, get, put } from "@/service/apiClient";
-import type { AdminUserActionApiResponse, AdminUsersApiResponse } from "@/types/admin";
+import type {
+  AdminDashboardApiResponse,
+  AdminDashboardApiStatus,
+  AdminDashboardApiCalls,
+  AdminUserActionApiResponse,
+  AdminUsersApiResponse,
+} from "@/types/admin";
+
+type AdminDashboardApiStatusResponse = {
+  succeeded: boolean;
+  result: AdminDashboardApiStatus[];
+  errors: string[];
+};
+
+type AdminDashboardApiCallsResponse = {
+  succeeded: boolean;
+  result: AdminDashboardApiCalls;
+  errors: string[];
+};
+
+export const getAdminDashboardService = () =>
+  get<AdminDashboardApiResponse>(apiEndpoints.admin.dashboard);
+
+export const getAdminDashboardApiStatusService = () =>
+  get<AdminDashboardApiStatusResponse>(apiEndpoints.admin.dashboardApiStatus);
+
+export const getAdminDashboardApiCallsService = () =>
+  get<AdminDashboardApiCallsResponse>(apiEndpoints.admin.dashboardApiCalls);
 
 export const getAdminUsersService = () =>
   get<AdminUsersApiResponse>(apiEndpoints.admin.users);
@@ -15,6 +42,9 @@ export const deleteAdminUserService = (userId: string) =>
   deleteRequest<AdminUserActionApiResponse>(apiEndpoints.admin.deleteUser(userId));
 
 export const adminService = {
+  dashboard: getAdminDashboardService,
+  dashboardApiStatus: getAdminDashboardApiStatusService,
+  dashboardApiCalls: getAdminDashboardApiCallsService,
   users: getAdminUsersService,
   activateUser: activateAdminUserService,
   deactivateUser: deactivateAdminUserService,

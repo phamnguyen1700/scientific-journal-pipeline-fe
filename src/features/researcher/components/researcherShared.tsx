@@ -66,3 +66,24 @@ export function MetricRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+export function ResearcherLoadingState({ label = "Loading analytics" }: { label?: string }) {
+  return (
+    <div className="space-y-4" role="status" aria-label={label}>
+      <span className="sr-only">{label}</span>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {Array.from({ length: 4 }, (_, index) => <div key={index} className="h-28 animate-pulse rounded-xl border border-border bg-muted/50" />)}
+      </div>
+      <div className="h-80 animate-pulse rounded-xl border border-border bg-muted/50" />
+    </div>
+  );
+}
+
+export function ResearcherEmptyState({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-8 text-center">
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="mt-1 max-w-md text-xs text-muted-foreground">{description}</p>
+    </div>
+  );
+}
