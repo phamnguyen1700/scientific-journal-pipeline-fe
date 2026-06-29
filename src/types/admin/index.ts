@@ -21,6 +21,7 @@ export type AdminUserApiModel = {
   phonenumber?: string;
   roleName: UserRole;
   isActive: boolean;
+  createdAt?: string;
 };
 
 export type AdminUsersApiResponse = {
@@ -95,18 +96,27 @@ export type SystemConfig = {
 };
 
 // Dashboard Types
-export type DashboardStats = {
+export type AdminDashboardSummary = {
   totalUsers: number;
+  activeUsers: number;
+  deactivatedUsers: number;
   researchers: number;
+  students: number;
+  lecturers: number;
+  systemAdministrators: number;
+  newUsersThisWeek: number;
+  newResearchersThisMonth: number;
   apisConnected: number;
-  systemHealth: number;
+  degradedApis: number;
 };
 
 export type UserGrowthData = {
   month: string;
+  totalUsers: number;
   students: number;
   researchers: number;
-  admins: number;
+  lecturers: number;
+  systemAdministrators: number;
 };
 
 export type ApiUsageData = {
@@ -114,10 +124,47 @@ export type ApiUsageData = {
   calls: number;
 };
 
-export type ApiStatusItem = {
+export type AdminDashboardApiStatus = {
   name: string;
-  status: ApiStatus;
-  latency: string;
-  calls: number;
+  baseUrl: string;
+  status: "Operational" | "Degraded" | "Down";
+  latencyMs: number;
+  checkedAt: string;
+  message: string;
+};
+
+export type AdminDashboardRoleBreakdown = {
+  roleName: UserRole;
+  count: number;
+};
+
+export type AdminDashboardRecentUser = {
+  userId: string;
+  username: string;
+  email: string;
+  roleName: UserRole;
+  isActive: boolean;
+  registeredAt: string;
+};
+
+export type AdminDashboardApiCalls = {
+  trackingEnabled: boolean;
+  message: string;
+  dataPoints: ApiUsageData[];
+};
+
+export type AdminDashboardResult = {
+  summary: AdminDashboardSummary;
+  userRoleBreakdown: AdminDashboardRoleBreakdown[];
+  userGrowth: UserGrowthData[];
+  recentUsers: AdminDashboardRecentUser[];
+  apiStatuses: AdminDashboardApiStatus[];
+  apiCalls: AdminDashboardApiCalls;
+};
+
+export type AdminDashboardApiResponse = {
+  succeeded: boolean;
+  result: AdminDashboardResult;
+  errors: string[];
 };
 
