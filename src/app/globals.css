@@ -1000,10 +1000,6 @@
     @apply mt-1 text-xs text-muted-foreground;
   }
 
-  .paper-result-abstract {
-    @apply mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground;
-  }
-
   .paper-result-tags {
     @apply mt-3 flex flex-wrap gap-1;
   }

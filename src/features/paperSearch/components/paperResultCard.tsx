@@ -42,8 +42,6 @@ export function PaperResultCard({
         </Button>
       </div>
 
-      <p className="paper-result-abstract">{paper.abstract}</p>
-
       <div className="paper-result-tags">
         {paper.tags.map((tag) => (
           <Tag key={tag} className="h-5 px-2 text-[10px]">
