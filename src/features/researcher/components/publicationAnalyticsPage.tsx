@@ -3,8 +3,8 @@
 import { Activity } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import { publicationYearlyData, topicPalette, topJournals, topKeywords } from "@/features/researcher/components/researcherData";
-import { chartTooltip, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
+import { topicPalette } from "@/features/researcher/components/researcherData";
+import { chartTooltip, ResearcherLoadingState, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
 import {
   useCitationsByYear,
   useJournalOpenAccessRatio,
@@ -29,21 +29,22 @@ export function PublicationAnalyticsPage() {
   const authorCitationsQuery = useTopAuthorsByCitations(5);
   const authorHIndexQuery = useTopAuthorsByHIndex(5);
 
+  const queries = [papersQuery, citationsQuery, keywordsQuery, keywordHistoryQuery, journalPapersQuery, journalCitationsQuery, openAccessQuery, authorCitationsQuery, authorHIndexQuery];
+  if (queries.some((query) => query.isPending)) {
+    return <div className="space-y-6 p-6"><ResearcherPageShell title="Publication Analytics" description="Research output, citation impact, authors, journals, and keyword metrics" icon={<Activity size={18} className="text-primary" />} /><ResearcherLoadingState label="Loading publication analytics" /></div>;
+  }
+
   const liveYearlyData = mergeYearlyMetrics(papersQuery.data, citationsQuery.data);
-  const yearlyData = liveYearlyData.length ? liveYearlyData : publicationYearlyData;
-  const keywordData = keywordsQuery.data?.length
-    ? keywordsQuery.data.map((item) => ({ keyword: item.key, count: item.value }))
-    : topKeywords;
-  const journalData = journalPapersQuery.data?.length
-    ? journalPapersQuery.data.map((item) => ({
+  const yearlyData = liveYearlyData;
+  const keywordData = keywordsQuery.data?.map((item) => ({ keyword: item.key, count: item.value })) ?? [];
+  const journalData = journalPapersQuery.data?.map((item) => ({
         name: item.key,
         papers: item.value,
         avgCitations: journalCitationsQuery.data?.find((citation) => citation.key === item.key)?.value ?? 0,
-      }))
-    : topJournals;
+      })) ?? [];
   const keywordHistory = mergeSeries(keywordHistoryQuery.data ?? []);
-  const totalPapers = papersQuery.data?.reduce((sum, item) => sum + item.value, 0) ?? 920;
-  const totalCitations = citationsQuery.data?.reduce((sum, item) => sum + item.value, 0) ?? 38600;
+  const totalPapers = papersQuery.data?.reduce((sum, item) => sum + item.value, 0) ?? 0;
+  const totalCitations = citationsQuery.data?.reduce((sum, item) => sum + item.value, 0) ?? 0;
   const keywordMax = Math.max(...keywordData.map((item) => item.count), 1);
 
   return (
@@ -54,7 +55,7 @@ export function PublicationAnalyticsPage() {
         {[
           { label: "Total Papers", value: totalPapers.toLocaleString(), sub: "Indexed publications" },
           { label: "Total Citations", value: totalCitations.toLocaleString(), sub: "Across all years" },
-          { label: "Top Author H-Index", value: (authorHIndexQuery.data?.[0]?.value ?? 54).toLocaleString(), sub: authorHIndexQuery.data?.[0]?.key ?? "Highest ranked author" },
+          { label: "Top Author H-Index", value: (authorHIndexQuery.data?.[0]?.value ?? 0).toLocaleString(), sub: authorHIndexQuery.data?.[0]?.key ?? "No author data" },
           { label: "Open Access", value: formatOpenAccessRatio(openAccessQuery.data), sub: "Journal availability" },
           { label: "Avg. Citations/Paper", value: totalPapers ? (totalCitations / totalPapers).toFixed(1) : "0", sub: "Dataset average" },
         ].map((item) => (

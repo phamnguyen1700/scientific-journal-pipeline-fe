@@ -1,20 +1,22 @@
 "use client";
 import { useState } from "react";
 import { Bell, BellOff, Plus, Radio, TrendingDown, TrendingUp } from "lucide-react";
-import { keywordAlerts, trackedJournals } from "@/features/researcher/components/researcherData";
-import { ResearcherPageShell } from "@/features/researcher/components/researcherShared";
+import { keywordAlerts } from "@/features/researcher/components/researcherData";
+import { ResearcherLoadingState, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
 import { useTopJournalsByCitations, useTopJournalsByPaperCount } from "@/hooks/analytics";
 
 export function JournalTrackerPage() {
-  const [fallbackJournals, setFallbackJournals] = useState(trackedJournals);
   const [journalAlerts, setJournalAlerts] = useState<Record<number, boolean>>({});
   const [alertList, setAlertList] = useState(keywordAlerts);
   const [activeTab, setActiveTab] = useState<"journals" | "keywords">("journals");
   const papersQuery = useTopJournalsByPaperCount(20);
   const citationsQuery = useTopJournalsByCitations(20);
 
-  const journalList = papersQuery.data?.length
-    ? papersQuery.data.map((journal, index) => ({
+  if (papersQuery.isPending || citationsQuery.isPending) {
+    return <div className="space-y-6 p-6"><ResearcherPageShell title="Journal & Keyword Tracker" description="Monitor journals and keywords with real-time alerts" icon={<Radio size={18} className="text-primary" />} /><ResearcherLoadingState label="Loading journal tracker" /></div>;
+  }
+
+  const journalList = papersQuery.data?.map((journal, index) => ({
       id: index + 1,
       name: journal.key,
       publisher: "Indexed journal",
@@ -24,15 +26,10 @@ export function JournalTrackerPage() {
       alert: journalAlerts[index + 1] ?? false,
       keywords: citationsQuery.data?.some((item) => item.key === journal.key) ? ["Citation data available"] : [],
       lastUpdated: "Live",
-    }))
-    : fallbackJournals;
+    })) ?? [];
 
   function toggleJournalAlert(id: number) {
-    if (papersQuery.data?.length) {
-      setJournalAlerts((current) => ({ ...current, [id]: !current[id] }));
-      return;
-    }
-    setFallbackJournals((current) => current.map((item) => item.id === id ? { ...item, alert: !item.alert } : item));
+    setJournalAlerts((current) => ({ ...current, [id]: !current[id] }));
   }
 
   return (

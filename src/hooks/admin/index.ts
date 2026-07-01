@@ -6,9 +6,14 @@ import {
   activateAdminUserService,
   deactivateAdminUserService,
   deleteAdminUserService,
+  getAdminDashboardApiCallsService,
+  getAdminDashboardApiStatusService,
+  getAdminDashboardService,
   getAdminUsersService,
 } from "@/service/admin";
 import type {
+  AdminDashboardApiResponse,
+  AdminDashboardResult,
   AdminUser,
   AdminUserActionApiResponse,
   AdminUserApiModel,
@@ -17,8 +22,55 @@ import type {
 
 export const adminQueryKeys = {
   all: ["admin"] as const,
+  dashboard: () => [...adminQueryKeys.all, "dashboard"] as const,
+  dashboardApiStatus: () => [...adminQueryKeys.dashboard(), "api-status"] as const,
+  dashboardApiCalls: () => [...adminQueryKeys.dashboard(), "api-calls"] as const,
   users: () => [...adminQueryKeys.all, "users"] as const,
 };
+
+export function useAdminDashboard() {
+  const query = useQuery({
+    queryKey: adminQueryKeys.dashboard(),
+    queryFn: async () => normalizeAdminDashboardResponse(await getAdminDashboardService()),
+  });
+
+  return {
+    ...query,
+    dashboard: query.data,
+    loading: query.isPending,
+    error: getErrorMessage(query.error),
+  };
+}
+
+export function useAdminDashboardApiStatus() {
+  return useQuery({
+    queryKey: adminQueryKeys.dashboardApiStatus(),
+    queryFn: async () => {
+      const response = await getAdminDashboardApiStatusService();
+
+      if (!response.succeeded) {
+        throw new Error(response.errors.join(", ") || "Unable to load API status.");
+      }
+
+      return response.result;
+    },
+  });
+}
+
+export function useAdminDashboardApiCalls() {
+  return useQuery({
+    queryKey: adminQueryKeys.dashboardApiCalls(),
+    queryFn: async () => {
+      const response = await getAdminDashboardApiCallsService();
+
+      if (!response.succeeded) {
+        throw new Error(response.errors.join(", ") || "Unable to load API call data.");
+      }
+
+      return response.result;
+    },
+  });
+}
 
 export function useAdminUsers() {
   const query = useQuery({
@@ -70,6 +122,14 @@ export function useDeleteAdminUser() {
   });
 }
 
+function normalizeAdminDashboardResponse(response: AdminDashboardApiResponse): AdminDashboardResult {
+  if (!response.succeeded) {
+    throw new Error(response.errors.join(", ") || "Unable to load admin dashboard.");
+  }
+
+  return response.result;
+}
+
 function normalizeAdminUsersResponse(response: AdminUsersApiResponse): AdminUser[] {
   if (!response.succeeded) {
     throw new Error(response.errors.join(", ") || "Unable to load users.");
@@ -98,7 +158,7 @@ function mapAdminUser(user: AdminUserApiModel): AdminUser {
     phonenumber: user.phonenumber,
     role: user.roleName,
     status: user.isActive ? "Active" : "Suspended",
-    joined: "-",
+    joined: user.createdAt ?? "-",
     papers: 0,
   };
 }

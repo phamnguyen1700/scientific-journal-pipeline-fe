@@ -18,8 +18,6 @@ import {
   Zap,
   Activity,
   Radio,
-  Database,
-  SlidersHorizontal,
 } from "lucide-react";
 import { Suspense, useMemo, memo } from "react";
 import {
@@ -73,8 +71,8 @@ const researcherNav: NavItem[] = [
 const adminNav: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin", section: "Main" },
   { label: "User Management", icon: Users, href: "/admin/users", section: "Manage" },
-  { label: "API Management", icon: Database, href: "/admin/api", section: "Manage" },
-  { label: "System Config", icon: SlidersHorizontal, href: "/admin/config", section: "Manage" },
+  // { label: "API Management", icon: Database, href: "/admin/api", section: "Manage" },
+  // { label: "System Config", icon: SlidersHorizontal, href: "/admin/config", section: "Manage" },
 ];
 
 

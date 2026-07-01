@@ -4,8 +4,8 @@ import { FormEvent, useState } from "react";
 import { Search } from "lucide-react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import { growthTrendData, monthlyTrendData, topicPalette } from "@/features/researcher/components/researcherData";
-import { chartTooltip, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
+import { topicPalette } from "@/features/researcher/components/researcherData";
+import { chartTooltip, ResearcherEmptyState, ResearcherLoadingState, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
 import { useKeywordTrend, useKeywordsOverTime, useTopDomains, useTopicTrend } from "@/hooks/analytics";
 import type { AnalyticsSeries, AnalyticsTrend } from "@/types/analytics";
 
@@ -20,12 +20,13 @@ export function TrendAnalyticsPage() {
   const combinedQuery = useKeywordsOverTime([filters.keyword, filters.topic]);
   const domainsQuery = useTopDomains(5);
   const liveData = mergeTrendSources(keywordQuery.data, topicQuery.data, combinedQuery.data, chartMode);
-  const chartData = liveData.length ? liveData : chartMode === "absolute" ? monthlyTrendData : growthTrendData;
-  const liveSeries = liveData.length
-    ? combinedQuery.data?.length
+  const liveSeries = combinedQuery.data?.length
       ? combinedQuery.data.map((series) => series.seriesName)
       : [keywordQuery.data?.keyword ?? filters.keyword, topicQuery.data?.topicName ?? filters.topic]
-    : ["llm", "bio", "quantum"];
+
+  if ([keywordQuery, topicQuery, combinedQuery, domainsQuery].some((query) => query.isPending)) {
+    return <div className="space-y-6 p-6"><ResearcherPageShell title="Trend Analytics" description="Compare live keyword and topic publication growth" /><ResearcherLoadingState label="Loading trend analytics" /></div>;
+  }
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -54,9 +55,9 @@ export function TrendAnalyticsPage() {
       <div className="rounded-xl border border-border bg-card p-6">
         <div className="mb-4"><p className="text-sm font-semibold text-foreground">Yearly Trend Comparison</p><p className="mt-0.5 text-xs text-muted-foreground">Results from keyword, topic, and multi-keyword analytics</p></div>
         <ResponsiveContainer width="100%" height={340}>
-          <LineChart data={chartData}>
+          <LineChart data={liveData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
-            <XAxis dataKey={liveData.length ? "year" : "month"} tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="year" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} tickFormatter={(value: number) => chartMode === "growth" ? `${value}%` : value.toLocaleString()} />
             <Tooltip contentStyle={chartTooltip()} />
             <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
@@ -64,6 +65,8 @@ export function TrendAnalyticsPage() {
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      {!liveData.length && <ResearcherEmptyState title="No trend data" description="The analytics service returned no yearly results for the selected keyword and topic." />}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {(domainsQuery.data?.length ? domainsQuery.data : []).map((domain, index) => <div key={domain.key} className="rounded-xl border border-border bg-card p-4"><div className="mb-2 h-2 w-2 rounded-full" style={{ backgroundColor: [topicPalette.purple, topicPalette.emerald, topicPalette.blue, topicPalette.amber, topicPalette.red][index % 5] }} /><p className="line-clamp-2 text-xs font-medium text-foreground">{domain.key}</p><p className="mt-1 text-lg font-semibold text-foreground">{domain.value.toLocaleString()}</p><p className="text-[10px] text-muted-foreground">indexed papers</p></div>)}

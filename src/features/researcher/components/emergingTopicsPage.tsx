@@ -1,14 +1,18 @@
 "use client";
 import { Flame, Star, TrendingUp, Zap } from "lucide-react";
-import { emergingTopics } from "@/features/researcher/components/researcherData";
-import { MiniSparkline, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
+import { MiniSparkline, ResearcherEmptyState, ResearcherLoadingState, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
 import { useTrendingTopics } from "@/hooks/analytics";
 import { topicPalette } from "@/features/researcher/components/researcherData";
 
 export function EmergingTopicsPage() {
   const trendingQuery = useTrendingTopics();
-  const topicData = trendingQuery.data?.length
-    ? trendingQuery.data.map((topic, index) => ({
+  if (trendingQuery.isPending) {
+    return <div className="space-y-6 p-6"><ResearcherPageShell title="Emerging Topics" description="AI-detected research areas with accelerating publication growth" icon={<Zap size={18} className="text-amber-500" />} /><ResearcherLoadingState label="Loading emerging topics" /></div>;
+  }
+  if (!trendingQuery.data?.length) {
+    return <div className="space-y-6 p-6"><ResearcherPageShell title="Emerging Topics" description="AI-detected research areas with accelerating publication growth" icon={<Zap size={18} className="text-amber-500" />} /><ResearcherEmptyState title="No emerging topics" description="The analytics service has not returned any trending topic signals." /></div>;
+  }
+  const topicData = trendingQuery.data.map((topic, index) => ({
         name: topic.topicName,
         field: "Trending research topic",
         growth: topic.growthPercentage,
@@ -18,8 +22,7 @@ export function EmergingTopicsPage() {
         color: [topicPalette.purple, topicPalette.blue, topicPalette.emerald, topicPalette.amber, topicPalette.red, topicPalette.violet][index % 6],
         opportunity: topic.growthPercentage >= 100 ? "Very High" : topic.growthPercentage >= 25 ? "High" : "Medium",
         trend: buildTrend(topic.paperCount, topic.growthPercentage),
-      }))
-    : emergingTopics;
+      }));
   const stageColors: Record<string, string> = {
     Explosive: "bg-red-100 text-red-700",
     Rapid: "bg-orange-100 text-orange-700",
@@ -51,7 +54,7 @@ export function EmergingTopicsPage() {
               <div className="min-w-0 flex-1">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <span className="font-mono text-xs text-muted-foreground">#{index + 1}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${stageColors[topic.stage]}`}>{topic.stage}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${stageColors[topic.stage]}`}>{topic.stage}</span> 
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${opportunityColors[topic.opportunity]}`}>{topic.opportunity} opportunity</span>
                 </div>
                 <h3 className="text-sm font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">{topic.name}</h3>
