@@ -44,6 +44,10 @@ export const apiEndpoints = {
     list: "/Topic",
     detail: (id: string) => `/Topic/${id}`,
   },
+  journals: {
+    list: "/Journal",
+    detail: (id: string) => `/Journal/${id}`,
+  },
   analytics: {
     papersByYear: "/Analytics/trends/papers-by-year",
     citationsByYear: "/Analytics/trends/citations-by-year",
