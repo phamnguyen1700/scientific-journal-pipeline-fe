@@ -812,11 +812,19 @@
   }
 
   .paper-search-layout {
-    @apply grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(520px,1fr)_380px];
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    @apply items-start gap-4;
+  }
+
+  @media (min-width: 1280px) {
+    .paper-search-layout {
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    }
   }
 
   .paper-search-filters {
-    @apply border-t border-border px-3 py-2;
+    @apply px-0 py-0;
   }
 
   .paper-search-filter-heading {
@@ -852,15 +860,15 @@
   }
 
   .paper-search-filter-button {
-    @apply h-9 rounded-md border-border bg-background px-3 text-sm font-normal shadow-none hover:bg-muted;
+    @apply h-10 min-w-24 justify-between rounded-md border-border bg-background px-3 text-sm font-normal shadow-none hover:bg-muted;
   }
 
   .paper-search-filter-button svg {
     @apply size-4 text-muted-foreground;
   }
 
-  .paper-search-filter-more {
-    @apply ml-auto rounded-md text-muted-foreground;
+  .paper-search-filter-reset {
+    @apply h-10 rounded-md px-3 text-xs text-muted-foreground hover:text-foreground;
   }
 
   .paper-search-filter-menu {
@@ -872,11 +880,11 @@
   }
 
   .paper-search-results {
-    @apply min-w-0 space-y-4;
+    @apply min-w-0 w-full space-y-4;
   }
 
   .paper-search-toolbar {
-    @apply relative flex flex-col gap-3 p-3 sm:flex-row sm:items-start;
+    @apply relative flex flex-col gap-3 p-3 sm:flex-row sm:items-center;
   }
 
   .paper-search-query-box {
@@ -900,15 +908,15 @@
   }
 
   .paper-search-toolbar-meta {
-    @apply flex shrink-0 items-center justify-between gap-3 text-xs text-muted-foreground sm:h-9;
+    @apply flex shrink-0 items-center justify-end gap-3 text-xs text-muted-foreground sm:h-9;
   }
 
   .paper-search-insights {
-    @apply grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-1;
+    @apply grid w-full grid-cols-1 content-start gap-3 md:grid-cols-2 xl:grid-cols-1;
   }
 
   .paper-search-insight-panel {
-    @apply rounded-xl border border-border bg-card p-4;
+    @apply w-full overflow-hidden rounded-xl border border-border bg-card p-4;
   }
 
   .paper-search-insight-heading {
@@ -957,7 +965,7 @@
   }
 
   .paper-search-facet-list {
-    @apply divide-y divide-border;
+    @apply w-full divide-y divide-border;
   }
 
   .paper-search-facet-list button {
@@ -981,7 +989,7 @@
   }
 
   .paper-result-card {
-    @apply rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm;
+    @apply w-full rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm;
   }
 
   .paper-result-heading {

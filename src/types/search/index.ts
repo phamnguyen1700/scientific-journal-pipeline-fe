@@ -71,6 +71,8 @@ export type PaperSearchApiPaper = {
   paperType?: string | null;
   language?: string | null;
   isOpenAccess?: boolean;
+  IsOpenAccess?: boolean;
+  openAccess?: boolean;
   isRetracted?: boolean;
   journal?: {
     name?: string;

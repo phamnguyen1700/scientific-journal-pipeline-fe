@@ -245,7 +245,7 @@ function mapSearchPaper(paper: PaperSearchApiPaper | PaperApiModel): PaperApiMod
     volume: "volume" in paper ? paper.volume : null,
     issue: "issue" in paper ? paper.issue : null,
     page: "page" in paper ? paper.page : null,
-    isOpenAccess: paper.isOpenAccess ?? false,
+    isOpenAccess: paper.isOpenAccess ?? ("IsOpenAccess" in paper ? paper.IsOpenAccess : undefined) ?? ("openAccess" in paper ? paper.openAccess : undefined) ?? false,
     isRetracted: paper.isRetracted ?? false,
     journalId: "journalId" in paper ? paper.journalId : null,
     journal: paper.journal ?? null,

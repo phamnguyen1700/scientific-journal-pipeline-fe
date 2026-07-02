@@ -1,14 +1,12 @@
 "use client";
 
-import { ChevronDown, MoreVertical, RotateCcw } from "lucide-react";
+import { ChevronDown, RotateCcw } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import type {
@@ -41,6 +39,7 @@ export function PaperSearchFilters({
   ) {
     onChange({ ...filters, [key]: value });
   }
+  const hasActiveFilters = Boolean(filters.from || filters.to || filters.language || filters.isOpenAccess);
 
   return (
     <div className="paper-search-filter-bar">
@@ -67,22 +66,12 @@ export function PaperSearchFilters({
           <DropdownMenuItem onClick={() => update("isOpenAccess", "false")}>Not open access</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <DropdownMenu>
-        <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="icon" className="paper-search-filter-more" aria-label="More filters" />}>
-          <MoreVertical />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="paper-search-filter-menu">
-          <DropdownMenuLabel>Language</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => update("language", "")}>Any language</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => update("language", "en")}>English</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => update("language", "vi")}>Vietnamese</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onReset}>
-            <RotateCcw />
-            Reset filters
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {hasActiveFilters && (
+        <Button type="button" variant="ghost" className="paper-search-filter-reset" onClick={onReset}>
+          <RotateCcw />
+          Reset
+        </Button>
+      )}
     </div>
   );
 }

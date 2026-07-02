@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 import {
@@ -61,7 +61,6 @@ export function PaperSearchPage() {
     defaultValues: initialSearchValues,
   });
   const formValues = useWatch({ control });
-  const [sort, setSort] = useState("relevance");
   const q = formValues.q ?? "";
   const from = formValues.from ?? "";
   const to = formValues.to ?? "";
@@ -98,19 +97,9 @@ export function PaperSearchPage() {
     [activePaperSource, allPapersQuery.papers, bookmarksQuery.papers, paperQuery.papers]
   );
 
-  const sortedPapers = useMemo(
-    () =>
-      [...papers].sort((first, second) => {
-        if (sort === "citations") return second.citations - first.citations;
-        if (sort === "newest") return second.year - first.year;
-        if (sort === "title") return first.title.localeCompare(second.title);
-        return 0;
-      }),
-    [papers, sort]
-  );
   const visiblePapers = useMemo(
-    () => activePaperSource === "search" ? sortedPapers : sortedPapers.slice((page - 1) * size, page * size),
-    [activePaperSource, page, size, sortedPapers]
+    () => activePaperSource === "search" ? papers : papers.slice((page - 1) * size, page * size),
+    [activePaperSource, page, papers, size]
   );
   const resultCount = activePaperSource === "search" ? paperQuery.total : papers.length;
   const loading = paperQuery.loading || (useAllPapersFallback && allPapersQuery.loading);
@@ -125,6 +114,7 @@ export function PaperSearchPage() {
             journals: buildJournalFacets(journalsQuery.journals, topJournalsQuery.data, papers),
             keywords: toFacetItems(keywordWordCloudQuery.data),
             openAccessRatios: openAccessRatioQuery.data,
+            openAccessTotal: resultCount,
             paperYears: toFacetItems(papersByYearQuery.data, "asc"),
             topics: topicsQuery.topics.length
               ? topicsQuery.topics.map((topic) => ({ label: topic.name, count: topic.papers }))
@@ -197,28 +187,24 @@ export function PaperSearchPage() {
       <section className="paper-search-controls">
         <PaperSearchToolbar
           query={q}
-          sort={sort}
           resultCount={resultCount}
           suggestions={suggestions}
           onQueryChange={updateQuery}
-          onSortChange={(value) => {
-            setSort(value);
-          }}
-        />
-        <PaperSearchFilters
-          facets={{
-            authors: relatedFacets.authors,
-            journals: relatedFacets.journals,
-            topics: relatedFacets.topics,
-            types: relatedFacets.types,
-            years: relatedFacets.years,
-          }}
-          filters={filters}
-          onChange={updateFilters}
-          onFacetSelect={updateQuery}
-          onReset={resetFilters}
         />
       </section>
+      <PaperSearchFilters
+        facets={{
+          authors: relatedFacets.authors,
+          journals: relatedFacets.journals,
+          topics: relatedFacets.topics,
+          types: relatedFacets.types,
+          years: relatedFacets.years,
+        }}
+        filters={filters}
+        onChange={updateFilters}
+        onFacetSelect={updateQuery}
+        onReset={resetFilters}
+      />
 
       <div className="paper-search-layout">
         <section className="paper-search-results">
@@ -307,6 +293,7 @@ function buildApiFacets({
   journals,
   keywords,
   openAccessRatios,
+  openAccessTotal,
   paperYears,
   topics,
 }: {
@@ -314,6 +301,7 @@ function buildApiFacets({
   journals: PaperSearchFacetItem[];
   keywords: PaperSearchFacetItem[];
   openAccessRatios: AnalyticsKeyValue[] | undefined;
+  openAccessTotal: number;
   paperYears: PaperSearchFacetItem[];
   topics: PaperSearchFacetItem[];
 }): PaperSearchFacets {
@@ -323,7 +311,7 @@ function buildApiFacets({
     journals,
     authors,
     types: [],
-    openAccess: estimateOpenAccess(openAccessRatios),
+    openAccess: estimateOpenAccess(openAccessRatios, openAccessTotal),
   };
 }
 
@@ -376,14 +364,28 @@ function normalizeFacetLabel(value: string) {
   return value.trim().toLowerCase();
 }
 
-function estimateOpenAccess(items: AnalyticsKeyValue[] | undefined) {
+function estimateOpenAccess(items: AnalyticsKeyValue[] | undefined, fallbackTotal: number) {
   if (!items?.length) {
     return emptyFacets.openAccess;
   }
 
-  const total = items.reduce((sum, item) => sum + Math.max(0, item.value), 0);
-  const openAccessItem = items.find((item) => /open|oa|access/i.test(item.key));
+  const ratioItem = items.find((item) => /ratio|percent|percentage/i.test(item.key));
+  if (ratioItem) {
+    const ratio = ratioItem.value <= 1 ? ratioItem.value : ratioItem.value / 100;
+    const total = fallbackTotal || 100;
+
+    return {
+      count: Math.round(ratio * total),
+      total,
+    };
+  }
+
+  const openAccessItem = items.find((item) => /open|oa|access|true|yes/i.test(item.key));
+  const closedAccessItem = items.find((item) => /closed|false|no|not/i.test(item.key));
   const count = openAccessItem?.value ?? 0;
+  const total = openAccessItem || closedAccessItem
+    ? count + (closedAccessItem?.value ?? 0)
+    : items.reduce((sum, item) => sum + Math.max(0, item.value), 0);
 
   return {
     count,
@@ -424,7 +426,7 @@ function mergeFacets(apiFacets: PaperSearchFacets, derivedFacets: PaperSearchFac
     journals: apiFacets.journals.length ? apiFacets.journals : derivedFacets.journals,
     authors: apiFacets.authors.length ? apiFacets.authors : derivedFacets.authors,
     types: apiFacets.types.length ? apiFacets.types : derivedFacets.types,
-    openAccess: apiFacets.openAccess.total ? apiFacets.openAccess : derivedFacets.openAccess,
+    openAccess: apiFacets.openAccess.count > 0 ? apiFacets.openAccess : derivedFacets.openAccess,
   };
 }
 

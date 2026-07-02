@@ -68,10 +68,10 @@ function InsightPanel({
   children: ReactNode;
 }) {
   return (
-    <section className="paper-search-insight-panel">
-      <div className="paper-search-insight-heading">
-        <span>{icon}</span>
-        <h2>{title}</h2>
+    <section className="paper-search-insight-panel w-full overflow-hidden rounded-xl border border-border bg-card p-4">
+      <div className="paper-search-insight-heading mb-3 flex items-center gap-2 text-foreground">
+        <span className="flex size-6 items-center justify-center rounded-md bg-muted text-muted-foreground">{icon}</span>
+        <h2 className="text-sm font-semibold">{title}</h2>
       </div>
       {children}
     </section>
@@ -94,9 +94,14 @@ function FacetPanel({
       {items.length ? (
         <div className="paper-search-facet-list">
           {items.slice(0, 5).map((item) => (
-            <button key={item.label} type="button" onClick={() => onSelect(item.label)}>
-              <span>{item.label}</span>
-              <strong>{item.count.toLocaleString()}</strong>
+            <button
+              key={item.label}
+              type="button"
+              className="flex w-full items-center justify-between gap-3 py-2 text-left text-xs"
+              onClick={() => onSelect(item.label)}
+            >
+              <span className="min-w-0 flex-1 truncate">{item.label}</span>
+              <strong className="shrink-0 font-medium text-muted-foreground">{item.count.toLocaleString()}</strong>
             </button>
           ))}
         </div>
