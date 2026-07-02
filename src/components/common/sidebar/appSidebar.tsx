@@ -18,8 +18,6 @@ import {
   Zap,
   Activity,
   Radio,
-  Database,
-  SlidersHorizontal,
 } from "lucide-react";
 import { Suspense, useMemo, memo } from "react";
 import {
@@ -59,22 +57,22 @@ const studentNav: NavItem[] = [
 
 // Researcher Navigation
 const researcherNav: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", section: "Main" },
-  { label: "Trend Research", icon: LineChart, href: "/dashboard/trending", section: "Analytics" },
-  { label: "Topic Compare", icon: BarChart2, href: "/dashboard/topics", section: "Analytics" },
-  { label: "Topic Cluster", icon: Network, href: "/dashboard/topics", section: "Analytics" },
-  { label: "Emerging Topics", icon: Zap, href: "/dashboard/trending", section: "Analytics" },
-  { label: "Publication Analytics", icon: Activity, href: "/dashboard/papers", section: "Research" },
-  { label: "Reports & Analytics", icon: FileText, href: "/dashboard/papers", section: "Research" },
-  { label: "Journal Tracker", icon: Radio, href: "/dashboard/following", section: "Research" },
+  { label: "Dashboard", icon: LayoutDashboard, href: "/researcher", section: "Main" },
+  { label: "Trend Research", icon: LineChart, href: "/researcher/trends", section: "Analytics" },
+  { label: "Topic Compare", icon: BarChart2, href: "/researcher/compare", section: "Analytics" },
+  { label: "Topic Cluster", icon: Network, href: "/researcher/cluster", section: "Analytics" },
+  { label: "Emerging Topics", icon: Zap, href: "/researcher/emerging", section: "Analytics" },
+  { label: "Publication Analytics", icon: Activity, href: "/researcher/analytics", section: "Research" },
+  { label: "Reports & Analytics", icon: FileText, href: "/researcher/reports", section: "Research" },
+  { label: "Journal Tracker", icon: Radio, href: "/researcher/tracker", section: "Research" },
 ];
 
 // Admin Navigation
 const adminNav: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin", section: "Main" },
   { label: "User Management", icon: Users, href: "/admin/users", section: "Manage" },
-  { label: "API Management", icon: Database, href: "/admin/api", section: "Manage" },
-  { label: "System Config", icon: SlidersHorizontal, href: "/admin/config", section: "Manage" },
+  // { label: "API Management", icon: Database, href: "/admin/api", section: "Manage" },
+  // { label: "System Config", icon: SlidersHorizontal, href: "/admin/config", section: "Manage" },
 ];
 
 

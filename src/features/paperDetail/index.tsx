@@ -34,6 +34,7 @@ export function PaperDetailPage({ id }: { id: string }) {
   }
 
   const paper = toPaperSearchResult(paperQuery.paper, Number(id) - 1);
+  const doi = normalizeDoi(paper.doi);
 
   return (
     <div className="paper-detail-page">
@@ -53,9 +54,9 @@ export function PaperDetailPage({ id }: { id: string }) {
             <p className="paper-detail-authors">{paper.authors.join(", ")}</p>
           </div>
 
-          {paper.doi && (
+          {doi && (
             <Button
-              render={<a href={`https://doi.org/${paper.doi}`} target="_blank" rel="noreferrer" />}
+              render={<a href={`https://doi.org/${doi}`} target="_blank" rel="noreferrer" />}
               nativeButton={false}
               variant="outline"
               size="sm"
@@ -73,7 +74,7 @@ export function PaperDetailPage({ id }: { id: string }) {
           {paper.language && <span><Languages />{paper.language.toUpperCase()}</span>}
         </div>
 
-        {paper.doi && <p className="paper-detail-doi">DOI: {paper.doi}</p>}
+        <p className="paper-detail-doi">DOI: {doi ?? "Not available"}</p>
 
         <section className="paper-detail-section">
           <h2>Abstract</h2>
@@ -88,6 +89,15 @@ export function PaperDetailPage({ id }: { id: string }) {
       </article>
     </div>
   );
+}
+
+function normalizeDoi(doi: string | null) {
+  const value = doi?.trim();
+  if (!value || ["null", "undefined", "n/a", "na", "-"].includes(value.toLowerCase())) {
+    return null;
+  }
+
+  return value;
 }
 
 function PaperDetailStatus({ title, description }: { title: string; description: string }) {

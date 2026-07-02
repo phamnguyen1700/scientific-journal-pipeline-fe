@@ -1,12 +1,4 @@
-import { SlidersHorizontal } from "lucide-react";
-
-import { Button } from "@/shared/ui/button";
-
-export function PaperSearchHeader({
-  onToggleFilters,
-}: {
-  onToggleFilters: () => void;
-}) {
+export function PaperSearchHeader() {
   return (
     <div className="paper-search-header">
       <div>
@@ -15,15 +7,6 @@ export function PaperSearchHeader({
           Discover scientific publications across journals and research topics.
         </p>
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        className="lg:hidden"
-        onClick={onToggleFilters}
-      >
-        <SlidersHorizontal />
-        Filters
-      </Button>
     </div>
   );
 }

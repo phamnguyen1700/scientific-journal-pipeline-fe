@@ -796,7 +796,7 @@
   }
 
   .paper-search-page {
-    @apply space-y-5 p-4 sm:p-6;
+    @apply space-y-4 p-4 sm:p-6;
   }
 
   .paper-search-header {
@@ -812,15 +812,19 @@
   }
 
   .paper-search-layout {
-    @apply grid grid-cols-1 items-start gap-4 lg:grid-cols-[220px_minmax(0,1fr)];
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    @apply items-start gap-4;
+  }
+
+  @media (min-width: 1280px) {
+    .paper-search-layout {
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    }
   }
 
   .paper-search-filters {
-    @apply hidden rounded-xl border border-border bg-card p-4 lg:block;
-  }
-
-  .paper-search-filters-open {
-    @apply block;
+    @apply px-0 py-0;
   }
 
   .paper-search-filter-heading {
@@ -851,16 +855,133 @@
     @apply flex items-center gap-2 text-xs font-normal text-foreground;
   }
 
+  .paper-search-filter-bar {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .paper-search-filter-button {
+    @apply h-10 min-w-24 justify-between rounded-md border-border bg-background px-3 text-sm font-normal shadow-none hover:bg-muted;
+  }
+
+  .paper-search-filter-button svg {
+    @apply size-4 text-muted-foreground;
+  }
+
+  .paper-search-filter-reset {
+    @apply h-10 rounded-md px-3 text-xs text-muted-foreground hover:text-foreground;
+  }
+
+  .paper-search-filter-menu {
+    @apply w-64;
+  }
+
+  .paper-search-controls {
+    @apply overflow-visible rounded-xl border border-border bg-card;
+  }
+
   .paper-search-results {
-    @apply min-w-0 space-y-4;
+    @apply min-w-0 w-full space-y-4;
   }
 
   .paper-search-toolbar {
-    @apply flex flex-col gap-3 rounded-xl border border-border bg-card p-3 sm:flex-row sm:items-center;
+    @apply relative flex flex-col gap-3 p-3 sm:flex-row sm:items-center;
+  }
+
+  .paper-search-query-box {
+    @apply relative min-w-0 flex-1;
+  }
+
+  .paper-search-clear {
+    @apply absolute right-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground;
+  }
+
+  .paper-search-clear svg {
+    @apply size-3.5;
+  }
+
+  .paper-search-suggestions {
+    @apply absolute left-0 right-0 top-[calc(100%+0.4rem)] z-20 overflow-hidden rounded-lg border border-border bg-card shadow-lg;
+  }
+
+  .paper-search-suggestions button {
+    @apply block w-full truncate border-b border-border px-3 py-2 text-left text-xs text-foreground transition-colors last:border-b-0 hover:bg-muted;
   }
 
   .paper-search-toolbar-meta {
-    @apply flex shrink-0 items-center justify-between gap-3 text-xs text-muted-foreground;
+    @apply flex shrink-0 items-center justify-end gap-3 text-xs text-muted-foreground sm:h-9;
+  }
+
+  .paper-search-insights {
+    @apply grid w-full grid-cols-1 content-start gap-3 md:grid-cols-2 xl:grid-cols-1;
+  }
+
+  .paper-search-insight-panel {
+    @apply w-full overflow-hidden rounded-xl border border-border bg-card p-4;
+  }
+
+  .paper-search-insight-heading {
+    @apply mb-3 flex items-center gap-2 text-foreground;
+  }
+
+  .paper-search-insight-heading span {
+    @apply flex size-6 items-center justify-center rounded-md bg-muted text-muted-foreground;
+  }
+
+  .paper-search-insight-heading svg {
+    @apply size-3.5;
+  }
+
+  .paper-search-insight-heading h2 {
+    @apply text-sm font-semibold;
+  }
+
+  .paper-search-year-bars {
+    @apply flex h-24 items-end gap-1 border-b border-border pb-2;
+  }
+
+  .paper-search-year-bars button {
+    @apply min-w-2 flex-1 rounded-t bg-muted transition-colors hover:bg-primary;
+  }
+
+  .paper-search-open-access {
+    @apply flex items-center gap-3;
+  }
+
+  .paper-search-open-access-ring {
+    background: conic-gradient(hsl(var(--foreground)) var(--oa), hsl(var(--muted)) 0);
+    @apply flex size-14 shrink-0 items-center justify-center rounded-full;
+  }
+
+  .paper-search-open-access-ring span {
+    @apply block size-6 rounded-full bg-card;
+  }
+
+  .paper-search-open-access strong {
+    @apply block text-2xl font-semibold leading-none text-foreground;
+  }
+
+  .paper-search-open-access span {
+    @apply mt-1 block text-xs text-muted-foreground;
+  }
+
+  .paper-search-facet-list {
+    @apply w-full divide-y divide-border;
+  }
+
+  .paper-search-facet-list button {
+    @apply flex w-full items-center justify-between gap-3 py-2 text-left text-xs transition-colors hover:text-primary;
+  }
+
+  .paper-search-facet-list span {
+    @apply min-w-0 flex-1 truncate text-foreground;
+  }
+
+  .paper-search-facet-list strong {
+    @apply shrink-0 font-medium text-muted-foreground;
+  }
+
+  .paper-search-insight-empty {
+    @apply text-xs text-muted-foreground;
   }
 
   .paper-search-result-list {
@@ -868,7 +989,7 @@
   }
 
   .paper-result-card {
-    @apply rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm;
+    @apply w-full rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm;
   }
 
   .paper-result-heading {
@@ -880,15 +1001,11 @@
   }
 
   .paper-result-title {
-    @apply text-base font-semibold leading-snug text-foreground transition-colors hover:text-primary;
+    @apply text-base font-semibold leading-snug text-foreground transition-colors hover:text-primary sm:text-lg;
   }
 
   .paper-result-authors {
     @apply mt-1 text-xs text-muted-foreground;
-  }
-
-  .paper-result-abstract {
-    @apply mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground;
   }
 
   .paper-result-tags {

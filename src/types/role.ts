@@ -10,5 +10,6 @@ export function isAdminRole(role: UserRole | null | undefined) {
 }
 
 export function getDefaultRouteByRole(role: UserRole | null | undefined) {
+  if (role === "Researcher") return "/researcher";
   return isAdminRole(role) ? "/admin" : "/dashboard";
 }

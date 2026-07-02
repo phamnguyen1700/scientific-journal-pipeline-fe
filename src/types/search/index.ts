@@ -36,6 +36,23 @@ export type PaperSearchRequest = {
   isOpenAccess?: boolean;
 };
 
+export type PaperSearchFacetItem = {
+  label: string;
+  count: number;
+};
+
+export type PaperSearchFacets = {
+  years: PaperSearchFacetItem[];
+  topics: PaperSearchFacetItem[];
+  journals: PaperSearchFacetItem[];
+  authors: PaperSearchFacetItem[];
+  types: PaperSearchFacetItem[];
+  openAccess: {
+    count: number;
+    total: number;
+  };
+};
+
 export type PaperSearchHighlight = {
   title?: string[];
   abstract?: string[];
@@ -54,6 +71,8 @@ export type PaperSearchApiPaper = {
   paperType?: string | null;
   language?: string | null;
   isOpenAccess?: boolean;
+  IsOpenAccess?: boolean;
+  openAccess?: boolean;
   isRetracted?: boolean;
   journal?: {
     name?: string;
@@ -69,6 +88,8 @@ export type PaperSearchData<T> = {
   page?: number;
   size?: number;
   results?: T;
+  facets?: Partial<PaperSearchFacets>;
+  aggregations?: Partial<PaperSearchFacets>;
 };
 
 export type PaperSearchApiResponse<T> = {

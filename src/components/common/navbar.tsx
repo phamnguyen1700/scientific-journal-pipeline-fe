@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, Menu } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import { useSidebar } from "./sidebar";
 import { memo, useMemo } from "react";
 import type { UserRole } from "@/types/role";
@@ -41,17 +41,6 @@ function NavbarContent({ onToggleSidebar }: NavbarProps) {
       >
         <Menu className="h-5 w-5" />
       </button>
-
-      <div className="flex-1 max-w-md">
-        <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2">
-          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-          <input
-            type="text"
-            placeholder="Search papers, topics, journals..."
-            className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none w-full"
-          />
-        </div>
-      </div>
 
       <div className="flex items-center gap-3 ml-auto">
         <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${currentRole.color}`}>

@@ -42,11 +42,16 @@ export type PaperApiModel = {
 export type PaperListApiResponse = {
   succeeded?: boolean;
   Succeeded?: boolean;
+  success?: boolean;
+  data?: PaperApiModel[] | PaperListResult;
   result?: PaperApiModel[] | PaperListResult;
   Result?: PaperApiModel[] | PaperListResult;
+  items?: PaperApiModel[];
+  papers?: PaperApiModel[];
+  records?: PaperApiModel[];
   errors?: string[];
   Errors?: string[];
-};
+} | PaperApiModel[];
 
 export type PaperDetailApiResponse = {
   succeeded?: boolean;

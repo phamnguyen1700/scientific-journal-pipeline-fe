@@ -74,8 +74,12 @@ export function usePapersByAuthor(authorId: string) {
 }
 
 function normalizePaperListResponse(response: PaperListApiResponse): PaperApiModel[] {
-  const succeeded = response.succeeded ?? response.Succeeded ?? true;
-  const result = response.result ?? response.Result ?? [];
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  const succeeded = response.success ?? response.succeeded ?? response.Succeeded ?? true;
+  const result = response.data ?? response.result ?? response.Result ?? response.items ?? response.papers ?? response.records ?? [];
   const errors = response.errors ?? response.Errors ?? [];
 
   if (!succeeded) {
