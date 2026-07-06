@@ -1,5 +1,6 @@
 "use client";
 
+import type { KeyboardEventHandler } from "react";
 import { Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -7,11 +8,13 @@ import { cn } from "@/lib/utils";
 export function SearchInput({
   value,
   onChange,
+  onKeyDown,
   placeholder = "Search...",
   className,
 }: {
   value: string;
   onChange: (value: string) => void;
+  onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
   placeholder?: string;
   className?: string;
 }) {
@@ -21,6 +24,7 @@ export function SearchInput({
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         className="h-9 w-full rounded-xl border border-border bg-input-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-3 focus:ring-primary/15"
       />
