@@ -8,10 +8,14 @@ import {
   getCitationsByYearService,
   getJournalOpenAccessRatioService,
   getKeywordCoOccurrenceService,
+  getKeywordSuggestionsService,
   getKeywordTrendsService,
   getKeywordsOverTimeService,
   getKeywordWordCloudService,
+  getJournalTrackerService,
   getPapersByYearService,
+  getTopicCoOccurrenceService,
+  getTopicComparisonService,
   getTopAuthorsByCitationsService,
   getTopAuthorsByHIndexService,
   getTopDomainsService,
@@ -32,6 +36,9 @@ export const analyticsQueryKeys = {
 function unwrapAnalytics<T>(response: AnalyticsApiResponse<T>) {
   if (!response.succeeded) {
     throw new Error(response.errors?.join(", ") || "Unable to load analytics data.");
+  }
+  if (response.result === null) {
+    throw new Error("Analytics service returned no data.");
   }
   return response.result;
 }
@@ -111,6 +118,10 @@ export function useKeywordCoOccurrence(size = 50) {
   return useAnalyticsQuery("keyword-co-occurrence", () => getKeywordCoOccurrenceService(size), { size });
 }
 
+export function useTopicCoOccurrence(size = 50) {
+  return useAnalyticsQuery("topic-co-occurrence", () => getTopicCoOccurrenceService(size), { size });
+}
+
 export function useKeywordTrend(keyword: string, years = 5) {
   const normalized = keyword.trim();
   return useAnalyticsQuery(
@@ -131,6 +142,33 @@ export function useTopicTrend(topic: string, years = 5) {
   );
 }
 
-export function useTrendingTopics() {
-  return useAnalyticsQuery("trending-topics", getTrendingTopicsService);
+export function useTrendingTopics(years = 1, topCount = 10) {
+  return useAnalyticsQuery(
+    "trending-topics",
+    () => getTrendingTopicsService(years, topCount),
+    { years, topCount }
+  );
+}
+
+export function useKeywordSuggestions(q = "", size = 10) {
+  const normalized = q.trim();
+  return useAnalyticsQuery(
+    "keyword-suggestions",
+    () => getKeywordSuggestionsService(normalized, size),
+    { q: normalized, size }
+  );
+}
+
+export function useTopicComparison(topicIds: string[], years = 5) {
+  const normalized = topicIds.filter(Boolean).slice(0, 5);
+  return useAnalyticsQuery(
+    "topic-comparison",
+    () => getTopicComparisonService(normalized, years),
+    { topicIds: normalized, years },
+    normalized.length >= 2 && normalized.length <= 5
+  );
+}
+
+export function useJournalTracker(size = 20, years = 5) {
+  return useAnalyticsQuery("journal-tracker", () => getJournalTrackerService(size, years), { size, years });
 }
