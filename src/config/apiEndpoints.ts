@@ -51,6 +51,9 @@ export const apiEndpoints = {
     list: "/Journal",
     detail: (id: string) => `/Journal/${id}`,
   },
+  keyword: {
+    suggestions: "/Keyword/suggestions",
+  },
   analytics: {
     papersByYear: "/Analytics/trends/papers-by-year",
     citationsByYear: "/Analytics/trends/citations-by-year",
@@ -66,6 +69,9 @@ export const apiEndpoints = {
     keywordWordCloud: "/Analytics/keywords/word-cloud",
     topKeywordsByYear: "/Analytics/keywords/top-by-year",
     keywordCoOccurrence: "/Analytics/keywords/co-occurrence",
+    topicCoOccurrence: "/Analytics/topics/co-occurrence",
+    topicComparison: "/Analytics/topics/compare",
+    journalTracker: "/Analytics/journals/tracker",
     keywordTrends: "/Analytics/keyword-trends",
     topicTrends: "/Analytics/topic-trends",
     trendingTopics: "/Analytics/trending-topics",

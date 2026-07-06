@@ -8,6 +8,8 @@ import type {
   AnalyticsSeries,
   AnalyticsTrend,
   AnalyticsTrendingTopic,
+  JournalTrackerItem,
+  TopicComparison,
 } from "@/types/analytics";
 
 const withSize = (size: number) => ({ params: { size } });
@@ -57,6 +59,9 @@ export const getTopKeywordsByYearService = (size = 10) =>
 export const getKeywordCoOccurrenceService = (size = 50) =>
   get<AnalyticsApiResponse<AnalyticsNetwork>>(apiEndpoints.analytics.keywordCoOccurrence, withSize(size));
 
+export const getTopicCoOccurrenceService = (size = 50) =>
+  get<AnalyticsApiResponse<AnalyticsNetwork>>(apiEndpoints.analytics.topicCoOccurrence, withSize(size));
+
 export const getKeywordTrendsService = (keyword: string, years = 5) =>
   get<AnalyticsApiResponse<AnalyticsTrend>>(apiEndpoints.analytics.keywordTrends, {
     params: { keyword, years },
@@ -67,8 +72,26 @@ export const getTopicTrendsService = (topic: string, years = 5) =>
     params: { topic, years },
   });
 
-export const getTrendingTopicsService = () =>
-  get<AnalyticsApiResponse<AnalyticsTrendingTopic[]>>(apiEndpoints.analytics.trendingTopics);
+export const getTrendingTopicsService = (years = 1, topCount = 10) =>
+  get<AnalyticsApiResponse<AnalyticsTrendingTopic[]>>(apiEndpoints.analytics.trendingTopics, {
+    params: { years, topCount },
+  });
+
+export const getKeywordSuggestionsService = (q = "", size = 10) =>
+  get<AnalyticsApiResponse<string[]>>(apiEndpoints.keyword.suggestions, {
+    params: { q, size },
+  });
+
+export const getTopicComparisonService = (topicIds: string[], years = 5) =>
+  get<AnalyticsApiResponse<TopicComparison[]>>(apiEndpoints.analytics.topicComparison, {
+    params: { topicIds, years },
+    paramsSerializer: { indexes: null },
+  });
+
+export const getJournalTrackerService = (size = 20, years = 5) =>
+  get<AnalyticsApiResponse<JournalTrackerItem[]>>(apiEndpoints.analytics.journalTracker, {
+    params: { size, years },
+  });
 
 export const getAnalyticsDashboardService = () =>
   get<AnalyticsApiResponse<AnalyticsDashboard>>(apiEndpoints.analytics.dashboard);
@@ -97,9 +120,13 @@ export const analyticsService = {
   keywordWordCloud: getKeywordWordCloudService,
   topKeywordsByYear: getTopKeywordsByYearService,
   keywordCoOccurrence: getKeywordCoOccurrenceService,
+  topicCoOccurrence: getTopicCoOccurrenceService,
   keywordTrends: getKeywordTrendsService,
   topicTrends: getTopicTrendsService,
   trendingTopics: getTrendingTopicsService,
+  keywordSuggestions: getKeywordSuggestionsService,
+  topicComparison: getTopicComparisonService,
+  journalTracker: getJournalTrackerService,
   dashboard: getAnalyticsDashboardService,
   dashboardSummary: getDashboardSummaryService,
   publicationTrends: getPublicationTrendsService,
