@@ -128,6 +128,9 @@ function normalizePaper(paper: PaperApiModel): PaperApiModel {
     id: paper.id ?? paper.paperId ?? "",
     paperAuthorResponseModels:
       paper.paperAuthorResponseModels ?? paper.paperAuthors ?? [],
+    paperTopics: paper.paperTopics ?? [],
+    paperKeywords: paper.paperKeywords ?? [],
+    paperSourceMappings: paper.paperSourceMappings ?? [],
   };
 }
 

@@ -1273,6 +1273,14 @@
     @apply mt-4 text-base font-semibold text-foreground;
   }
 
+  .topic-card-link {
+    @apply block transition-colors hover:text-primary;
+  }
+
+  .topic-card-link:hover .topic-card-title {
+    @apply text-primary;
+  }
+
   .topic-card-description {
     @apply mt-1.5 line-clamp-3 text-xs leading-relaxed text-muted-foreground;
   }

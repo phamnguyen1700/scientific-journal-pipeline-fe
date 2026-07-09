@@ -1,3 +1,5 @@
+import type { PaperApiModel } from "@/types/papers";
+
 export type Journal = {
   id: string | number;
   apiId?: string;
@@ -23,6 +25,7 @@ export type Journal = {
   core: boolean | null;
   topics: JournalTopic[];
   countsByYear: JournalYearCount[];
+  relatedPapers: PaperApiModel[];
 };
 
 export type JournalTopic = {

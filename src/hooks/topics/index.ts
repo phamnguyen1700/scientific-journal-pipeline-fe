@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { getTopicsService } from "@/service/topics";
+import { getTopicDetailService, getTopicsService } from "@/service/topics";
 import type { TagColor } from "@/types/common";
 import type { ResearchTopic, TopicTrend } from "@/types/topics";
 
@@ -11,6 +11,7 @@ const topicColors: TagColor[] = ["purple", "blue", "green", "amber", "red", "cya
 export const topicQueryKeys = {
   all: ["topics"] as const,
   list: () => [...topicQueryKeys.all, "list"] as const,
+  detail: (id: string) => [...topicQueryKeys.all, "detail", id] as const,
 };
 
 export function useTopics() {
@@ -22,6 +23,21 @@ export function useTopics() {
   return {
     ...query,
     topics: query.data ?? [],
+    loading: query.isPending,
+    error: getErrorMessage(query.error),
+  };
+}
+
+export function useTopic(id: string) {
+  const query = useQuery({
+    queryKey: topicQueryKeys.detail(id),
+    queryFn: async () => mapTopicDetail(await getTopicDetailService(id), id),
+    enabled: Boolean(id),
+  });
+
+  return {
+    ...query,
+    topic: query.data ?? null,
     loading: query.isPending,
     error: getErrorMessage(query.error),
   };
@@ -52,6 +68,18 @@ function mapTopics(response: unknown): ResearchTopic[] {
       keywords: readStringArray(record, ["keywords", "tags"]),
     };
   });
+}
+
+function mapTopicDetail(response: unknown, fallbackId: string): ResearchTopic {
+  const payload = extractPayload(response);
+  const record = asRecord(payload);
+  const topic = mapTopics({ result: [record ?? payload] })[0];
+
+  return {
+    ...topic,
+    id: topic.id ?? fallbackId,
+    apiId: topic.apiId ?? fallbackId,
+  };
 }
 
 function extractPayload(response: unknown): unknown {

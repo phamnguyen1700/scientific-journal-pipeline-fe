@@ -13,6 +13,52 @@ export type PaperAuthor = {
   } | null;
 };
 
+export type PaperTopic = {
+  paperTopicId?: string;
+  topicId?: string;
+  score?: number | null;
+  topic?: {
+    topicId?: string;
+    topicName?: string;
+    normalizedName?: string;
+  } | null;
+};
+
+export type PaperKeyword = {
+  paperKeywordId?: string;
+  keywordId?: string;
+  score?: number | null;
+  keyword?: {
+    keywordId?: string;
+    keywordName?: string;
+    normalizedName?: string;
+  } | null;
+};
+
+export type PaperSourceMapping = {
+  paperSourceMappingId?: string;
+  sourceRecordId?: string;
+  sourceRecordUrl?: string;
+  sourceSpecificData?: string | PaperSourceSpecificData | null;
+};
+
+export type PaperSourceSpecificData = {
+  primary_topic?: {
+    source_record_id?: string;
+    display_name?: string;
+    score?: number | null;
+    domain?: {
+      display_name?: string;
+    };
+    field?: {
+      display_name?: string;
+    };
+    subfield?: {
+      display_name?: string;
+    };
+  };
+};
+
 export type PaperApiModel = {
   id: string;
   paperId?: string;
@@ -36,12 +82,20 @@ export type PaperApiModel = {
   } | null;
   journalId: string | null;
   journal: {
+    journalId?: string;
     name?: string;
     title?: string;
     journalName?: string;
+    issnL?: string | null;
+    homepageUrl?: string | null;
+    isOpenAccess?: boolean;
+    isCore?: boolean;
   } | null;
   paperAuthors?: PaperAuthor[];
   paperAuthorResponseModels?: PaperAuthor[];
+  paperTopics?: PaperTopic[];
+  paperKeywords?: PaperKeyword[];
+  paperSourceMappings?: PaperSourceMapping[];
 };
 
 export type PaperListApiResponse = {

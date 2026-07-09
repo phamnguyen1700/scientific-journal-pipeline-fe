@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getJournalDetailService, getJournalsService } from "@/service/journals";
 import type { Journal, JournalTopic, JournalYearCount } from "@/types/journals";
+import type { PaperApiModel } from "@/types/papers";
 
 export const journalQueryKeys = {
   all: ["journals"] as const,
@@ -68,6 +69,7 @@ function mapJournal(item: unknown, index: number, fallbackId?: string): Journal 
   const issn = readStringArray(sourceData, ["issn"]);
   const topics = mapJournalTopics(record?.journalTopics, sourceData?.topics);
   const countsByYear = mapCountsByYear(sourceData?.counts_by_year);
+  const relatedPapers = mapRelatedPapers(record?.papers);
 
   return {
     id: journalId ?? index + 1,
@@ -97,6 +99,7 @@ function mapJournal(item: unknown, index: number, fallbackId?: string): Journal 
     core: readBoolean(record, ["isCore", "core"]) ?? readBoolean(sourceData, ["is_core"]) ?? null,
     topics,
     countsByYear,
+    relatedPapers,
   };
 }
 
@@ -243,6 +246,12 @@ function mapCountsByYear(value: unknown): JournalYearCount[] {
       openAccessWorksCount: readNumber(record, ["oa_works_count"]) ?? 0,
     };
   }).filter((count): count is JournalYearCount => Boolean(count));
+}
+
+function mapRelatedPapers(value: unknown): PaperApiModel[] {
+  return Array.isArray(value)
+    ? value.filter((paper): paper is PaperApiModel => Boolean(asRecord(paper)))
+    : [];
 }
 
 function getErrorMessage(error: unknown) {
