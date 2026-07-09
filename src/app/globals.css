@@ -1080,6 +1080,10 @@
     @apply mt-2 text-sm text-muted-foreground;
   }
 
+  .paper-detail-inline-link {
+    @apply font-medium text-primary transition-colors hover:underline;
+  }
+
   .paper-detail-meta {
     @apply flex flex-wrap gap-x-5 gap-y-2 border-b border-border py-4 text-xs text-muted-foreground;
   }

@@ -7,7 +7,7 @@ export function toPaperSearchResult(
   paper: PaperApiModel,
   index = 0
 ): PaperSearchResult {
-  const authors = [...(paper.paperAuthorResponseModels ?? [])]
+  const authors = [...(paper.paperAuthorResponseModels ?? paper.paperAuthors ?? [])]
     .sort((first, second) => (first.authorOrder ?? 0) - (second.authorOrder ?? 0))
     .map((author) =>
       author.author?.displayName ??
@@ -22,7 +22,7 @@ export function toPaperSearchResult(
     id: paper.id && paper.id !== emptyId ? paper.id : String(index + 1),
     apiId: paper.id,
     doi: paper.doi,
-    title: paper.title,
+    title: stripHtmlTags(paper.title) || "Untitled paper",
     authors: authors.length ? authors : ["Author information unavailable"],
     journal: paper.journal?.journalName ?? paper.journal?.name ?? paper.journal?.title ?? "Journal information unavailable",
     year: paper.publicationYear,
@@ -37,4 +37,8 @@ export function toPaperSearchResult(
     referenceCount: paper.referenceCount,
     retracted: paper.isRetracted,
   };
+}
+
+function stripHtmlTags(value: string) {
+  return value.replace(/<[^>]*>/g, "").trim();
 }

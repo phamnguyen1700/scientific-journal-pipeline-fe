@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getPaperDetailService,
   getPapersByAuthorService,
+  getPapersByJournalService,
   getPapersService,
 } from "@/service/papers";
 import type { PaperApiModel, PaperDetailApiResponse, PaperListApiResponse } from "@/types/papers";
@@ -14,6 +15,7 @@ export const paperQueryKeys = {
   list: () => [...paperQueryKeys.all, "list"] as const,
   detail: (id: string) => [...paperQueryKeys.all, "detail", id] as const,
   byAuthor: (authorId: string) => [...paperQueryKeys.all, "author", authorId] as const,
+  byJournal: (journalId: string) => [...paperQueryKeys.all, "journal", journalId] as const,
 };
 
 export function usePapers() {
@@ -73,9 +75,24 @@ export function usePapersByAuthor(authorId: string) {
   };
 }
 
+export function usePapersByJournal(journalId: string) {
+  const query = useQuery({
+    queryKey: paperQueryKeys.byJournal(journalId),
+    queryFn: async () => normalizePaperListResponse(await getPapersByJournalService(journalId)),
+    enabled: Boolean(journalId),
+  });
+
+  return {
+    ...query,
+    papers: query.data ?? [],
+    loading: query.isPending,
+    error: getErrorMessage(query.error),
+  };
+}
+
 function normalizePaperListResponse(response: PaperListApiResponse): PaperApiModel[] {
   if (Array.isArray(response)) {
-    return response;
+    return response.map(normalizePaper);
   }
 
   const succeeded = response.success ?? response.succeeded ?? response.Succeeded ?? true;
@@ -87,10 +104,10 @@ function normalizePaperListResponse(response: PaperListApiResponse): PaperApiMod
   }
 
   if (Array.isArray(result)) {
-    return result;
+    return result.map(normalizePaper);
   }
 
-  return result.data ?? result.items ?? result.papers ?? result.records ?? [];
+  return (result.results ?? result.data ?? result.items ?? result.papers ?? result.records ?? []).map(normalizePaper);
 }
 
 function normalizePaperDetailResponse(response: PaperDetailApiResponse) {
@@ -102,7 +119,16 @@ function normalizePaperDetailResponse(response: PaperDetailApiResponse) {
     throw new Error(errors.join(", ") || "Paper not found.");
   }
 
-  return result;
+  return normalizePaper(result);
+}
+
+function normalizePaper(paper: PaperApiModel): PaperApiModel {
+  return {
+    ...paper,
+    id: paper.id ?? paper.paperId ?? "",
+    paperAuthorResponseModels:
+      paper.paperAuthorResponseModels ?? paper.paperAuthors ?? [],
+  };
 }
 
 function isListPosition(id: string) {

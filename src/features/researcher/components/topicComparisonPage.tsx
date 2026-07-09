@@ -1,150 +1,151 @@
 "use client";
+
 import { useMemo, useState } from "react";
-import { Plus, X } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, Legend, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { allComparisonTopics, comparisonMonths, comparisonTopics, type TopicMetricKey } from "@/features/researcher/components/researcherData";
-import { chartTooltip, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
+import { X } from "lucide-react";
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+
+import { topicPalette } from "@/features/researcher/components/researcherData";
+import { chartTooltip, ResearcherEmptyState, ResearcherLoadingState, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
+import { useTopicComparison, useTopicsAvailableForCompare } from "@/hooks/analytics";
+import type { TopicComparison } from "@/types/analytics";
+
+const colors = [topicPalette.purple, topicPalette.emerald, topicPalette.blue, topicPalette.amber, topicPalette.red];
 
 export function TopicComparisonPage() {
-  const [selected, setSelected] = useState(["Large Language Models", "Computer Vision", "Bioinformatics"]);
-  const [adding, setAdding] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [years, setYears] = useState(5);
+  const topicsQuery = useTopicsAvailableForCompare("", 300);
+  const topicOptions = topicsQuery.data ?? [];
+  const defaultTopicIds = topicOptions.slice(0, Math.min(3, topicOptions.length)).map((topic) => topic.topicId);
+  const activeSelectedIds = selectedIds.length ? selectedIds : defaultTopicIds;
+  const comparisonQuery = useTopicComparison(activeSelectedIds, years);
+  const comparison = useMemo(() => comparisonQuery.data ?? [], [comparisonQuery.data]);
+  const chartData = useMemo(() => buildComparisonChart(comparison), [comparison]);
 
-  const monthlyBarData = useMemo(
-    () => comparisonMonths.map((month, index) => {
-      const row: Record<string, string | number> = { month };
-      selected.forEach((topic) => {
-        row[topic] = comparisonTopics[topic].monthlyTrend[index];
-      });
-      return row;
-    }),
-    [selected]
-  );
-
-  const radarData = useMemo(
-    () => [
-      { key: "papers", label: "Publications" },
-      { key: "growth", label: "Growth %" },
-      { key: "citations", label: "Citations" },
-      { key: "hIndex", label: "H-Index" },
-      { key: "journals", label: "Journals" },
-    ].map((metric) => {
-      const row: Record<string, string | number> = { metric: metric.label };
-      selected.forEach((topic) => {
-        const maxValue = Math.max(...allComparisonTopics.map((item) => comparisonTopics[item][metric.key as TopicMetricKey]));
-        row[topic] = Math.round((comparisonTopics[topic][metric.key as TopicMetricKey] / maxValue) * 100);
-      });
-      return row;
-    }),
-    [selected]
-  );
-
-  function addTopic(topic: string) {
-    if (!selected.includes(topic) && selected.length < 5) setSelected((current) => [...current, topic]);
-    setAdding(false);
+  function addTopic(topicId: string) {
+    if (activeSelectedIds.includes(topicId) || activeSelectedIds.length >= 5) return;
+    setSelectedIds([...activeSelectedIds, topicId]);
   }
 
-  function removeTopic(topic: string) {
-    if (selected.length > 2) setSelected((current) => current.filter((item) => item !== topic));
+  function removeTopic(topicId: string) {
+    if (activeSelectedIds.length <= 2) return;
+    setSelectedIds(activeSelectedIds.filter((id) => id !== topicId));
+  }
+
+  if (topicsQuery.isPending) {
+    return <div className="space-y-6 p-6"><ResearcherPageShell title="Topic Comparison" description="Side-by-side analysis of two to five research topics" /><ResearcherLoadingState label="Loading comparable topics" /></div>;
   }
 
   return (
     <div className="space-y-6 p-6">
-      <ResearcherPageShell title="Topic Comparison" description="Side-by-side analysis of up to five research topics" />
+      <ResearcherPageShell title="Topic Comparison" description="Side-by-side analysis of two to five research topics with linked papers" />
+
       <div className="flex flex-wrap items-center gap-2">
-        {selected.map((topic) => (
-          <div key={topic} className="flex items-center gap-2 rounded-full py-1.5 pl-3 pr-2 text-xs font-medium text-white" style={{ backgroundColor: comparisonTopics[topic].color }}>
-            {topic}
-            <button onClick={() => removeTopic(topic)} className="opacity-80 transition-opacity hover:opacity-100" aria-label={`Remove ${topic}`}>
-              <X size={12} />
-            </button>
-          </div>
-        ))}
-        {selected.length < 5 && (
-          <div className="relative">
-            <button onClick={() => setAdding((current) => !current)} className="flex items-center gap-1.5 rounded-full border-2 border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary">
-              <Plus size={12} /> Add topic
-            </button>
-            {adding && (
-              <div className="absolute top-full z-10 mt-1 w-52 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
-                {allComparisonTopics.filter((topic) => !selected.includes(topic)).map((topic) => (
-                  <button key={topic} onClick={() => addTopic(topic)} className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs transition-colors hover:bg-muted">
-                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: comparisonTopics[topic].color }} />
-                    {topic}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="overflow-auto rounded-xl border border-border bg-card">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Metric</th>
-              {selected.map((topic) => (
-                <th key={topic} className="px-5 py-3 text-right">
-                  <div className="flex items-center justify-end gap-1.5">
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: comparisonTopics[topic].color }} />
-                    <span className="max-w-[120px] truncate text-xs font-semibold text-foreground">{topic}</span>
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {[
-              { label: "Publications", key: "papers" as TopicMetricKey, format: (value: number) => value.toLocaleString() },
-              { label: "Growth Rate", key: "growth" as TopicMetricKey, format: (value: number) => `+${value}%` },
-              { label: "Total Citations", key: "citations" as TopicMetricKey, format: (value: number) => value.toLocaleString() },
-              { label: "H-Index", key: "hIndex" as TopicMetricKey, format: (value: number) => value.toString() },
-              { label: "Active Journals", key: "journals" as TopicMetricKey, format: (value: number) => value.toString() },
-            ].map((row) => (
-              <tr key={row.key} className="transition-colors hover:bg-muted/30">
-                <td className="px-5 py-3 text-xs font-medium text-muted-foreground">{row.label}</td>
-                {selected.map((topic) => {
-                  const value = comparisonTopics[topic][row.key];
-                  const maxValue = Math.max(...selected.map((item) => comparisonTopics[item][row.key]));
-                  return (
-                    <td key={topic} className="px-5 py-3 text-right">
-                      <span className={`text-sm font-semibold ${value === maxValue ? "text-primary" : "text-foreground"}`}>{row.format(value)}</span>
-                      {value === maxValue && <span className="ml-1 text-[10px] text-primary">▲</span>}
-                    </td>
-                  );
-                })}
-              </tr>
+        {activeSelectedIds.map((topicId, index) => {
+          const topic = topicOptions.find((item) => item.topicId === topicId);
+          return (
+            <div key={topicId} className="flex items-center gap-2 rounded-full py-1.5 pl-3 pr-2 text-xs font-medium text-white" style={{ backgroundColor: colors[index % colors.length] }}>
+              {topic?.topicName ?? topicId}
+              {topic ? <span className="rounded-full bg-white/15 px-1.5 py-0.5 text-[10px]">{topic.paperCount}</span> : null}
+              <button onClick={() => removeTopic(topicId)} className="opacity-80 transition-opacity hover:opacity-100" aria-label={`Remove ${topic?.topicName ?? topicId}`}>
+                <X size={12} />
+              </button>
+            </div>
+          );
+        })}
+        {activeSelectedIds.length < 5 && (
+          <select onChange={(event) => { addTopic(event.target.value); event.currentTarget.value = ""; }} defaultValue="" className="h-9 rounded-full border-2 border-dashed border-border bg-background px-3 text-xs text-muted-foreground outline-none focus:border-primary">
+            <option value="" disabled>Add topic</option>
+            {topicOptions.filter((topic) => !activeSelectedIds.includes(topic.topicId)).map((topic) => (
+              <option key={topic.topicId} value={topic.topicId}>{topic.topicName} ({topic.paperCount} papers)</option>
             ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-border bg-card p-5">
-          <p className="mb-4 text-sm font-semibold text-foreground">Monthly Publications</p>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={monthlyBarData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={chartTooltip()} />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-              {selected.map((topic) => <Bar key={topic} dataKey={topic} fill={comparisonTopics[topic].color} radius={[3, 3, 0, 0]} />)}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-5">
-          <p className="mb-4 text-sm font-semibold text-foreground">Relative Strength</p>
-          <ResponsiveContainer width="100%" height={240}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="#F3F4F6" />
-              <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11, fill: "#6B7280" }} />
-              <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
-              {selected.map((topic) => <Radar key={topic} dataKey={topic} stroke={comparisonTopics[topic].color} fill={comparisonTopics[topic].color} fillOpacity={0.08} strokeWidth={2} />)}
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-              <Tooltip contentStyle={chartTooltip()} />
-            </RadarChart>
-          </ResponsiveContainer>
+          </select>
+        )}
+        <div className="ml-auto flex items-center gap-1 rounded-xl bg-muted p-1">
+          {[1, 5, 10, 20].map((value) => <button key={value} onClick={() => setYears(value)} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${years === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>{value}Y</button>)}
         </div>
       </div>
+
+      {!topicOptions.length ? (
+        <ResearcherEmptyState title="No comparable topics" description="The backend returned no topics linked to papers for comparison." />
+      ) : activeSelectedIds.length < 2 ? (
+        <ResearcherEmptyState title="Select at least two topics" description="The comparison endpoint requires two to five selected topics." />
+      ) : comparisonQuery.isPending ? (
+        <ResearcherLoadingState label="Loading topic comparison" />
+      ) : !comparison.length ? (
+        <ResearcherEmptyState title="No comparison data" description="The analytics service returned no comparison data for the selected topics." />
+      ) : (
+        <>
+          <div className="overflow-auto rounded-xl border border-border bg-card">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Metric</th>
+                  {comparison.map((topic, index) => (
+                    <th key={topic.topicId} className="px-5 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
+                        <span className="max-w-[160px] truncate text-xs font-semibold text-foreground">{topic.topicName}</span>
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {[
+                  { label: "Publications", key: "paperCount" as const, format: formatNumber },
+                  { label: "Growth Rate", key: "growthPercentage" as const, format: formatPercent },
+                  { label: "Total Citations", key: "citationCount" as const, format: formatNumber },
+                  { label: "Topic H-Index", key: "topicHIndex" as const, format: formatNumber },
+                  { label: "Journals", key: "journalCount" as const, format: formatNumber },
+                ].map((row) => (
+                  <tr key={row.key} className="transition-colors hover:bg-muted/30">
+                    <td className="px-5 py-3 text-xs font-medium text-muted-foreground">{row.label}</td>
+                    {comparison.map((topic) => (
+                      <td key={topic.topicId} className="px-5 py-3 text-right text-sm font-semibold text-foreground">
+                        {row.format(topic[row.key])}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-5">
+            <p className="mb-4 text-sm font-semibold text-foreground">Yearly Publications</p>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+                <XAxis dataKey="year" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={chartTooltip()} />
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                {comparison.map((topic, index) => <Line key={topic.topicId} type="monotone" dataKey={topic.topicName} stroke={colors[index % colors.length]} strokeWidth={2.5} dot={false} />)}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
     </div>
   );
+}
+
+function buildComparisonChart(comparison: TopicComparison[]) {
+  const years = new Set(comparison.flatMap((topic) => topic.yearlyCounts.map((point) => point.year)));
+  return Array.from(years).sort((a, b) => a - b).map((year) => {
+    const row: Record<string, string | number> = { year };
+    comparison.forEach((topic) => {
+      row[topic.topicName] = topic.yearlyCounts.find((point) => point.year === year)?.count ?? 0;
+    });
+    return row;
+  });
+}
+
+function formatNumber(value: number) {
+  return value.toLocaleString();
+}
+
+function formatPercent(value: number) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}%`;
 }

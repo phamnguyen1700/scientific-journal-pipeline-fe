@@ -79,6 +79,7 @@ export type PaperSearchApiPaper = {
     title?: string;
     journalName?: string;
   } | null;
+  paperAuthors?: import("@/types/papers").PaperAuthor[];
   paperAuthorResponseModels?: import("@/types/papers").PaperAuthor[];
   highlight?: PaperSearchHighlight | null;
 };

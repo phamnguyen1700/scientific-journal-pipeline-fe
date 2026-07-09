@@ -16,6 +16,7 @@ import { toPaperSearchResult } from "@/features/paperSearch/paperMapper";
 import { usePaper } from "@/hooks/papers";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import type { PaperApiModel, PaperAuthor } from "@/types/papers";
 
 export function PaperDetailPage({ id }: { id: string }) {
   const paperQuery = usePaper(id);
@@ -35,6 +36,8 @@ export function PaperDetailPage({ id }: { id: string }) {
 
   const paper = toPaperSearchResult(paperQuery.paper, Number(id) - 1);
   const doi = normalizeDoi(paper.doi);
+  const authorLinks = getAuthorLinks(paperQuery.paper);
+  const journalId = paperQuery.paper.journalId;
 
   return (
     <div className="paper-detail-page">
@@ -51,7 +54,22 @@ export function PaperDetailPage({ id }: { id: string }) {
               {paper.paperType && <Badge variant="muted">{paper.paperType}</Badge>}
             </div>
             <h1 className="paper-detail-title">{paper.title}</h1>
-            <p className="paper-detail-authors">{paper.authors.join(", ")}</p>
+            <p className="paper-detail-authors">
+              {authorLinks.length
+                ? authorLinks.map((author, index) => (
+                    <span key={`${author.name}-${index}`}>
+                      {index > 0 && ", "}
+                      {author.id ? (
+                        <Link href={`/dashboard/authors/${author.id}`} className="paper-detail-inline-link">
+                          {author.name}
+                        </Link>
+                      ) : (
+                        author.name
+                      )}
+                    </span>
+                  ))
+                : paper.authors.join(", ")}
+            </p>
           </div>
 
           {doi && (
@@ -67,7 +85,16 @@ export function PaperDetailPage({ id }: { id: string }) {
         </div>
 
         <div className="paper-detail-meta">
-          <span><BookOpen />{paper.journal}</span>
+          <span>
+            <BookOpen />
+            {journalId ? (
+              <Link href={`/dashboard/journals/${journalId}`} className="paper-detail-inline-link">
+                {paper.journal}
+              </Link>
+            ) : (
+              paper.journal
+            )}
+          </span>
           <span><CalendarDays />{paper.publicationDate ?? paper.year}</span>
           <span><Quote />{paper.citations.toLocaleString()} citations</span>
           <span><FileText />{paper.referenceCount.toLocaleString()} references</span>
@@ -98,6 +125,30 @@ function normalizeDoi(doi: string | null) {
   }
 
   return value;
+}
+
+function getAuthorLinks(paper: PaperApiModel) {
+  return [...(paper.paperAuthorResponseModels ?? paper.paperAuthors ?? [])]
+    .sort((first, second) => (first.authorOrder ?? 0) - (second.authorOrder ?? 0))
+    .map((author) => ({
+      id: getAuthorId(author),
+      name: getAuthorName(author) ?? "",
+    }))
+    .filter((author) => Boolean(author.name));
+}
+
+function getAuthorId(author: PaperAuthor) {
+  return author.authorId ?? author.author?.authorId ?? author.id ?? author.author?.id;
+}
+
+function getAuthorName(author: PaperAuthor) {
+  return (
+    author.author?.displayName ??
+    author.author?.fullName ??
+    author.rawAuthorName ??
+    author.name ??
+    author.authorName
+  );
 }
 
 function PaperDetailStatus({ title, description }: { title: string; description: string }) {
