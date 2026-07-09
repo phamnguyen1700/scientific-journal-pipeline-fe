@@ -8,6 +8,7 @@ import type {
   AnalyticsSeries,
   AnalyticsTrend,
   AnalyticsTrendingTopic,
+  AvailableTopicForCompare,
   JournalTrackerItem,
   TopicComparison,
 } from "@/types/analytics";
@@ -88,6 +89,11 @@ export const getTopicComparisonService = (topicIds: string[], years = 5) =>
     paramsSerializer: { indexes: null },
   });
 
+export const getTopicsAvailableForCompareService = (q = "", size = 300) =>
+  get<AnalyticsApiResponse<AvailableTopicForCompare[]>>(apiEndpoints.analytics.topicsAvailableForCompare, {
+    params: { q, size },
+  });
+
 export const getJournalTrackerService = (size = 20, years = 5) =>
   get<AnalyticsApiResponse<JournalTrackerItem[]>>(apiEndpoints.analytics.journalTracker, {
     params: { size, years },
@@ -125,6 +131,7 @@ export const analyticsService = {
   topicTrends: getTopicTrendsService,
   trendingTopics: getTrendingTopicsService,
   keywordSuggestions: getKeywordSuggestionsService,
+  topicsAvailableForCompare: getTopicsAvailableForCompareService,
   topicComparison: getTopicComparisonService,
   journalTracker: getJournalTrackerService,
   dashboard: getAnalyticsDashboardService,

@@ -16,6 +16,7 @@ import {
   getPapersByYearService,
   getTopicCoOccurrenceService,
   getTopicComparisonService,
+  getTopicsAvailableForCompareService,
   getTopAuthorsByCitationsService,
   getTopAuthorsByHIndexService,
   getTopDomainsService,
@@ -166,6 +167,15 @@ export function useTopicComparison(topicIds: string[], years = 5) {
     () => getTopicComparisonService(normalized, years),
     { topicIds: normalized, years },
     normalized.length >= 2 && normalized.length <= 5
+  );
+}
+
+export function useTopicsAvailableForCompare(q = "", size = 300) {
+  const normalized = q.trim();
+  return useAnalyticsQuery(
+    "topics-available-for-compare",
+    () => getTopicsAvailableForCompareService(normalized, size),
+    { q: normalized, size }
   );
 }
 

@@ -77,6 +77,14 @@ export type TopicComparison = {
   yearlyCounts: AnalyticsYearlyCount[];
 };
 
+export type AvailableTopicForCompare = {
+  topicId: string;
+  topicName: string;
+  paperCount: number;
+  firstYear: number;
+  lastYear: number;
+};
+
 export type JournalTrackerItem = {
   journalId: string;
   journalName: string;

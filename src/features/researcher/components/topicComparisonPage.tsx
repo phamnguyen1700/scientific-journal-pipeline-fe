@@ -6,8 +6,7 @@ import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, X
 
 import { topicPalette } from "@/features/researcher/components/researcherData";
 import { chartTooltip, ResearcherEmptyState, ResearcherLoadingState, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
-import { useTopicComparison } from "@/hooks/analytics";
-import { useTopics } from "@/hooks/topics";
+import { useTopicComparison, useTopicsAvailableForCompare } from "@/hooks/analytics";
 import type { TopicComparison } from "@/types/analytics";
 
 const colors = [topicPalette.purple, topicPalette.emerald, topicPalette.blue, topicPalette.amber, topicPalette.red];
@@ -15,12 +14,10 @@ const colors = [topicPalette.purple, topicPalette.emerald, topicPalette.blue, to
 export function TopicComparisonPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [years, setYears] = useState(5);
-  const topicsQuery = useTopics();
-  const topics = topicsQuery.topics.map((topic) => ({
-    id: String(topic.apiId ?? topic.id),
-    name: topic.name,
-  }));
-  const activeSelectedIds = selectedIds.length ? selectedIds : topics.slice(0, 2).map((topic) => topic.id);
+  const topicsQuery = useTopicsAvailableForCompare("", 300);
+  const topicOptions = topicsQuery.data ?? [];
+  const defaultTopicIds = topicOptions.slice(0, Math.min(3, topicOptions.length)).map((topic) => topic.topicId);
+  const activeSelectedIds = selectedIds.length ? selectedIds : defaultTopicIds;
   const comparisonQuery = useTopicComparison(activeSelectedIds, years);
   const comparison = useMemo(() => comparisonQuery.data ?? [], [comparisonQuery.data]);
   const chartData = useMemo(() => buildComparisonChart(comparison), [comparison]);
@@ -35,21 +32,22 @@ export function TopicComparisonPage() {
     setSelectedIds(activeSelectedIds.filter((id) => id !== topicId));
   }
 
-  if (topicsQuery.loading) {
-    return <div className="space-y-6 p-6"><ResearcherPageShell title="Topic Comparison" description="Side-by-side analysis of two to five research topics" /><ResearcherLoadingState label="Loading topics" /></div>;
+  if (topicsQuery.isPending) {
+    return <div className="space-y-6 p-6"><ResearcherPageShell title="Topic Comparison" description="Side-by-side analysis of two to five research topics" /><ResearcherLoadingState label="Loading comparable topics" /></div>;
   }
 
   return (
     <div className="space-y-6 p-6">
-      <ResearcherPageShell title="Topic Comparison" description="Side-by-side analysis of two to five research topics" />
+      <ResearcherPageShell title="Topic Comparison" description="Side-by-side analysis of two to five research topics with linked papers" />
 
       <div className="flex flex-wrap items-center gap-2">
         {activeSelectedIds.map((topicId, index) => {
-          const topic = topics.find((item) => item.id === topicId);
+          const topic = topicOptions.find((item) => item.topicId === topicId);
           return (
             <div key={topicId} className="flex items-center gap-2 rounded-full py-1.5 pl-3 pr-2 text-xs font-medium text-white" style={{ backgroundColor: colors[index % colors.length] }}>
-              {topic?.name ?? topicId}
-              <button onClick={() => removeTopic(topicId)} className="opacity-80 transition-opacity hover:opacity-100" aria-label={`Remove ${topic?.name ?? topicId}`}>
+              {topic?.topicName ?? topicId}
+              {topic ? <span className="rounded-full bg-white/15 px-1.5 py-0.5 text-[10px]">{topic.paperCount}</span> : null}
+              <button onClick={() => removeTopic(topicId)} className="opacity-80 transition-opacity hover:opacity-100" aria-label={`Remove ${topic?.topicName ?? topicId}`}>
                 <X size={12} />
               </button>
             </div>
@@ -58,8 +56,8 @@ export function TopicComparisonPage() {
         {activeSelectedIds.length < 5 && (
           <select onChange={(event) => { addTopic(event.target.value); event.currentTarget.value = ""; }} defaultValue="" className="h-9 rounded-full border-2 border-dashed border-border bg-background px-3 text-xs text-muted-foreground outline-none focus:border-primary">
             <option value="" disabled>Add topic</option>
-            {topics.filter((topic) => !activeSelectedIds.includes(topic.id)).map((topic) => (
-              <option key={topic.id} value={topic.id}>{topic.name}</option>
+            {topicOptions.filter((topic) => !activeSelectedIds.includes(topic.topicId)).map((topic) => (
+              <option key={topic.topicId} value={topic.topicId}>{topic.topicName} ({topic.paperCount} papers)</option>
             ))}
           </select>
         )}
@@ -68,7 +66,9 @@ export function TopicComparisonPage() {
         </div>
       </div>
 
-      {activeSelectedIds.length < 2 ? (
+      {!topicOptions.length ? (
+        <ResearcherEmptyState title="No comparable topics" description="The backend returned no topics linked to papers for comparison." />
+      ) : activeSelectedIds.length < 2 ? (
         <ResearcherEmptyState title="Select at least two topics" description="The comparison endpoint requires two to five selected topics." />
       ) : comparisonQuery.isPending ? (
         <ResearcherLoadingState label="Loading topic comparison" />

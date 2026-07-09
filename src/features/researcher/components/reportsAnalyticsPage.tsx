@@ -1,3 +1,5 @@
+"use client";
+
 import { ResearcherEmptyState, ResearcherPageShell } from "@/features/researcher/components/researcherShared";
 
 export function ReportsAnalyticsPage() {
