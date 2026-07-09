@@ -70,6 +70,7 @@ export const apiEndpoints = {
     topKeywordsByYear: "/Analytics/keywords/top-by-year",
     keywordCoOccurrence: "/Analytics/keywords/co-occurrence",
     topicCoOccurrence: "/Analytics/topics/co-occurrence",
+    topicsAvailableForCompare: "/Analytics/topics/available-for-compare",
     topicComparison: "/Analytics/topics/compare",
     journalTracker: "/Analytics/journals/tracker",
     keywordTrends: "/Analytics/keyword-trends",

@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  FileText,
   Search,
   Users,
   LogOut,
@@ -63,7 +62,7 @@ const researcherNav: NavItem[] = [
   { label: "Topic Cluster", icon: Network, href: "/researcher/cluster", section: "Analytics" },
   { label: "Emerging Topics", icon: Zap, href: "/researcher/emerging", section: "Analytics" },
   { label: "Publication Analytics", icon: Activity, href: "/researcher/analytics", section: "Research" },
-  { label: "Reports & Analytics", icon: FileText, href: "/researcher/reports", section: "Research" },
+  // { label: "Reports & Analytics", icon: FileText, href: "/researcher/reports", section: "Research" },
   { label: "Journal Tracker", icon: Radio, href: "/researcher/tracker", section: "Research" },
 ];
 
