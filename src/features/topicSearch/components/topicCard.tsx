@@ -1,4 +1,5 @@
 import { Bell, BellRing, FileText, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 import { Tag } from "@/components/common";
 import { Button } from "@/shared/ui/button";
@@ -11,6 +12,8 @@ export function TopicCard({
   topic: ResearchTopic;
   onToggleFollow: (id: string | number) => void;
 }) {
+  const topicHref = `/dashboard/topics/${topic.apiId ?? topic.id}`;
+
   return (
     <article className="topic-card">
       <div className="topic-card-heading">
@@ -26,8 +29,10 @@ export function TopicCard({
         </Button>
       </div>
 
-      <h2 className="topic-card-title">{topic.name}</h2>
-      <p className="topic-card-description">{topic.description}</p>
+      <Link href={topicHref} className="topic-card-link">
+        <h2 className="topic-card-title">{topic.name}</h2>
+        <p className="topic-card-description">{topic.description}</p>
+      </Link>
 
       <div className="topic-card-keywords">
         {topic.keywords.map((keyword) => (

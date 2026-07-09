@@ -16,7 +16,7 @@ import { toPaperSearchResult } from "@/features/paperSearch/paperMapper";
 import { usePaper } from "@/hooks/papers";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import type { PaperApiModel, PaperAuthor } from "@/types/papers";
+import type { PaperApiModel, PaperAuthor, PaperKeyword, PaperTopic } from "@/types/papers";
 
 export function PaperDetailPage({ id }: { id: string }) {
   const paperQuery = usePaper(id);
@@ -38,6 +38,9 @@ export function PaperDetailPage({ id }: { id: string }) {
   const doi = normalizeDoi(paper.doi);
   const authorLinks = getAuthorLinks(paperQuery.paper);
   const journalId = paperQuery.paper.journalId;
+  const topics = getPaperTopics(paperQuery.paper);
+  const keywords = getPaperKeywords(paperQuery.paper);
+  const sourceRecordId = paperQuery.paper.paperSourceMappings?.[0]?.sourceRecordId;
 
   return (
     <div className="paper-detail-page">
@@ -99,14 +102,44 @@ export function PaperDetailPage({ id }: { id: string }) {
           <span><Quote />{paper.citations.toLocaleString()} citations</span>
           <span><FileText />{paper.referenceCount.toLocaleString()} references</span>
           {paper.language && <span><Languages />{paper.language.toUpperCase()}</span>}
+          {paperQuery.paper.volume && <span>Vol. {paperQuery.paper.volume}</span>}
+          {paperQuery.paper.issue && <span>Issue {paperQuery.paper.issue}</span>}
+          {paperQuery.paper.page && <span>Pages {paperQuery.paper.page}</span>}
         </div>
 
         <p className="paper-detail-doi">DOI: {doi ?? "Not available"}</p>
+        {sourceRecordId && <p className="paper-detail-doi">Source record: {sourceRecordId}</p>}
 
         <section className="paper-detail-section">
           <h2>Abstract</h2>
           <p>{paper.abstract}</p>
         </section>
+
+        {topics.length > 0 && (
+          <section className="paper-detail-section">
+            <h2>Topics</h2>
+            <div className="paper-result-tags">
+              {topics.map((topic) => (
+                topic.id ? (
+                  <Link key={topic.id} href={`/dashboard/topics/${topic.id}`} className="paper-detail-inline-link">
+                    <Tag>{formatScoredLabel(topic.name, topic.score)}</Tag>
+                  </Link>
+                ) : (
+                  <Tag key={topic.name}>{formatScoredLabel(topic.name, topic.score)}</Tag>
+                )
+              ))}
+            </div>
+          </section>
+        )}
+
+        {keywords.length > 0 && (
+          <section className="paper-detail-section">
+            <h2>Keywords</h2>
+            <div className="paper-result-tags">
+              {keywords.map((keyword) => <Tag key={keyword.id ?? keyword.name}>{formatScoredLabel(keyword.name, keyword.score)}</Tag>)}
+            </div>
+          </section>
+        )}
 
         {paper.tags.length > 0 && (
           <div className="paper-result-tags">
@@ -149,6 +182,31 @@ function getAuthorName(author: PaperAuthor) {
     author.name ??
     author.authorName
   );
+}
+
+function getPaperTopics(paper: PaperApiModel) {
+  return (paper.paperTopics ?? [])
+    .map((paperTopic: PaperTopic) => ({
+      id: paperTopic.topic?.topicId ?? paperTopic.topicId,
+      name: paperTopic.topic?.topicName ?? paperTopic.topic?.normalizedName ?? "",
+      score: paperTopic.score ?? null,
+    }))
+    .filter((topic) => Boolean(topic.name));
+}
+
+function getPaperKeywords(paper: PaperApiModel) {
+  return (paper.paperKeywords ?? [])
+    .map((paperKeyword: PaperKeyword) => ({
+      id: paperKeyword.keyword?.keywordId ?? paperKeyword.keywordId,
+      name: paperKeyword.keyword?.keywordName ?? paperKeyword.keyword?.normalizedName ?? "",
+      score: paperKeyword.score ?? null,
+    }))
+    .filter((keyword) => Boolean(keyword.name))
+    .sort((first, second) => (second.score ?? 0) - (first.score ?? 0));
+}
+
+function formatScoredLabel(name: string, score: number | null | undefined) {
+  return typeof score === "number" ? `${name} (${(score * 100).toFixed(0)}%)` : name;
 }
 
 function PaperDetailStatus({ title, description }: { title: string; description: string }) {
