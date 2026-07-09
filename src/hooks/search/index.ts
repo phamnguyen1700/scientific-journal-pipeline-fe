@@ -234,7 +234,7 @@ function mapSearchPaper(paper: PaperSearchApiPaper | PaperApiModel): PaperApiMod
   return {
     id: paper.id ?? paperId ?? "",
     doi: paper.doi ?? null,
-    title: paper.title ?? "Untitled paper",
+    title: stripHtmlTags(paper.title) || "Untitled paper",
     abstract: paper.abstract ?? null,
     publicationYear: paper.publicationYear ?? 0,
     publicationDate: paper.publicationDate ?? null,
@@ -249,7 +249,14 @@ function mapSearchPaper(paper: PaperSearchApiPaper | PaperApiModel): PaperApiMod
     isRetracted: paper.isRetracted ?? false,
     journalId: "journalId" in paper ? paper.journalId : null,
     journal: paper.journal ?? null,
-    paperAuthorResponseModels: paper.paperAuthorResponseModels ?? [],
+    paperAuthorResponseModels:
+      paper.paperAuthorResponseModels ??
+      ("paperAuthors" in paper ? paper.paperAuthors : undefined) ??
+      [],
     highlight: paper.highlight ?? null,
   };
+}
+
+function stripHtmlTags(value?: string) {
+  return value?.replace(/<[^>]*>/g, "").trim() ?? "";
 }

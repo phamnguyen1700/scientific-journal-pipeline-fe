@@ -14,8 +14,12 @@ export const getPaperDetailService = (id: string) =>
 export const getPapersByAuthorService = (authorId: string) =>
   get<PaperListApiResponse>(apiEndpoints.papers.byAuthor(authorId));
 
+export const getPapersByJournalService = (journalId: string) =>
+  get<PaperListApiResponse>(apiEndpoints.papers.byJournal(journalId));
+
 export const papersService = {
   list: getPapersService,
   detail: getPaperDetailService,
   byAuthor: getPapersByAuthorService,
+  byJournal: getPapersByJournalService,
 };

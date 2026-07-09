@@ -1,10 +1,13 @@
 export type PaperAuthor = {
+  authorId?: string;
   id?: string;
   name?: string;
   authorName?: string;
   rawAuthorName?: string;
   authorOrder?: number;
   author?: {
+    authorId?: string;
+    id?: string;
     displayName?: string;
     fullName?: string | null;
   } | null;
@@ -12,6 +15,7 @@ export type PaperAuthor = {
 
 export type PaperApiModel = {
   id: string;
+  paperId?: string;
   doi: string | null;
   title: string;
   abstract: string | null;
@@ -36,6 +40,7 @@ export type PaperApiModel = {
     title?: string;
     journalName?: string;
   } | null;
+  paperAuthors?: PaperAuthor[];
   paperAuthorResponseModels?: PaperAuthor[];
 };
 
@@ -63,6 +68,7 @@ export type PaperDetailApiResponse = {
 };
 
 export type PaperListResult = {
+  results?: PaperApiModel[];
   data?: PaperApiModel[];
   items?: PaperApiModel[];
   papers?: PaperApiModel[];
