@@ -8,12 +8,8 @@ import { chartTooltip, ResearcherLoadingState, ResearcherPageShell } from "@/fea
 import {
   useCitationsByYear,
   useJournalOpenAccessRatio,
-  useKeywordWordCloud,
   usePapersByYear,
-  useTopAuthorsByCitations,
   useTopAuthorsByHIndex,
-  useTopJournalsByCitations,
-  useTopJournalsByPaperCount,
   useTopKeywordsByYear,
 } from "@/hooks/analytics";
 import type { AnalyticsKeyValue, AnalyticsSeries } from "@/types/analytics";
@@ -21,31 +17,20 @@ import type { AnalyticsKeyValue, AnalyticsSeries } from "@/types/analytics";
 export function PublicationAnalyticsPage() {
   const papersQuery = usePapersByYear();
   const citationsQuery = useCitationsByYear();
-  const keywordsQuery = useKeywordWordCloud(10);
   const keywordHistoryQuery = useTopKeywordsByYear(5);
-  const journalPapersQuery = useTopJournalsByPaperCount(10);
-  const journalCitationsQuery = useTopJournalsByCitations(10);
   const openAccessQuery = useJournalOpenAccessRatio();
-  const authorCitationsQuery = useTopAuthorsByCitations(5);
   const authorHIndexQuery = useTopAuthorsByHIndex(5);
 
-  const queries = [papersQuery, citationsQuery, keywordsQuery, keywordHistoryQuery, journalPapersQuery, journalCitationsQuery, openAccessQuery, authorCitationsQuery, authorHIndexQuery];
+  const queries = [papersQuery, citationsQuery, keywordHistoryQuery, openAccessQuery, authorHIndexQuery];
   if (queries.some((query) => query.isPending)) {
     return <div className="space-y-6 p-6"><ResearcherPageShell title="Publication Analytics" description="Research output, citation impact, authors, journals, and keyword metrics" icon={<Activity size={18} className="text-primary" />} /><ResearcherLoadingState label="Loading publication analytics" /></div>;
   }
 
   const liveYearlyData = mergeYearlyMetrics(papersQuery.data, citationsQuery.data);
   const yearlyData = liveYearlyData;
-  const keywordData = keywordsQuery.data?.map((item) => ({ keyword: item.key, count: item.value })) ?? [];
-  const journalData = journalPapersQuery.data?.map((item) => ({
-        name: item.key,
-        papers: item.value,
-        avgCitations: journalCitationsQuery.data?.find((citation) => citation.key === item.key)?.value ?? 0,
-      })) ?? [];
   const keywordHistory = mergeSeries(keywordHistoryQuery.data ?? []);
   const totalPapers = papersQuery.data?.reduce((sum, item) => sum + item.value, 0) ?? 0;
   const totalCitations = citationsQuery.data?.reduce((sum, item) => sum + item.value, 0) ?? 0;
-  const keywordMax = Math.max(...keywordData.map((item) => item.count), 1);
 
   return (
     <div className="space-y-6 p-6">
@@ -100,34 +85,6 @@ export function PublicationAnalyticsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-5">
-          <p className="mb-4 text-sm font-semibold text-foreground">Top Keywords</p>
-          <div className="space-y-3">
-            {keywordData.slice(0, 10).map((keyword) => (
-              <div key={keyword.keyword} className="flex items-center gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-foreground">{keyword.keyword}</p>
-                  <div className="mt-1 rounded-full bg-muted"><div className="h-1.5 rounded-full bg-primary" style={{ width: `${(keyword.count / keywordMax) * 100}%` }} /></div>
-                </div>
-                <span className="shrink-0 text-xs font-semibold text-muted-foreground">{keyword.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <RankingList title="Top Authors by Citations" items={authorCitationsQuery.data ?? []} />
-        <RankingList title="Top Authors by H-Index" items={authorHIndexQuery.data ?? []} />
-      </div>
-
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <div className="border-b border-border px-5 py-4"><p className="text-sm font-semibold text-foreground">Top Publishing Venues</p></div>
-        <table className="w-full text-sm">
-          <thead><tr className="border-b border-border bg-muted/40"><th className="px-5 py-2.5 text-left text-xs font-semibold uppercase text-muted-foreground">Journal</th><th className="px-5 py-2.5 text-right text-xs font-semibold uppercase text-muted-foreground">Papers</th><th className="px-5 py-2.5 text-right text-xs font-semibold uppercase text-muted-foreground">Citations</th></tr></thead>
-          <tbody className="divide-y divide-border">
-            {journalData.map((journal) => <tr key={journal.name} className="hover:bg-muted/30"><td className="px-5 py-3 font-medium text-foreground">{journal.name}</td><td className="px-5 py-3 text-right text-muted-foreground">{journal.papers}</td><td className="px-5 py-3 text-right font-semibold text-primary">{journal.avgCitations.toLocaleString()}</td></tr>)}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }
@@ -138,10 +95,6 @@ function ChartCard({ title, children }: { title: string; children: React.ReactEl
 
 function ChartAxes() {
   return <><CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" /><XAxis dataKey="year" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} /><YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={chartTooltip()} /></>;
-}
-
-function RankingList({ title, items }: { title: string; items: AnalyticsKeyValue[] }) {
-  return <div className="rounded-xl border border-border bg-card p-5"><p className="mb-4 text-sm font-semibold text-foreground">{title}</p><div className="space-y-3">{items.map((item, index) => <div key={item.key} className="flex items-center gap-3"><span className="w-5 text-xs text-muted-foreground">{index + 1}</span><span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">{item.key}</span><span className="text-xs font-semibold text-primary">{item.value.toLocaleString()}</span></div>)}</div></div>;
 }
 
 function mergeYearlyMetrics(papers?: AnalyticsKeyValue[], citations?: AnalyticsKeyValue[]) {
