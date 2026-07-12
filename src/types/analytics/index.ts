@@ -9,6 +9,11 @@ export type AnalyticsKeyValue = {
   value: number;
 };
 
+export type AnalyticsOpenAccessStat = {
+  key: "Closed" | "Open Access" | string;
+  value: number;
+};
+
 export type AnalyticsSeries = {
   seriesName: string;
   dataPoints: AnalyticsKeyValue[];

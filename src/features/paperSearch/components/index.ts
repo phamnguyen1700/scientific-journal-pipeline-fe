@@ -1,3 +1,4 @@
+export { PaperSearchBox } from "@/features/paperSearch/components/paperSearchBox";
 export { PaperResultCard } from "@/features/paperSearch/components/paperResultCard";
 export { PaperSearchFilters } from "@/features/paperSearch/components/paperSearchFilters";
 export { PaperSearchHeader } from "@/features/paperSearch/components/paperSearchHeader";

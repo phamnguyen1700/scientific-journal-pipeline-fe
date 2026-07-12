@@ -11,7 +11,7 @@ export type DashboardKpi = {
 };
 
 export type TrendPoint = {
-  month: string;
+  year: string;
   [topicKey: string]: string | number;
 };
 
@@ -24,7 +24,7 @@ export type TrendSeries = {
 export type TrendingTopic = {
   name: string;
   count: number;
-  growth: number;
+  growth?: number;
   color: string;
 };
 
@@ -57,4 +57,35 @@ export type StudentDashboardData = {
     journalAlerts?: number;
     newPapers?: number;
   };
+};
+
+export type DashboardApiResponse<T> = {
+  succeeded: boolean;
+  result: T | null;
+  errors: string[];
+};
+
+export type DashboardSummary = {
+  bookmarkedPapers?: number;
+  followedTopics?: number;
+  journalAlerts?: number;
+  newPapers?: number;
+};
+
+export type DashboardHotTopic = {
+  topicName: string;
+  paperCount: number;
+  growthPercentage: number;
+};
+
+export type DashboardPublicationTrendPoint = {
+  year: number;
+  monthNumber: number;
+  month: string;
+  count: number;
+};
+
+export type DashboardPublicationTrend = {
+  topicName: string;
+  monthlyCounts: DashboardPublicationTrendPoint[];
 };

@@ -3,26 +3,26 @@ export type PaperSearchFilters = {
   to: string;
   language: string;
   isOpenAccess: "" | "true" | "false";
+  filterJournal: string;
+  filterAuthor: string;
+  filterKeyword: string;
+  filterYear: string;
 };
 
-export type PaperSearchResult = {
-  id: string;
-  apiId: string;
-  doi: string | null;
+export type PaperSearchHighlight = {
+  title?: string[];
+  abstract?: string[];
+};
+
+export type PaperSearchPaper = {
+  paperId: string;
   title: string;
+  abstract: string | null;
+  doi: string | null;
+  publicationYear: number;
+  citedByCount: number;
   authors: string[];
-  journal: string;
-  year: number;
-  citations: number;
-  abstract: string;
-  tags: string[];
-  openAccess: boolean;
-  bookmarked: boolean;
-  publicationDate: string | null;
-  paperType: string | null;
-  language: string | null;
-  referenceCount: number;
-  retracted: boolean;
+  keywords: string[];
   highlight?: PaperSearchHighlight | null;
 };
 
@@ -34,10 +34,15 @@ export type PaperSearchRequest = {
   to?: number;
   language?: string;
   isOpenAccess?: boolean;
+  filterJournal?: string[];
+  filterAuthor?: string[];
+  filterKeyword?: string[];
+  filterYear?: number[];
 };
 
 export type PaperSearchFacetItem = {
   label: string;
+  value?: string;
   count: number;
 };
 
@@ -46,6 +51,7 @@ export type PaperSearchFacets = {
   topics: PaperSearchFacetItem[];
   journals: PaperSearchFacetItem[];
   authors: PaperSearchFacetItem[];
+  keywords: PaperSearchFacetItem[];
   types: PaperSearchFacetItem[];
   openAccess: {
     count: number;
@@ -53,53 +59,34 @@ export type PaperSearchFacets = {
   };
 };
 
-export type PaperSearchHighlight = {
-  title?: string[];
-  abstract?: string[];
+export type PaperSearchApiFacetItem = {
+  value: string;
+  count: number;
 };
 
-export type PaperSearchApiPaper = {
-  paperId?: string;
-  id?: string;
-  doi?: string | null;
-  title?: string;
-  abstract?: string | null;
-  publicationYear?: number;
-  publicationDate?: string | null;
-  citedByCount?: number;
-  referenceCount?: number;
-  paperType?: string | null;
-  language?: string | null;
-  isOpenAccess?: boolean;
-  IsOpenAccess?: boolean;
-  openAccess?: boolean;
-  isRetracted?: boolean;
-  journal?: {
-    name?: string;
-    title?: string;
-    journalName?: string;
-  } | null;
-  paperAuthors?: import("@/types/papers").PaperAuthor[];
-  paperAuthorResponseModels?: import("@/types/papers").PaperAuthor[];
-  highlight?: PaperSearchHighlight | null;
+export type PaperSearchApiFacets = {
+  years?: PaperSearchApiFacetItem[];
+  journals?: PaperSearchApiFacetItem[];
+  authors?: PaperSearchApiFacetItem[];
+  keywords?: PaperSearchApiFacetItem[];
 };
 
-export type PaperSearchData<T> = {
-  total?: number;
-  page?: number;
-  size?: number;
-  results?: T;
-  facets?: Partial<PaperSearchFacets>;
-  aggregations?: Partial<PaperSearchFacets>;
+export type PaperSearchData = {
+  total: number;
+  page: number;
+  size: number;
+  totalPages: number;
+  results: PaperSearchPaper[];
+  facets?: PaperSearchApiFacets;
 };
 
-export type PaperSearchApiResponse<T> = {
-  success?: boolean;
-  data?: PaperSearchData<T> | T;
+export type PaperSearchApiResponse = {
   succeeded?: boolean;
   Succeeded?: boolean;
-  result?: PaperSearchData<T> | T;
-  Result?: PaperSearchData<T> | T;
+  success?: boolean;
+  result?: PaperSearchData;
+  Result?: PaperSearchData;
+  data?: PaperSearchData;
   errors?: string[];
   Errors?: string[];
 };

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   ArrowLeft,
   BookOpen,
@@ -12,38 +13,58 @@ import {
 import Link from "next/link";
 
 import { Tag } from "@/components/common";
-import { toPaperSearchResult } from "@/features/paperSearch/paperMapper";
+import { AuthorDetailDrawer } from "@/features/authors";
+import { JournalDetailDrawer } from "@/features/journals";
 import { usePaper } from "@/hooks/papers";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import type { PaperApiModel, PaperAuthor, PaperKeyword, PaperTopic } from "@/types/papers";
+import type {
+  PaperApiModel,
+  PaperAuthor,
+  PaperKeyword,
+  PaperTopic,
+} from "@/types/papers";
+import { PaperDetailHeader } from "./components/paperDetailHeader";
 
 export function PaperDetailPage({ id }: { id: string }) {
+  const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
+  const [selectedJournalId, setSelectedJournalId] = useState<string | null>(
+    null,
+  );
   const paperQuery = usePaper(id);
 
   if (paperQuery.loading) {
-    return <PaperDetailStatus title="Loading paper..." description="Fetching paper details from the server." />;
+    return (
+      <PaperDetailStatus
+        title="Loading paper..."
+        description="Fetching paper details from the server."
+      />
+    );
   }
 
   if (paperQuery.error || !paperQuery.paper) {
     return (
       <PaperDetailStatus
         title="Paper not found"
-        description={paperQuery.error ?? "The requested paper is not available."}
+        description={
+          paperQuery.error ?? "The requested paper is not available."
+        }
       />
     );
   }
 
-  const paper = toPaperSearchResult(paperQuery.paper, Number(id) - 1);
+  const paper = paperQuery.paper;
   const doi = normalizeDoi(paper.doi);
-  const authorLinks = getAuthorLinks(paperQuery.paper);
-  const journalId = paperQuery.paper.journalId;
-  const topics = getPaperTopics(paperQuery.paper);
-  const keywords = getPaperKeywords(paperQuery.paper);
-  const sourceRecordId = paperQuery.paper.paperSourceMappings?.[0]?.sourceRecordId;
+  const authorLinks = getAuthorLinks(paper);
+  const journalId = paper.journalId;
+  const topics = getPaperTopics(paper);
+  const keywords = getPaperKeywords(paper);
+  const sourceRecordId = paper.paperSourceMappings?.[0]?.sourceRecordId;
 
   return (
     <div className="paper-detail-page">
+      <PaperDetailHeader />
+
       <Link href="/dashboard/papers" className="paper-detail-back">
         <ArrowLeft /> Back to paper search
       </Link>
@@ -52,9 +73,13 @@ export function PaperDetailPage({ id }: { id: string }) {
         <div className="paper-detail-heading">
           <div>
             <div className="paper-result-badges">
-              {paper.openAccess && <Badge variant="success">Open Access</Badge>}
-              {paper.retracted && <Badge variant="danger">Retracted</Badge>}
-              {paper.paperType && <Badge variant="muted">{paper.paperType}</Badge>}
+              {paper.isOpenAccess && (
+                <Badge variant="success">Open Access</Badge>
+              )}
+              {paper.isRetracted && <Badge variant="danger">Retracted</Badge>}
+              {paper.paperType && (
+                <Badge variant="muted">{paper.paperType}</Badge>
+              )}
             </div>
             <h1 className="paper-detail-title">{paper.title}</h1>
             <p className="paper-detail-authors">
@@ -63,21 +88,31 @@ export function PaperDetailPage({ id }: { id: string }) {
                     <span key={`${author.name}-${index}`}>
                       {index > 0 && ", "}
                       {author.id ? (
-                        <Link href={`/dashboard/authors/${author.id}`} className="paper-detail-inline-link">
+                        <button
+                          type="button"
+                          className="paper-detail-inline-link"
+                          onClick={() => setSelectedAuthorId(author.id ?? null)}
+                        >
                           {author.name}
-                        </Link>
+                        </button>
                       ) : (
                         author.name
                       )}
                     </span>
                   ))
-                : paper.authors.join(", ")}
+                : getPaperAuthorNames(paper).join(", ")}
             </p>
           </div>
 
           {doi && (
             <Button
-              render={<a href={`https://doi.org/${doi}`} target="_blank" rel="noreferrer" />}
+              render={
+                <a
+                  href={`https://doi.org/${doi}`}
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              }
               nativeButton={false}
               variant="outline"
               size="sm"
@@ -91,43 +126,69 @@ export function PaperDetailPage({ id }: { id: string }) {
           <span>
             <BookOpen />
             {journalId ? (
-              <Link href={`/dashboard/journals/${journalId}`} className="paper-detail-inline-link">
-                {paper.journal}
-              </Link>
+              <button
+                type="button"
+                className="paper-detail-inline-link"
+                onClick={() => setSelectedJournalId(journalId)}
+              >
+                {getJournalName(paper)}
+              </button>
             ) : (
-              paper.journal
+              getJournalName(paper)
             )}
           </span>
-          <span><CalendarDays />{paper.publicationDate ?? paper.year}</span>
-          <span><Quote />{paper.citations.toLocaleString()} citations</span>
-          <span><FileText />{paper.referenceCount.toLocaleString()} references</span>
-          {paper.language && <span><Languages />{paper.language.toUpperCase()}</span>}
-          {paperQuery.paper.volume && <span>Vol. {paperQuery.paper.volume}</span>}
-          {paperQuery.paper.issue && <span>Issue {paperQuery.paper.issue}</span>}
-          {paperQuery.paper.page && <span>Pages {paperQuery.paper.page}</span>}
+          <span>
+            <CalendarDays />
+            {paper.publicationDate ?? paper.publicationYear}
+          </span>
+          <span>
+            <Quote />
+            {paper.citedByCount.toLocaleString()} citations
+          </span>
+          <span>
+            <FileText />
+            {paper.referenceCount.toLocaleString()} references
+          </span>
+          {paper.language && (
+            <span>
+              <Languages />
+              {paper.language.toUpperCase()}
+            </span>
+          )}
+          {paper.volume && <span>Vol. {paper.volume}</span>}
+          {paper.issue && <span>Issue {paper.issue}</span>}
+          {paper.page && <span>Pages {paper.page}</span>}
         </div>
 
         <p className="paper-detail-doi">DOI: {doi ?? "Not available"}</p>
-        {sourceRecordId && <p className="paper-detail-doi">Source record: {sourceRecordId}</p>}
+        {sourceRecordId && (
+          <p className="paper-detail-doi">Source record: {sourceRecordId}</p>
+        )}
 
         <section className="paper-detail-section">
           <h2>Abstract</h2>
-          <p>{paper.abstract}</p>
+          <p>{paper.abstract ?? "No abstract is available for this paper."}</p>
         </section>
 
         {topics.length > 0 && (
           <section className="paper-detail-section">
             <h2>Topics</h2>
             <div className="paper-result-tags">
-              {topics.map((topic) => (
+              {topics.map((topic) =>
                 topic.id ? (
-                  <Link key={topic.id} href={`/dashboard/topics/${topic.id}`} className="paper-detail-inline-link">
+                  <Link
+                    key={topic.id}
+                    href={`/dashboard/topics/${topic.id}`}
+                    className="paper-detail-inline-link"
+                  >
                     <Tag>{formatScoredLabel(topic.name, topic.score)}</Tag>
                   </Link>
                 ) : (
-                  <Tag key={topic.name}>{formatScoredLabel(topic.name, topic.score)}</Tag>
-                )
-              ))}
+                  <Tag key={topic.name}>
+                    {formatScoredLabel(topic.name, topic.score)}
+                  </Tag>
+                ),
+              )}
             </div>
           </section>
         )}
@@ -136,24 +197,52 @@ export function PaperDetailPage({ id }: { id: string }) {
           <section className="paper-detail-section">
             <h2>Keywords</h2>
             <div className="paper-result-tags">
-              {keywords.map((keyword) => <Tag key={keyword.id ?? keyword.name}>{formatScoredLabel(keyword.name, keyword.score)}</Tag>)}
+              {keywords.map((keyword) => (
+                <Tag key={keyword.id ?? keyword.name}>
+                  {formatScoredLabel(keyword.name, keyword.score)}
+                </Tag>
+              ))}
             </div>
           </section>
         )}
-
-        {paper.tags.length > 0 && (
-          <div className="paper-result-tags">
-            {paper.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}
-          </div>
-        )}
       </article>
+
+      <AuthorDetailDrawer
+        authorId={selectedAuthorId}
+        open={Boolean(selectedAuthorId)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedAuthorId(null);
+        }}
+      />
+      <JournalDetailDrawer
+        journalId={selectedJournalId}
+        open={Boolean(selectedJournalId)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedJournalId(null);
+        }}
+      />
     </div>
   );
 }
 
+function getJournalName(paper: PaperApiModel) {
+  return (
+    paper.journal?.journalName ??
+    paper.journal?.name ??
+    paper.journal?.title ??
+    "Journal information unavailable"
+  );
+}
+
+function getPaperAuthorNames(paper: PaperApiModel) {
+  return getAuthorLinks(paper).map((author) => author.name);
+}
 function normalizeDoi(doi: string | null) {
   const value = doi?.trim();
-  if (!value || ["null", "undefined", "n/a", "na", "-"].includes(value.toLowerCase())) {
+  if (
+    !value ||
+    ["null", "undefined", "n/a", "na", "-"].includes(value.toLowerCase())
+  ) {
     return null;
   }
 
@@ -162,7 +251,9 @@ function normalizeDoi(doi: string | null) {
 
 function getAuthorLinks(paper: PaperApiModel) {
   return [...(paper.paperAuthorResponseModels ?? paper.paperAuthors ?? [])]
-    .sort((first, second) => (first.authorOrder ?? 0) - (second.authorOrder ?? 0))
+    .sort(
+      (first, second) => (first.authorOrder ?? 0) - (second.authorOrder ?? 0),
+    )
     .map((author) => ({
       id: getAuthorId(author),
       name: getAuthorName(author) ?? "",
@@ -171,7 +262,9 @@ function getAuthorLinks(paper: PaperApiModel) {
 }
 
 function getAuthorId(author: PaperAuthor) {
-  return author.authorId ?? author.author?.authorId ?? author.id ?? author.author?.id;
+  return (
+    author.authorId ?? author.author?.authorId ?? author.id ?? author.author?.id
+  );
 }
 
 function getAuthorName(author: PaperAuthor) {
@@ -188,7 +281,11 @@ function getPaperTopics(paper: PaperApiModel) {
   return (paper.paperTopics ?? [])
     .map((paperTopic: PaperTopic) => ({
       id: paperTopic.topic?.topicId ?? paperTopic.topicId,
-      name: paperTopic.topic?.topicName ?? paperTopic.topic?.normalizedName ?? "",
+      name:
+        paperTopic.topic?.topicName ??
+        paperTopic.topic?.normalizedName ??
+        paperTopic.topicName ??
+        "",
       score: paperTopic.score ?? null,
     }))
     .filter((topic) => Boolean(topic.name));
@@ -198,7 +295,11 @@ function getPaperKeywords(paper: PaperApiModel) {
   return (paper.paperKeywords ?? [])
     .map((paperKeyword: PaperKeyword) => ({
       id: paperKeyword.keyword?.keywordId ?? paperKeyword.keywordId,
-      name: paperKeyword.keyword?.keywordName ?? paperKeyword.keyword?.normalizedName ?? "",
+      name:
+        paperKeyword.keyword?.keywordName ??
+        paperKeyword.keyword?.normalizedName ??
+        paperKeyword.keywordName ??
+        "",
       score: paperKeyword.score ?? null,
     }))
     .filter((keyword) => Boolean(keyword.name))
@@ -206,10 +307,18 @@ function getPaperKeywords(paper: PaperApiModel) {
 }
 
 function formatScoredLabel(name: string, score: number | null | undefined) {
-  return typeof score === "number" ? `${name} (${(score * 100).toFixed(0)}%)` : name;
+  return typeof score === "number"
+    ? `${name} (${(score * 100).toFixed(0)}%)`
+    : name;
 }
 
-function PaperDetailStatus({ title, description }: { title: string; description: string }) {
+function PaperDetailStatus({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
     <div className="paper-detail-page">
       <Link href="/dashboard/papers" className="paper-detail-back">

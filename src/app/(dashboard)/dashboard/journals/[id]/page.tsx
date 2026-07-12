@@ -1,4 +1,4 @@
-import { JournalDetailPage } from "@/features/journalDetail";
+import { JournalDetailPage } from "@/features/journals";
 
 export default async function Page({
   params,

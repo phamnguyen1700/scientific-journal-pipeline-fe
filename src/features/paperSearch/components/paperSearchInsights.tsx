@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import {
   BookOpen,
   CalendarDays,
@@ -10,54 +10,71 @@ import {
   UserRound,
 } from "lucide-react";
 
+import type {
+  AnalyticsKeyValue,
+  AnalyticsOpenAccessStat,
+  AnalyticsTrendingTopic,
+} from "@/types/analytics";
 import type { PaperSearchFacetItem, PaperSearchFacets } from "@/types/search";
-
+import { OpenAccessPieChart } from "./openAccessPieChart";
 export function PaperSearchInsights({
   facets,
-  total,
+  openAccessStats,
+  papersByYear,
+  topAuthors,
+  topJournals,
   onSelectKeyword,
   onSelectYear,
+  trendingTopics,
 }: {
   facets: PaperSearchFacets;
-  total: number;
+  openAccessStats: AnalyticsOpenAccessStat[];
+  papersByYear: AnalyticsKeyValue[];
+  topAuthors: AnalyticsKeyValue[];
+  topJournals: AnalyticsKeyValue[];
   onSelectKeyword: (keyword: string) => void;
   onSelectYear: (year: number) => void;
+  trendingTopics: AnalyticsTrendingTopic[];
 }) {
-  const openAccessTotal = facets.openAccess.total || total;
-  const openAccessRate = openAccessTotal
-    ? Math.round((facets.openAccess.count / openAccessTotal) * 1000) / 10
-    : 0;
-
   return (
-    <aside className="paper-search-insights" aria-label="Related search information">
+    <aside
+      className="paper-search-insights"
+      aria-label="Related search information"
+    >
       <InsightPanel title="Year" icon={<CalendarDays />}>
-        {facets.years.length ? (
-          <YearBars items={facets.years} onSelectYear={onSelectYear} />
+        {papersByYear.length ? (
+          <YearBars items={papersByYear} onSelectYear={onSelectYear} />
         ) : (
           <InsightEmpty />
         )}
       </InsightPanel>
 
       <InsightPanel title="Open Access" icon={<Globe2 />}>
-        <div className="paper-search-open-access">
-          <div className="paper-search-open-access-ring" style={{ "--oa": `${openAccessRate}%` } as CSSProperties}>
-            <span />
-          </div>
-          <div>
-            <strong>{openAccessRate}%</strong>
-            <span>{facets.openAccess.count.toLocaleString()} papers</span>
-          </div>
-        </div>
+        <OpenAccessPieChart items={openAccessStats} />
       </InsightPanel>
 
-      <FacetPanel title="Topic" icon={<Tags />} items={facets.topics} onSelect={onSelectKeyword} />
-      <FacetPanel title="Journal" icon={<BookOpen />} items={facets.journals} onSelect={onSelectKeyword} />
-      <FacetPanel title="Author" icon={<UserRound />} items={facets.authors} onSelect={onSelectKeyword} />
-      <FacetPanel title="Type" icon={<FileText />} items={facets.types} onSelect={onSelectKeyword} />
+      <TrendingTopicPanel items={trendingTopics} onSelect={onSelectKeyword} />
+      <AnalyticsFacetPanel
+        title="Journal"
+        icon={<BookOpen />}
+        items={topJournals}
+        onSelect={onSelectKeyword}
+      />
+      <AnalyticsFacetPanel
+        title="Author"
+        icon={<UserRound />}
+        items={topAuthors}
+        onSelect={onSelectKeyword}
+      />
+      <FacetPanel
+        title="Type"
+        icon={<FileText />}
+        items={facets.types}
+        onSelect={onSelectKeyword}
+      />
     </aside>
   );
 }
-
 function InsightPanel({
   title,
   icon,
@@ -70,7 +87,9 @@ function InsightPanel({
   return (
     <section className="paper-search-insight-panel w-full overflow-hidden rounded-xl border border-border bg-card p-4">
       <div className="paper-search-insight-heading mb-3 flex items-center gap-2 text-foreground">
-        <span className="flex size-6 items-center justify-center rounded-md bg-muted text-muted-foreground">{icon}</span>
+        <span className="flex size-6 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          {icon}
+        </span>
         <h2 className="text-sm font-semibold">{title}</h2>
       </div>
       {children}
@@ -78,6 +97,73 @@ function InsightPanel({
   );
 }
 
+function TrendingTopicPanel({
+  items,
+  onSelect,
+}: {
+  items: AnalyticsTrendingTopic[];
+  onSelect: (keyword: string) => void;
+}) {
+  return (
+    <InsightPanel title="Topic" icon={<Tags />}>
+      {items.length ? (
+        <div className="paper-search-facet-list">
+          {items.slice(0, 5).map((topic) => (
+            <button
+              key={topic.topicName}
+              type="button"
+              className="flex w-full items-center justify-between gap-3 py-2 text-left text-xs"
+              onClick={() => onSelect(topic.topicName)}
+            >
+              <span className="min-w-0 flex-1 truncate">{topic.topicName}</span>
+              <strong className="shrink-0 font-medium text-muted-foreground">
+                {topic.paperCount.toLocaleString()}
+              </strong>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <InsightEmpty />
+      )}
+    </InsightPanel>
+  );
+}
+
+function AnalyticsFacetPanel({
+  title,
+  icon,
+  items,
+  onSelect,
+}: {
+  title: string;
+  icon: ReactNode;
+  items: AnalyticsKeyValue[];
+  onSelect: (keyword: string) => void;
+}) {
+  return (
+    <InsightPanel title={title} icon={icon}>
+      {items.length ? (
+        <div className="paper-search-facet-list">
+          {items.slice(0, 5).map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className="flex w-full items-center justify-between gap-3 py-2 text-left text-xs"
+              onClick={() => onSelect(item.key)}
+            >
+              <span className="min-w-0 flex-1 truncate">{item.key}</span>
+              <strong className="shrink-0 font-medium text-muted-foreground">
+                {item.value.toLocaleString()}
+              </strong>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <InsightEmpty />
+      )}
+    </InsightPanel>
+  );
+}
 function FacetPanel({
   title,
   icon,
@@ -101,7 +187,9 @@ function FacetPanel({
               onClick={() => onSelect(item.label)}
             >
               <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              <strong className="shrink-0 font-medium text-muted-foreground">{item.count.toLocaleString()}</strong>
+              <strong className="shrink-0 font-medium text-muted-foreground">
+                {item.count.toLocaleString()}
+              </strong>
             </button>
           ))}
         </div>
@@ -116,31 +204,48 @@ function YearBars({
   items,
   onSelectYear,
 }: {
-  items: PaperSearchFacetItem[];
+  items: AnalyticsKeyValue[];
   onSelectYear: (year: number) => void;
 }) {
-  const max = Math.max(...items.map((item) => item.count), 1);
+  const visibleItems = [...items]
+    .filter(
+      (item) =>
+        Number.isFinite(Number(item.key)) && Number.isFinite(item.value),
+    )
+    .sort((first, second) => Number(first.key) - Number(second.key))
+    .slice(-10);
+  const max = Math.max(...visibleItems.map((item) => item.value), 1);
+
+  if (!visibleItems.length) {
+    return <InsightEmpty />;
+  }
 
   return (
-    <div className="paper-search-year-bars">
-      {items.slice(-18).map((item) => {
-        const year = Number(item.label);
+    <div className="paper-search-year-chart">
+      {visibleItems.map((item) => {
+        const year = Number(item.key);
+        const height = Math.max((item.value / max) * 100, 8);
 
         return (
           <button
-            key={item.label}
+            key={item.key}
             type="button"
-            style={{ height: `${Math.max(12, (item.count / max) * 84)}px` }}
-            title={`${item.label}: ${item.count.toLocaleString()} papers`}
-            onClick={() => Number.isFinite(year) && onSelectYear(year)}
-            aria-label={`${item.label}: ${item.count.toLocaleString()} papers`}
-          />
+            className="paper-search-year-chart-item"
+            title={`${item.key}: ${item.value.toLocaleString()} papers`}
+            onClick={() => onSelectYear(year)}
+            aria-label={`Filter papers from ${item.key}`}
+          >
+            <span>{item.value.toLocaleString()}</span>
+            <i>
+              <b style={{ height: `${height}%` }} />
+            </i>
+            <em>{item.key}</em>
+          </button>
         );
       })}
     </div>
   );
 }
-
 function InsightEmpty() {
   return <p className="paper-search-insight-empty">No data yet</p>;
 }

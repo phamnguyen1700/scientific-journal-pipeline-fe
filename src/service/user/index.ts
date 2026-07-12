@@ -1,32 +1,38 @@
 import { apiEndpoints } from "@/config/apiEndpoints";
 import { deleteRequest, get, post, put } from "@/service/apiClient";
+import type {
+  UserApiResponse,
+  UserBookmark,
+  UserFollowedTopic,
+  UserProfile,
+} from "@/types/user";
 
 export const getUserProfileService = () =>
-  get<unknown>(apiEndpoints.user.profile);
+  get<UserApiResponse<UserProfile>>(apiEndpoints.user.profile);
 
-export const updateUserProfileService = (payload: unknown) =>
-  put<unknown>(apiEndpoints.user.profile, payload);
+export const updateUserProfileService = (payload: Partial<UserProfile>) =>
+  put<UserApiResponse<UserProfile>, Partial<UserProfile>>(apiEndpoints.user.profile, payload);
 
 export const getLegacyProfileService = () =>
-  get<unknown>(apiEndpoints.user.legacyProfile);
+  get<UserApiResponse<UserProfile>>(apiEndpoints.user.legacyProfile);
 
 export const getUserBookmarksService = () =>
-  get<unknown>(apiEndpoints.user.bookmarks);
+  get<UserApiResponse<UserBookmark[]>>(apiEndpoints.user.bookmarks);
 
 export const addUserBookmarkService = (paperId: string) =>
-  post<unknown>(apiEndpoints.user.bookmark(paperId));
+  post<UserApiResponse<UserBookmark>>(apiEndpoints.user.bookmark(paperId));
 
 export const removeUserBookmarkService = (paperId: string) =>
-  deleteRequest<unknown>(apiEndpoints.user.bookmark(paperId));
+  deleteRequest<UserApiResponse<string>>(apiEndpoints.user.bookmark(paperId));
 
 export const getUserFollowingTopicsService = () =>
-  get<unknown>(apiEndpoints.user.followingTopics);
+  get<UserApiResponse<UserFollowedTopic[]>>(apiEndpoints.user.followingTopics);
 
 export const followTopicService = (topicId: string) =>
-  post<unknown>(apiEndpoints.user.followingTopic(topicId));
+  post<UserApiResponse<UserFollowedTopic>>(apiEndpoints.user.followingTopic(topicId));
 
 export const unfollowTopicService = (topicId: string) =>
-  deleteRequest<unknown>(apiEndpoints.user.followingTopic(topicId));
+  deleteRequest<UserApiResponse<string>>(apiEndpoints.user.followingTopic(topicId));
 
 export const userService = {
   profile: getUserProfileService,

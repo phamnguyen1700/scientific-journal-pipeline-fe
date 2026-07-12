@@ -7,17 +7,19 @@ import { Tag } from "@/components/common";
 import { useTopic } from "@/hooks/topics";
 import { useUserFollowingTopics } from "@/hooks/user";
 import { Button } from "@/shared/ui/button";
+import type { TagColor } from "@/types/common";
+import type { ResearchTopic, TopicApiModel } from "@/types/topics";
 
 export function TopicDetailPage({ id }: { id: string }) {
   const topicQuery = useTopic(id);
   const followingTopicsQuery = useUserFollowingTopics();
-  const topic = topicQuery.topic;
+  const topicData = topicQuery.topic;
 
   if (topicQuery.loading) {
     return <TopicDetailStatus title="Loading topic..." description="Fetching topic details from the server." />;
   }
 
-  if (topicQuery.error || !topic) {
+  if (topicQuery.error || !topicData) {
     return (
       <TopicDetailStatus
         title="Topic not found"
@@ -26,10 +28,11 @@ export function TopicDetailPage({ id }: { id: string }) {
     );
   }
 
+  const topic = toResearchTopic(topicData);
   const topicId = topic.apiId ?? String(topic.id);
   const followedTopicIds = new Set(
     followingTopicsQuery.topics.flatMap((item) =>
-      [item.id, item.apiId, item.name].filter(Boolean).map(String)
+      [item.topicId, item.topicName].filter(Boolean).map(String)
     )
   );
   const isFollowing =
@@ -93,6 +96,33 @@ export function TopicDetailPage({ id }: { id: string }) {
       </article>
     </div>
   );
+}
+
+function toResearchTopic(topic: TopicApiModel): ResearchTopic {
+  return {
+    id: topic.topicId,
+    apiId: topic.topicId,
+    name: topic.topicName,
+    description: topic.description ?? "No topic description available.",
+    category: topic.category ?? "Research Topic",
+    color: getTopicColor(topic.category),
+    papers: topic.paperCount ?? 0,
+    growth: topic.growthPercentage ?? 0,
+    trend: "up",
+    followed: topic.followed ?? false,
+    keywords: topic.keywords ?? [],
+  };
+}
+
+function getTopicColor(category: string | null | undefined): TagColor {
+  const colors: TagColor[] = ["purple", "blue", "green", "amber", "red", "cyan"];
+  if (!category) return "gray";
+
+  const index = category
+    .split("")
+    .reduce((total, character) => total + character.charCodeAt(0), 0);
+
+  return colors[index % colors.length];
 }
 
 function TopicDetailStatus({ title, description }: { title: string; description: string }) {

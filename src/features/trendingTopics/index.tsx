@@ -8,11 +8,20 @@ import {
   TrendingTopicsHeader,
   TrendingTopicsRanking,
 } from "@/features/trendingTopics/components";
-import { useTrendingTopicMetrics } from "@/hooks/trends";
+import {
+  getDashboardErrorMessage,
+  useDashboardHotTopics,
+  useDashboardTrendingTopics,
+} from "@/hooks/dashboard";
+import type { AnalyticsTrendingTopic } from "@/types/analytics";
+import type { DashboardHotTopic } from "@/types/dashboard";
 import type {
   TrendingTimeRange,
   TrendingTopicChartPoint,
+  TrendingTopicMetric,
 } from "@/types/topics";
+
+const topicColors = ["#6C4CF1", "#10B981", "#F59E0B", "#EF4444", "#2563EB", "#06B6D4"];
 
 const chartDataByRange: Record<TrendingTimeRange, TrendingTopicChartPoint[]> = {
   "7-days": [
@@ -42,23 +51,67 @@ const chartDataByRange: Record<TrendingTimeRange, TrendingTopicChartPoint[]> = {
 
 export function TrendingTopicsPage() {
   const [range, setRange] = useState<TrendingTimeRange>("30-days");
-  const topicsQuery = useTrendingTopicMetrics();
+  const hotTopicsQuery = useDashboardHotTopics();
+  const trendingTopicsQuery = useDashboardTrendingTopics();
   const chartData = useMemo(() => chartDataByRange[range], [range]);
+  const topics = useMemo(() => {
+    const hotTopics = toHotTopicMetrics(hotTopicsQuery.data ?? []);
+
+    return hotTopics.length
+      ? hotTopics
+      : toTrendingTopicMetrics(trendingTopicsQuery.data ?? []);
+  }, [hotTopicsQuery.data, trendingTopicsQuery.data]);
+  const loading = hotTopicsQuery.isPending || trendingTopicsQuery.isPending;
+  const error = getDashboardErrorMessage(hotTopicsQuery.error ?? trendingTopicsQuery.error);
 
   return (
     <div className="trending-topics-page">
       <TrendingTopicsHeader range={range} onRangeChange={setRange} />
-      <TrendingTopicKpis topics={topicsQuery.topics} />
+      <TrendingTopicKpis topics={topics} />
       <TrendingTopicsChart data={chartData} />
-      {topicsQuery.loading ? (
+      {loading ? (
         <div className="paper-search-empty">Loading trending topics...</div>
-      ) : topicsQuery.error ? (
-        <div className="paper-search-empty">{topicsQuery.error}</div>
+      ) : error ? (
+        <div className="paper-search-empty">{error}</div>
       ) : (
-        <TrendingTopicsRanking topics={topicsQuery.topics} />
+        <TrendingTopicsRanking topics={topics} />
       )}
     </div>
   );
+}
+
+function toHotTopicMetrics(topics: DashboardHotTopic[]): TrendingTopicMetric[] {
+  return topics.map((topic, index) => ({
+    id: topic.topicName,
+    name: topic.topicName,
+    category: "Research topic",
+    color: topicColors[index % topicColors.length],
+    papers: topic.paperCount,
+    growth: topic.growthPercentage,
+    citations: 0,
+    followers: 0,
+    sparkline: buildSparkline(topic.growthPercentage),
+  }));
+}
+
+function toTrendingTopicMetrics(topics: AnalyticsTrendingTopic[]): TrendingTopicMetric[] {
+  return topics.map((topic, index) => ({
+    id: topic.topicName,
+    name: topic.topicName,
+    category: "Research topic",
+    color: topicColors[index % topicColors.length],
+    papers: topic.paperCount,
+    growth: topic.growthPercentage,
+    citations: 0,
+    followers: 0,
+    sparkline: buildSparkline(topic.growthPercentage),
+  }));
+}
+
+function buildSparkline(growth: number) {
+  const base = Math.max(8, 48 - Math.round(growth));
+
+  return Array.from({ length: 7 }, (_, index) => base + Math.round((growth / 6) * index));
 }
 
 export { chartDataByRange };

@@ -10,11 +10,38 @@ import {
   PublicationTrendsCard,
   RecentPapersCard,
 } from "@/features/dashboard/components";
-import type { DashboardKpi } from "@/types/dashboard";
-import { toPaperSearchResult } from "@/features/paperSearch/paperMapper";
-import { useStudentDashboard } from "@/hooks/dashboard";
+import {
+  getDashboardErrorMessage,
+  useDashboardAnalytics,
+  useDashboardSummary,
+} from "@/hooks/dashboard";
+import { useKeywordsOverTime, useTopTopics } from "@/hooks/analytics";
 import { usePaperSearch } from "@/hooks/search";
-import { useUserProfile } from "@/hooks/user";
+import {
+  useUserBookmarks,
+  useUserFollowingTopics,
+  useUserProfile,
+} from "@/hooks/user";
+import type { AnalyticsKeyValue, AnalyticsSeries } from "@/types/analytics";
+import type {
+  BookmarkedPaper,
+  DashboardKpi,
+  RecentPaper,
+  TrendingTopic,
+  TrendPoint,
+  TrendSeries,
+} from "@/types/dashboard";
+import type { PaperSearchPaper } from "@/types/search";
+import type { UserBookmark } from "@/types/user";
+
+const topicColors = ["#6C4CF1", "#10B981", "#F59E0B", "#EF4444", "#2563EB"];
+const publicationTrendKeywords = [
+  "Computer science",
+  "Artificial intelligence",
+  "Machine learning",
+  "Data science",
+  "Deep learning",
+];
 
 const dashboardKpis: DashboardKpi[] = [
   {
@@ -53,30 +80,40 @@ const dashboardKpis: DashboardKpi[] = [
 
 export function StudentDashboardPage() {
   const papersQuery = usePaperSearch({ page: 1, size: 4 });
-  const dashboardQuery = useStudentDashboard();
   const profileQuery = useUserProfile();
-  const studentDashboard = dashboardQuery.data;
-  const displayName = profileQuery.profile?.username ?? "Researcher";
-  const apiRecentPapers = papersQuery.papers.map((paper, index) => {
-    const result = toPaperSearchResult(paper, index);
+  const bookmarksQuery = useUserBookmarks();
+  const followingTopicsQuery = useUserFollowingTopics();
+  const summaryQuery = useDashboardSummary();
+  const analyticsQuery = useDashboardAnalytics();
+  const topTopicsQuery = useTopTopics(10);
+  const publicationTrendsQuery = useKeywordsOverTime(publicationTrendKeywords);
 
-    return {
-      id: result.id,
-      title: result.title,
-      authors: result.authors.join(", "),
-      journal: result.journal,
-      year: result.year,
-      citations: result.citations,
-      tags: result.tags,
-    };
-  });
+  const displayName = profileQuery.profile?.username ?? "Researcher";
+  const bookmarks = toDashboardBookmarks(bookmarksQuery.bookmarks).slice(0, 4);
+  const followedTopics = followingTopicsQuery.topics;
+  const summary = summaryQuery.data;
+  const analytics = analyticsQuery.data;
+  const publicationTrends = toPublicationTrends(
+    publicationTrendsQuery.data ?? [],
+  );
+  const trendingTopics = toTopTopicItems(topTopicsQuery.data ?? []);
+  const recentPapers = toRecentPapers(papersQuery.papers);
+  const bookmarkTotal =
+    summary?.bookmarkedPapers ?? bookmarksQuery.bookmarks.length;
+  const followedTopicCount =
+    summary?.followedTopics ??
+    analytics?.followedTopics ??
+    followedTopics.length;
   const kpiItems = dashboardKpis.map((item) =>
     mapDashboardKpi(item, {
-      bookmarkedPapers: studentDashboard.stats.bookmarkedPapers ?? studentDashboard.bookmarks.length,
-      followedTopics: studentDashboard.stats.followedTopics ?? studentDashboard.followedTopicCount,
-      journalAlerts: studentDashboard.stats.journalAlerts,
-      newPapers: studentDashboard.stats.newPapers ?? papersQuery.total,
-    })
+      bookmarkedPapers: bookmarkTotal,
+      followedTopics: followedTopicCount,
+      journalAlerts: summary?.journalAlerts,
+      newPapers:
+        summary?.newPapers ??
+        analytics?.newPapersInFollowedTopics ??
+        papersQuery.total,
+    }),
   );
 
   return (
@@ -84,20 +121,25 @@ export function StudentDashboardPage() {
       <DashboardHeader name={displayName} />
       <DashboardKpiGrid items={kpiItems} />
       <div className="dashboard-grid">
-        <PublicationTrendsCard data={studentDashboard.trendData} series={studentDashboard.trendSeries} />
-        <HotTopicsCard topics={studentDashboard.trendingTopics} />
+        <PublicationTrendsCard
+          data={publicationTrends.data}
+          series={publicationTrends.series}
+        />
+        <HotTopicsCard topics={trendingTopics} />
       </div>
       <div className="dashboard-grid">
         <RecentPapersCard
           error={papersQuery.error}
           loading={papersQuery.loading}
-          papers={apiRecentPapers}
+          papers={recentPapers}
         />
         <BookmarksCard
-          error={dashboardQuery.error}
-          loading={dashboardQuery.loading}
-          papers={studentDashboard.bookmarks}
-          total={studentDashboard.stats.bookmarkedPapers ?? studentDashboard.bookmarks.length}
+          error={
+            bookmarksQuery.error ?? getDashboardErrorMessage(summaryQuery.error)
+          }
+          loading={bookmarksQuery.loading || summaryQuery.isPending}
+          papers={bookmarks}
+          total={bookmarkTotal}
         />
       </div>
     </div>
@@ -111,24 +153,130 @@ function mapDashboardKpi(
     followedTopics?: number;
     journalAlerts?: number;
     newPapers?: number;
-  }
+  },
 ): DashboardKpi {
-  if (item.label === "Bookmarked Papers" && stats.bookmarkedPapers !== undefined) {
-    return { ...item, value: String(stats.bookmarkedPapers), sub: "saved in your library" };
+  if (
+    item.label === "Bookmarked Papers" &&
+    stats.bookmarkedPapers !== undefined
+  ) {
+    return {
+      ...item,
+      value: String(stats.bookmarkedPapers),
+      sub: "saved in your library",
+    };
   }
 
   if (item.label === "Followed Topics" && stats.followedTopics !== undefined) {
-    return { ...item, value: String(stats.followedTopics), sub: "topics you follow" };
+    return {
+      ...item,
+      value: String(stats.followedTopics),
+      sub: "topics you follow",
+    };
   }
 
   if (item.label === "Journal Alerts" && stats.journalAlerts !== undefined) {
-    return { ...item, value: String(stats.journalAlerts), sub: "from analytics dashboard" };
+    return {
+      ...item,
+      value: String(stats.journalAlerts),
+      sub: "from analytics dashboard",
+    };
   }
 
   if (item.label === "New Papers" && stats.newPapers !== undefined) {
-    return { ...item, value: String(stats.newPapers), sub: "from search index" };
+    return {
+      ...item,
+      value: String(stats.newPapers),
+      sub: "from search index",
+    };
   }
 
   return item;
 }
 
+function toRecentPapers(papers: PaperSearchPaper[]): RecentPaper[] {
+  return papers.map((paper) => ({
+    id: paper.paperId,
+    title: paper.title,
+    authors: paper.authors.join(", "),
+    journal: "Journal information unavailable",
+    year: paper.publicationYear,
+    citations: paper.citedByCount,
+    tags: paper.keywords.slice(0, 4),
+  }));
+}
+
+function toDashboardBookmarks(bookmarks: UserBookmark[]): BookmarkedPaper[] {
+  return bookmarks.map((bookmark) => ({
+    id: bookmark.paperId,
+    title: bookmark.paper?.title ?? "Paper information unavailable",
+    journal: "Journal information unavailable",
+    saved: formatBookmarkDate(bookmark.createdAt),
+  }));
+}
+
+function formatBookmarkDate(value: string | undefined) {
+  if (!value) return "recently";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function toTopTopicItems(topics: AnalyticsKeyValue[]): TrendingTopic[] {
+  return topics.slice(0, 10).map((topic, index) => ({
+    name: topic.key,
+    count: topic.value,
+    color: topicColors[index % topicColors.length],
+  }));
+}
+
+function toPublicationTrends(trends: AnalyticsSeries[]): {
+  data: TrendPoint[];
+  series: TrendSeries[];
+} {
+  const rows = new Map<string, TrendPoint & { sortKey: number }>();
+  const series: TrendSeries[] = [];
+
+  trends.forEach((trend, topicIndex) => {
+    const key = `topic${topicIndex}`;
+
+    series.push({
+      key,
+      name: trend.seriesName,
+      color: topicColors[topicIndex % topicColors.length],
+    });
+
+    trend.dataPoints.forEach((point) => {
+      const row = rows.get(point.key) ?? {
+        year: point.key,
+        sortKey: Number(point.key),
+      };
+
+      row[key] = point.value;
+      rows.set(point.key, row);
+    });
+  });
+
+  const data = Array.from(rows.values())
+    .sort((first, second) => first.sortKey - second.sortKey)
+    .map(toTrendPoint);
+
+  return { data, series };
+}
+
+function toTrendPoint(row: TrendPoint & { sortKey: number }): TrendPoint {
+  const trendPoint: TrendPoint = { year: row.year };
+
+  Object.entries(row).forEach(([key, value]) => {
+    if (key !== "year" && key !== "sortKey") {
+      trendPoint[key] = value;
+    }
+  });
+
+  return trendPoint;
+}

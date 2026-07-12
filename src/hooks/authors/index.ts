@@ -7,13 +7,13 @@ import type { AuthorDetail, AuthorDetailApiResponse } from "@/types/authors";
 
 export const authorQueryKeys = {
   all: ["authors"] as const,
-  detail: (id: string) => [...authorQueryKeys.all, "detail", id] as const,
+  detail: (id: string | null) => [...authorQueryKeys.all, "detail", id] as const,
 };
 
-export function useAuthor(id: string) {
+export function useAuthor(id: string | null) {
   const query = useQuery({
     queryKey: authorQueryKeys.detail(id),
-    queryFn: async () => normalizeAuthorDetailResponse(await getAuthorDetailService(id)),
+    queryFn: async () => unwrapAuthorDetailResponse(await getAuthorDetailService(id ?? "")),
     enabled: Boolean(id),
   });
 
@@ -25,24 +25,21 @@ export function useAuthor(id: string) {
   };
 }
 
-function normalizeAuthorDetailResponse(response: AuthorDetailApiResponse): AuthorDetail {
-  if (isAuthorDetail(response)) {
+function unwrapAuthorDetailResponse(response: AuthorDetailApiResponse): AuthorDetail {
+  if ("authorId" in response || "displayName" in response || "fullName" in response) {
     return response;
   }
 
-  const succeeded = response.success ?? response.succeeded ?? response.Succeeded ?? true;
-  const result = response.result ?? response.Result ?? response.data ?? null;
-  const errors = response.errors ?? response.Errors ?? [];
+  const apiResponse = response as Exclude<AuthorDetailApiResponse, AuthorDetail>;
+  const succeeded = apiResponse.success ?? apiResponse.succeeded ?? apiResponse.Succeeded ?? false;
+  const result = apiResponse.result ?? apiResponse.Result ?? apiResponse.data ?? null;
+  const errors = apiResponse.errors ?? apiResponse.Errors ?? [];
 
   if (!succeeded || !result) {
     throw new Error(errors.join(", ") || "Author not found.");
   }
 
   return result;
-}
-
-function isAuthorDetail(response: AuthorDetailApiResponse): response is AuthorDetail {
-  return "authorId" in response || "displayName" in response || "fullName" in response;
 }
 
 function getErrorMessage(error: unknown) {

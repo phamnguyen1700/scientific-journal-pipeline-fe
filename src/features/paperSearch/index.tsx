@@ -11,27 +11,24 @@ import {
   PaperSearchPagination,
   PaperSearchToolbar,
 } from "@/features/paperSearch/components";
-import { toPaperSearchResult } from "@/features/paperSearch/paperMapper";
 import {
   useJournalOpenAccessRatio,
   useKeywordWordCloud,
   usePapersByYear,
   useTopAuthorsByCitations,
-  useTopJournalsByPaperCount,
-  useTopTopics,
+  useTopJournalsByCitations,
+  useTrendingTopics,
 } from "@/hooks/analytics";
-import { useJournals } from "@/hooks/journals";
-import { usePapers } from "@/hooks/papers";
-import { useAuthorSearch, usePaperSearch } from "@/hooks/search";
-import { useTopics } from "@/hooks/topics";
+import { usePaperSearch } from "@/hooks/search";
 import { useUserBookmarks } from "@/hooks/user";
 import type { AnalyticsKeyValue } from "@/types/analytics";
-import type { Journal } from "@/types/journals";
 import type {
   PaperSearchFilters as PaperSearchFiltersValue,
+  PaperSearchApiFacetItem,
+  PaperSearchApiFacets,
   PaperSearchFacetItem,
   PaperSearchFacets,
-  PaperSearchResult,
+  PaperSearchPaper,
 } from "@/types/search";
 
 const initialFilters: PaperSearchFiltersValue = {
@@ -39,6 +36,10 @@ const initialFilters: PaperSearchFiltersValue = {
   to: "",
   language: "",
   isOpenAccess: "",
+  filterJournal: "",
+  filterAuthor: "",
+  filterKeyword: "",
+  filterYear: "",
 };
 
 const pageSize = 10;
@@ -66,77 +67,85 @@ export function PaperSearchPage() {
   const to = formValues.to ?? "";
   const language = formValues.language ?? "";
   const isOpenAccess = formValues.isOpenAccess ?? "";
+  const filterJournal = formValues.filterJournal ?? "";
+  const filterAuthor = formValues.filterAuthor ?? "";
+  const filterKeyword = formValues.filterKeyword ?? "";
+  const filterYear = formValues.filterYear ?? "";
   const page = formValues.page ?? 1;
   const size = formValues.size ?? pageSize;
-  const filters: PaperSearchFiltersValue = { from, to, language, isOpenAccess };
-  const hasSearchCriteria = Boolean(q.trim() || from || to || language || isOpenAccess);
-  const searchRequest = toPaperSearchRequest({ q, from, to, language, isOpenAccess, page, size });
+  const filters: PaperSearchFiltersValue = {
+    from,
+    to,
+    language,
+    isOpenAccess,
+    filterJournal,
+    filterAuthor,
+    filterKeyword,
+    filterYear,
+  };
+  const hasSearchCriteria = Boolean(
+    q.trim() ||
+      from ||
+      to ||
+      language ||
+      isOpenAccess ||
+      filterJournal ||
+      filterAuthor ||
+      filterKeyword ||
+      filterYear,
+  );
+  const searchRequest = toPaperSearchRequest({
+    q,
+    from,
+    to,
+    language,
+    isOpenAccess,
+    filterJournal,
+    filterAuthor,
+    filterKeyword,
+    filterYear,
+    page,
+    size,
+  });
   const paperQuery = usePaperSearch(searchRequest);
-  const allPapersQuery = usePapers();
-  const journalsQuery = useJournals();
-  const topicsQuery = useTopics();
-  const authorsQuery = useAuthorSearch({ q, size: 12 });
   const papersByYearQuery = usePapersByYear();
-  const topTopicsQuery = useTopTopics(12);
+  const trendingTopicsQuery = useTrendingTopics(1, 10);
   const keywordWordCloudQuery = useKeywordWordCloud(12);
-  const topJournalsQuery = useTopJournalsByPaperCount(12);
-  const topAuthorsQuery = useTopAuthorsByCitations(12);
+  const topJournalsQuery = useTopJournalsByCitations(10);
+  const topAuthorsQuery = useTopAuthorsByCitations(10);
   const openAccessRatioQuery = useJournalOpenAccessRatio();
   const bookmarksQuery = useUserBookmarks();
-  const searchHasResults = paperQuery.papers.length > 0 || paperQuery.total > 0;
-  const useAllPapersFallback = !hasSearchCriteria && !paperQuery.loading && Boolean(paperQuery.error || !searchHasResults);
-  const activePaperSource = useAllPapersFallback ? "all" : "search";
-
-  const papers = useMemo(
-    () =>
-      (activePaperSource === "search" ? paperQuery.papers : allPapersQuery.papers).map((paper, index) => {
-        const result = toPaperSearchResult(paper, index);
-
-        return { ...result, bookmarked: bookmarksQuery.papers.some((bookmark) => String(bookmark.id) === result.id || bookmark.apiId === result.apiId) };
-      }),
-    [activePaperSource, allPapersQuery.papers, bookmarksQuery.papers, paperQuery.papers]
+  const papers = paperQuery.papers;
+  const bookmarkedPaperIds = useMemo(
+    () => new Set(bookmarksQuery.bookmarks.map((bookmark) => bookmark.paperId)),
+    [bookmarksQuery.bookmarks]
   );
-
-  const visiblePapers = useMemo(
-    () => activePaperSource === "search" ? papers : papers.slice((page - 1) * size, page * size),
-    [activePaperSource, page, papers, size]
-  );
-  const resultCount = activePaperSource === "search" ? paperQuery.total : papers.length;
-  const loading = paperQuery.loading || (useAllPapersFallback && allPapersQuery.loading);
-  const error = useAllPapersFallback ? allPapersQuery.error : paperQuery.error;
+  const resultCount = paperQuery.total || papers.length;
+  const loading = paperQuery.loading;
+  const error = paperQuery.error;
   const relatedFacets = useMemo(
     () =>
       mergeFacets(
         mergeFacets(
-          activePaperSource === "search" ? paperQuery.facets : emptyFacets,
+          toSearchFacets(paperQuery.facets),
           buildApiFacets({
-            authors: authorsQuery.authors.length ? authorsQuery.authors : toFacetItems(topAuthorsQuery.data),
-            journals: buildJournalFacets(journalsQuery.journals, topJournalsQuery.data, papers),
+            authors: toFacetItems(topAuthorsQuery.data),
+            journals: toFacetItems(topJournalsQuery.data),
             keywords: toFacetItems(keywordWordCloudQuery.data),
-            openAccessRatios: openAccessRatioQuery.data,
-            openAccessTotal: resultCount,
             paperYears: toFacetItems(papersByYearQuery.data, "asc"),
-            topics: topicsQuery.topics.length
-              ? topicsQuery.topics.map((topic) => ({ label: topic.name, count: topic.papers }))
-              : toFacetItems(topTopicsQuery.data),
+            topics: [],
           })
         ),
         buildFacetsFromPapers(papers, resultCount)
       ),
     [
-      activePaperSource,
-      authorsQuery.authors,
-      journalsQuery.journals,
       keywordWordCloudQuery.data,
-      openAccessRatioQuery.data,
       paperQuery.facets,
       papers,
       papersByYearQuery.data,
       resultCount,
       topAuthorsQuery.data,
       topJournalsQuery.data,
-      topTopicsQuery.data,
-      topicsQuery.topics,
     ]
   );
   const suggestions = useMemo(
@@ -157,12 +166,17 @@ export function PaperSearchPage() {
     setValue("to", value.to);
     setValue("language", value.language);
     setValue("isOpenAccess", value.isOpenAccess);
+    setValue("filterJournal", value.filterJournal);
+    setValue("filterAuthor", value.filterAuthor);
+    setValue("filterKeyword", value.filterKeyword);
+    setValue("filterYear", value.filterYear);
     setValue("page", 1);
   }
 
   function updateYear(year: number) {
     setValue("from", String(year));
     setValue("to", String(year));
+    setValue("filterYear", String(year));
     setValue("page", 1);
   }
 
@@ -171,76 +185,81 @@ export function PaperSearchPage() {
   }
 
   function toggleBookmark(id: string) {
-    const paper = papers.find((item) => item.id === id);
-    const paperId = paper?.apiId ?? id;
-
-    if (paper?.bookmarked) {
-      bookmarksQuery.removeBookmark(paperId);
+    if (bookmarkedPaperIds.has(id)) {
+      bookmarksQuery.removeBookmark(id);
     } else {
-      bookmarksQuery.addBookmark(paperId);
+      bookmarksQuery.addBookmark(id);
     }
   }
 
   return (
     <div className="paper-search-page">
-      <PaperSearchHeader />
-      <section className="paper-search-controls">
-        <PaperSearchToolbar
-          query={q}
-          resultCount={resultCount}
-          suggestions={suggestions}
-          onQueryChange={updateQuery}
+      <div className="paper-search-workspace">
+        <PaperSearchFilters
+          facets={{
+            authors: relatedFacets.authors,
+            journals: relatedFacets.journals,
+            keywords: relatedFacets.keywords,
+            years: relatedFacets.years,
+          }}
+          filters={filters}
+          onChange={updateFilters}
+          onReset={resetFilters}
         />
-      </section>
-      <PaperSearchFilters
-        facets={{
-          authors: relatedFacets.authors,
-          journals: relatedFacets.journals,
-          topics: relatedFacets.topics,
-          types: relatedFacets.types,
-          years: relatedFacets.years,
-        }}
-        filters={filters}
-        onChange={updateFilters}
-        onFacetSelect={updateQuery}
-        onReset={resetFilters}
-      />
 
-      <div className="paper-search-layout">
-        <section className="paper-search-results">
-          {loading ? (
-            <PaperSearchStatus title="Loading papers..." description={hasSearchCriteria ? "Searching matching papers from the server." : "Fetching all papers from the server."} />
-          ) : error ? (
-            <PaperSearchStatus title="Unable to load papers" description={error} />
-          ) : visiblePapers.length ? (
-            <div className="paper-search-result-list">
-              {visiblePapers.map((paper) => (
-                <PaperResultCard
-                  key={paper.id}
-                  paper={paper}
-                  onToggleBookmark={toggleBookmark}
-                />
-              ))}
-            </div>
-          ) : (
-            <PaperSearchStatus title="No papers found" description="Try adjusting the search keyword or filter selection." />
-          )}
-
-          {!loading && !error && (
-            <PaperSearchPagination
-              page={currentPage}
-              pageCount={pageCount}
-              onChange={(nextPage) => setValue("page", nextPage)}
+        <div className="paper-search-main">
+          <PaperSearchHeader />
+          <section className="paper-search-controls">
+            <PaperSearchToolbar
+              query={q}
+              resultCount={resultCount}
+              suggestions={suggestions}
+              onQueryChange={updateQuery}
             />
-          )}
-        </section>
+          </section>
 
-        <PaperSearchInsights
-          facets={relatedFacets}
-          total={resultCount}
-          onSelectKeyword={updateQuery}
-          onSelectYear={updateYear}
-        />
+          <div className="paper-search-layout">
+            <section className="paper-search-results">
+              {loading ? (
+                <PaperSearchStatus title="Loading papers..." description={hasSearchCriteria ? "Searching matching papers from the server." : "Fetching all papers from the server."} />
+              ) : error ? (
+                <PaperSearchStatus title="Unable to load papers" description={error} />
+              ) : papers.length ? (
+                <div className="paper-search-result-list">
+                  {papers.map((paper) => (
+                    <PaperResultCard
+                      key={paper.paperId}
+                      bookmarked={bookmarkedPaperIds.has(paper.paperId)}
+                      paper={paper}
+                      onToggleBookmark={toggleBookmark}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <PaperSearchStatus title="No papers found" description="Try adjusting the search keyword or filter selection." />
+              )}
+
+              {!loading && !error && (
+                <PaperSearchPagination
+                  page={currentPage}
+                  pageCount={pageCount}
+                  onChange={(nextPage) => setValue("page", nextPage)}
+                />
+              )}
+            </section>
+
+            <PaperSearchInsights
+              facets={relatedFacets}
+              openAccessStats={openAccessRatioQuery.data ?? []}
+              papersByYear={papersByYearQuery.data ?? []}
+              onSelectKeyword={updateQuery}
+              onSelectYear={updateYear}
+              topAuthors={topAuthorsQuery.data ?? []}
+              topJournals={topJournalsQuery.data ?? []}
+              trendingTopics={trendingTopicsQuery.data ?? []}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -267,9 +286,25 @@ function toPaperSearchRequest(values: PaperSearchFormValues) {
       values.isOpenAccess === ""
         ? undefined
         : values.isOpenAccess === "true",
+    filterJournal: toStringArrayParam(values.filterJournal),
+    filterAuthor: toStringArrayParam(values.filterAuthor),
+    filterKeyword: toStringArrayParam(values.filterKeyword),
+    filterYear: toNumberArrayParam(values.filterYear),
   };
 }
 
+
+function toStringArrayParam(value: string) {
+  const trimmed = value.trim();
+
+  return trimmed ? [trimmed] : undefined;
+}
+
+function toNumberArrayParam(value: string) {
+  const parsed = toNumberParam(value);
+
+  return parsed === undefined ? undefined : [parsed];
+}
 function toNumberParam(value: string) {
   const parsed = Number(value);
 
@@ -281,6 +316,7 @@ const emptyFacets: PaperSearchFacets = {
   topics: [],
   journals: [],
   authors: [],
+  keywords: [],
   types: [],
   openAccess: {
     count: 0,
@@ -288,70 +324,59 @@ const emptyFacets: PaperSearchFacets = {
   },
 };
 
+
+function toSearchFacets(facets: PaperSearchApiFacets | undefined): PaperSearchFacets {
+  return {
+    years: toSearchFacetItems(facets?.years, "asc"),
+    topics: [],
+    journals: toSearchFacetItems(facets?.journals),
+    authors: toSearchFacetItems(facets?.authors),
+    keywords: toSearchFacetItems(facets?.keywords),
+    types: [],
+    openAccess: emptyFacets.openAccess,
+  };
+}
+
+function toSearchFacetItems(
+  items: PaperSearchApiFacetItem[] | undefined,
+  order: "count" | "asc" = "count",
+): PaperSearchFacetItem[] {
+  const facets = (items ?? [])
+    .map((item) => ({ label: item.value, value: item.value, count: item.count }))
+    .filter((item) => item.label && Number.isFinite(item.count));
+
+  return facets.sort((first, second) => {
+    if (order === "asc") return Number(first.label) - Number(second.label);
+    return second.count - first.count || first.label.localeCompare(second.label);
+  });
+}
 function buildApiFacets({
   authors,
   journals,
   keywords,
-  openAccessRatios,
-  openAccessTotal,
   paperYears,
   topics,
 }: {
   authors: PaperSearchFacetItem[];
   journals: PaperSearchFacetItem[];
   keywords: PaperSearchFacetItem[];
-  openAccessRatios: AnalyticsKeyValue[] | undefined;
-  openAccessTotal: number;
   paperYears: PaperSearchFacetItem[];
   topics: PaperSearchFacetItem[];
 }): PaperSearchFacets {
   return {
     years: paperYears,
-    topics: topics.length ? topics : keywords,
+    topics,
     journals,
     authors,
+    keywords,
     types: [],
-    openAccess: estimateOpenAccess(openAccessRatios, openAccessTotal),
+    openAccess: emptyFacets.openAccess,
   };
-}
-
-function buildJournalFacets(
-  journals: Journal[],
-  analyticsJournals: AnalyticsKeyValue[] | undefined,
-  papers: PaperSearchResult[]
-): PaperSearchFacetItem[] {
-  const analyticsCounts = new Map(
-    (analyticsJournals ?? []).map((item) => [normalizeFacetLabel(item.key), item.value])
-  );
-  const paperCounts = papers.reduce<Map<string, number>>((map, paper) => {
-    const key = normalizeFacetLabel(paper.journal);
-    if (key && !paper.journal.includes("unavailable")) {
-      map.set(key, (map.get(key) ?? 0) + 1);
-    }
-
-    return map;
-  }, new Map());
-
-  if (!journals.length) {
-    return toFacetItems(analyticsJournals);
-  }
-
-  return journals
-    .map((journal) => {
-      const key = normalizeFacetLabel(journal.name);
-
-      return {
-        label: journal.name,
-        count: journal.papers || analyticsCounts.get(key) || paperCounts.get(key) || 0,
-      };
-    })
-    .sort((first, second) => second.count - first.count || first.label.localeCompare(second.label))
-    .slice(0, 12);
 }
 
 function toFacetItems(items: AnalyticsKeyValue[] | undefined, order: "count" | "asc" = "count"): PaperSearchFacetItem[] {
   const facets = (items ?? [])
-    .map((item) => ({ label: item.key, count: item.value }))
+    .map((item) => ({ label: item.key, value: item.key, count: item.value }))
     .filter((item) => item.label && Number.isFinite(item.count));
 
   return facets.sort((first, second) => {
@@ -360,64 +385,7 @@ function toFacetItems(items: AnalyticsKeyValue[] | undefined, order: "count" | "
   });
 }
 
-function normalizeFacetLabel(value: string) {
-  return value.trim().toLowerCase();
-}
 
-function estimateOpenAccess(items: AnalyticsKeyValue[] | undefined, fallbackTotal: number) {
-  if (!items?.length) {
-    return emptyFacets.openAccess;
-  }
-
-  const ratioItem = items.find((item) => /ratio|percent|percentage/i.test(item.key));
-  if (ratioItem) {
-    const ratio = ratioItem.value <= 1 ? ratioItem.value : ratioItem.value / 100;
-    const total = fallbackTotal || 100;
-
-    return {
-      count: Math.round(ratio * total),
-      total,
-    };
-  }
-
-  const openAccessItem = items.find((item) => /open|oa|access|true|yes/i.test(item.key));
-  const closedAccessItem = items.find((item) => /closed|false|no|not/i.test(item.key));
-  const count = openAccessItem?.value ?? 0;
-  const total = openAccessItem || closedAccessItem
-    ? count + (closedAccessItem?.value ?? 0)
-    : items.reduce((sum, item) => sum + Math.max(0, item.value), 0);
-
-  return {
-    count,
-    total,
-  };
-}
-
-const stopWords = new Set([
-  "about",
-  "after",
-  "analysis",
-  "and",
-  "are",
-  "based",
-  "between",
-  "case",
-  "data",
-  "for",
-  "from",
-  "into",
-  "learning",
-  "model",
-  "models",
-  "paper",
-  "research",
-  "study",
-  "the",
-  "this",
-  "through",
-  "using",
-  "with",
-]);
 
 function mergeFacets(apiFacets: PaperSearchFacets, derivedFacets: PaperSearchFacets): PaperSearchFacets {
   return {
@@ -425,20 +393,22 @@ function mergeFacets(apiFacets: PaperSearchFacets, derivedFacets: PaperSearchFac
     topics: apiFacets.topics.length ? apiFacets.topics : derivedFacets.topics,
     journals: apiFacets.journals.length ? apiFacets.journals : derivedFacets.journals,
     authors: apiFacets.authors.length ? apiFacets.authors : derivedFacets.authors,
+    keywords: apiFacets.keywords.length ? apiFacets.keywords : derivedFacets.keywords,
     types: apiFacets.types.length ? apiFacets.types : derivedFacets.types,
     openAccess: apiFacets.openAccess.count > 0 ? apiFacets.openAccess : derivedFacets.openAccess,
   };
 }
 
-function buildFacetsFromPapers(papers: PaperSearchResult[], total: number): PaperSearchFacets {
+function buildFacetsFromPapers(papers: PaperSearchPaper[], total: number): PaperSearchFacets {
   return {
-    years: buildFacet(papers.map((paper) => String(paper.year)).filter((year) => year !== "0"), "asc"),
-    topics: buildFacet(papers.flatMap((paper) => [...paper.tags, ...extractTopicTerms(paper.title), ...extractTopicTerms(paper.abstract)])),
-    journals: buildFacet(papers.map((paper) => paper.journal).filter((journal) => !journal.includes("unavailable"))),
-    authors: buildFacet(papers.flatMap((paper) => paper.authors).filter((author) => !author.includes("unavailable"))),
-    types: buildFacet(papers.map((paper) => paper.paperType ?? "").filter(Boolean)),
+    years: buildFacet(papers.map((paper) => String(paper.publicationYear)).filter((year) => year !== "0"), "asc"),
+    topics: [],
+    journals: [],
+    authors: buildFacet(papers.flatMap((paper) => paper.authors)),
+    keywords: buildFacet(papers.flatMap((paper) => paper.keywords)),
+    types: [],
     openAccess: {
-      count: papers.filter((paper) => paper.openAccess).length,
+      count: 0,
       total: total || papers.length,
     },
   };
@@ -453,7 +423,7 @@ function buildFacet(values: string[], order: "count" | "asc" = "count"): PaperSe
     return map;
   }, new Map());
 
-  return Array.from(counts, ([label, count]) => ({ label, count }))
+  return Array.from(counts, ([label, count]) => ({ label, value: label, count }))
     .sort((first, second) => {
       if (order === "asc") return Number(first.label) - Number(second.label);
       return second.count - first.count || first.label.localeCompare(second.label);
@@ -461,22 +431,7 @@ function buildFacet(values: string[], order: "count" | "asc" = "count"): PaperSe
     .slice(0, 12);
 }
 
-function extractTopicTerms(text: string) {
-  const words = text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, " ")
-    .split(/\s+/)
-    .filter((word) => word.length > 3 && !stopWords.has(word));
-
-  const phrases: string[] = [];
-  for (let index = 0; index < words.length - 1; index += 1) {
-    phrases.push(toTitleCase(`${words[index]} ${words[index + 1]}`));
-  }
-
-  return phrases.slice(0, 6);
-}
-
-function buildSuggestions(query: string, papers: PaperSearchResult[], facets: PaperSearchFacets) {
+function buildSuggestions(query: string, papers: PaperSearchPaper[], facets: PaperSearchFacets) {
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) return [];
 
@@ -484,16 +439,12 @@ function buildSuggestions(query: string, papers: PaperSearchResult[], facets: Pa
     ...facets.topics.map((item) => item.label),
     ...facets.journals.map((item) => item.label),
     ...facets.authors.map((item) => item.label),
-    ...papers.map((paper) => paper.title),
+    ...papers.flatMap((paper) => [paper.title, ...paper.authors, ...paper.keywords]),
   ];
 
   return Array.from(new Set(candidates))
     .filter((candidate) => candidate.toLowerCase().includes(normalizedQuery) && candidate.toLowerCase() !== normalizedQuery)
     .slice(0, 6);
-}
-
-function toTitleCase(value: string) {
-  return value.replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export { initialFilters };
