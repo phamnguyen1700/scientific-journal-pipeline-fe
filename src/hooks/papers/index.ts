@@ -1,141 +1,145 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 
 import {
   getPaperDetailService,
   getPapersByAuthorService,
-  getPapersByJournalService,
   getPapersService,
 } from "@/service/papers";
-import type { PaperApiModel, PaperDetailApiResponse, PaperListApiResponse } from "@/types/papers";
+import type {
+  PaperApiModel,
+  PaperDetailApiResponse,
+  PaperListApiResponse,
+  PagedResponse,
+} from "@/types/papers";
 
 export const paperQueryKeys = {
   all: ["papers"] as const,
   list: () => [...paperQueryKeys.all, "list"] as const,
   detail: (id: string) => [...paperQueryKeys.all, "detail", id] as const,
   byAuthor: (authorId: string) => [...paperQueryKeys.all, "author", authorId] as const,
-  byJournal: (journalId: string) => [...paperQueryKeys.all, "journal", journalId] as const,
 };
 
 export function usePapers() {
   const query = useQuery({
     queryKey: paperQueryKeys.list(),
-    queryFn: async () => normalizePaperListResponse(await getPapersService()),
+    queryFn: async () => unwrapPaperListResponse(await getPapersService()),
   });
 
   return {
     ...query,
-    papers: query.data ?? [],
+    papers: query.data?.results ?? [],
     loading: query.isPending,
     error: getErrorMessage(query.error),
   };
 }
 
 export function usePaper(id: string) {
-  const listQuery = usePapers();
-  const detailQuery = useQuery({
+  const query = useQuery({
     queryKey: paperQueryKeys.detail(id),
-    queryFn: async () => normalizePaperDetailResponse(await getPaperDetailService(id)),
-    enabled: Boolean(id) && !isListPosition(id),
+    queryFn: async () => unwrapPaperDetailResponse(await getPaperDetailService(id)),
+    enabled: Boolean(id),
   });
 
-  if (isListPosition(id)) {
-    const position = Number(id) - 1;
-    const paper = listQuery.papers[position] ?? null;
+  return {
+    ...query,
+    paper: query.data ?? null,
+    loading: query.isPending,
+    error: getErrorMessage(query.error),
+  };
+}
 
-    return {
-      ...listQuery,
-      paper,
-      loading: listQuery.loading,
-      error: listQuery.error || (!listQuery.loading && !paper ? "Paper not found." : null),
-    };
-  }
+export function usePaperDetails(ids: string[]) {
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+  const queries = useQueries({
+    queries: uniqueIds.map((id) => ({
+      queryKey: paperQueryKeys.detail(id),
+      queryFn: async () => unwrapPaperDetailResponse(await getPaperDetailService(id)),
+      enabled: Boolean(id),
+    })),
+  });
 
   return {
-    ...detailQuery,
-    paper: detailQuery.data ?? null,
-    loading: detailQuery.isPending,
-    error: getErrorMessage(detailQuery.error),
+    ids: uniqueIds,
+    queries,
+    papers: queries.map((query) => query.data ?? null),
+    loading: queries.some((query) => query.isPending),
+    error: getErrorMessage(queries.find((query) => query.error)?.error),
   };
 }
 
 export function usePapersByAuthor(authorId: string) {
   const query = useQuery({
     queryKey: paperQueryKeys.byAuthor(authorId),
-    queryFn: async () => normalizePaperListResponse(await getPapersByAuthorService(authorId)),
+    queryFn: async () => unwrapPaperListResponse(await getPapersByAuthorService(authorId)),
     enabled: Boolean(authorId),
   });
 
   return {
     ...query,
-    papers: query.data ?? [],
+    papers: query.data?.results ?? [],
     loading: query.isPending,
     error: getErrorMessage(query.error),
   };
 }
 
-export function usePapersByJournal(journalId: string) {
-  const query = useQuery({
-    queryKey: paperQueryKeys.byJournal(journalId),
-    queryFn: async () => normalizePaperListResponse(await getPapersByJournalService(journalId)),
-    enabled: Boolean(journalId),
-  });
-
-  return {
-    ...query,
-    papers: query.data ?? [],
-    loading: query.isPending,
-    error: getErrorMessage(query.error),
-  };
-}
-
-function normalizePaperListResponse(response: PaperListApiResponse): PaperApiModel[] {
+function unwrapPaperListResponse(response: PaperListApiResponse): PagedResponse<PaperApiModel> {
   if (Array.isArray(response)) {
-    return response.map(normalizePaper);
+    return {
+      total: response.length,
+      page: 1,
+      size: response.length,
+      totalPages: 1,
+      results: response,
+    };
   }
 
-  const succeeded = response.success ?? response.succeeded ?? response.Succeeded ?? true;
-  const result = response.data ?? response.result ?? response.Result ?? response.items ?? response.papers ?? response.records ?? [];
-  const errors = response.errors ?? response.Errors ?? [];
+  if ("results" in response || "items" in response || "papers" in response || "records" in response) {
+    return response;
+  }
 
-  if (!succeeded) {
+  const apiResponse = response as Exclude<PaperListApiResponse, PagedResponse<PaperApiModel> | PaperApiModel[]>;
+  const succeeded = apiResponse.success ?? apiResponse.succeeded ?? apiResponse.Succeeded ?? true;
+  const result = apiResponse.result ?? apiResponse.Result ?? apiResponse.data ?? null;
+  const errors = apiResponse.errors ?? apiResponse.Errors ?? [];
+
+  if (!succeeded || !result) {
     throw new Error(errors.join(", ") || "Unable to load papers.");
   }
 
   if (Array.isArray(result)) {
-    return result.map(normalizePaper);
+    return {
+      total: result.length,
+      page: 1,
+      size: result.length,
+      totalPages: 1,
+      results: result,
+    };
   }
 
-  return (result.results ?? result.data ?? result.items ?? result.papers ?? result.records ?? []).map(normalizePaper);
+  return result;
 }
 
-function normalizePaperDetailResponse(response: PaperDetailApiResponse) {
-  const succeeded = response.succeeded ?? response.Succeeded ?? true;
-  const result = response.result ?? response.Result ?? null;
-  const errors = response.errors ?? response.Errors ?? [];
+function unwrapPaperDetailResponse(response: PaperDetailApiResponse): PaperApiModel {
+  if (!response) {
+    throw new Error("Paper not found.");
+  }
+
+  if ("id" in response || "paperId" in response) {
+    return response as PaperApiModel;
+  }
+
+  const apiResponse = response as Exclude<PaperDetailApiResponse, PaperApiModel | null>;
+  const succeeded = apiResponse.success ?? apiResponse.succeeded ?? apiResponse.Succeeded ?? true;
+  const result = apiResponse.result ?? apiResponse.Result ?? apiResponse.data ?? null;
+  const errors = apiResponse.errors ?? apiResponse.Errors ?? [];
 
   if (!succeeded || !result) {
     throw new Error(errors.join(", ") || "Paper not found.");
   }
 
-  return normalizePaper(result);
-}
-
-function normalizePaper(paper: PaperApiModel): PaperApiModel {
-  return {
-    ...paper,
-    id: paper.id ?? paper.paperId ?? "",
-    paperAuthorResponseModels:
-      paper.paperAuthorResponseModels ?? paper.paperAuthors ?? [],
-    paperTopics: paper.paperTopics ?? [],
-    paperKeywords: paper.paperKeywords ?? [],
-    paperSourceMappings: paper.paperSourceMappings ?? [],
-  };
-}
-
-function isListPosition(id: string) {
-  return /^\d+$/.test(id);
+  return result;
 }
 
 function getErrorMessage(error: unknown) {

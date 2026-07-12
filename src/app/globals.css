@@ -672,11 +672,11 @@
   }
 
   .dashboard-grid {
-    @apply grid grid-cols-1 gap-4 lg:grid-cols-3;
+    @apply grid grid-cols-1 items-start gap-4 lg:grid-cols-3;
   }
 
   .dashboard-card {
-    @apply rounded-xl border border-border bg-card p-5;
+    @apply h-fit rounded-xl border border-border bg-card p-5;
   }
 
   .dashboard-trends-card {
@@ -707,16 +707,39 @@
     @apply h-[200px] w-full;
   }
 
+
+
+
+  .dashboard-trend-chart-wrap {
+    @apply min-w-0 space-y-3;
+  }
+
+  .dashboard-trend-chart {
+    @apply h-60 min-w-0 w-full;
+  }
+
+  .dashboard-trend-legend {
+    @apply flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground;
+  }
+
+  .dashboard-trend-legend-item {
+    @apply inline-flex min-w-0 items-center gap-1.5;
+  }
+
+  .dashboard-trend-legend-item span {
+    @apply size-2 shrink-0 rounded-full;
+  }
+
   .dashboard-topic-list {
-    @apply space-y-3;
+    @apply space-y-2.5;
   }
 
   .dashboard-topic {
-    @apply flex items-center gap-3;
+    @apply flex items-center gap-2.5;
   }
 
   .dashboard-topic-rank {
-    @apply w-4 font-mono text-xs text-muted-foreground;
+    @apply w-5 shrink-0 font-mono text-xs text-muted-foreground;
   }
 
   .dashboard-topic-name {
@@ -728,11 +751,11 @@
   }
 
   .dashboard-topic-track {
-    @apply h-1 flex-1 rounded-full bg-muted;
+    @apply h-1.5 flex-1 rounded-full bg-muted;
   }
 
   .dashboard-topic-count {
-    @apply shrink-0 text-[10px] text-muted-foreground;
+    @apply flex items-center gap-1 text-xs font-semibold text-emerald-600;
   }
 
   .dashboard-topic-growth {
@@ -796,7 +819,15 @@
   }
 
   .paper-search-page {
-    @apply space-y-4 p-4 sm:p-6;
+    @apply p-0;
+  }
+
+  .paper-search-workspace {
+    @apply grid min-h-[calc(100vh-4rem)] grid-cols-1 bg-background lg:grid-cols-[220px_minmax(0,1fr)];
+  }
+
+  .paper-search-main {
+    @apply min-w-0 space-y-4 p-4 sm:p-6;
   }
 
   .paper-search-header {
@@ -823,28 +854,32 @@
     }
   }
 
-  .paper-search-filters {
-    @apply px-0 py-0;
+  .paper-search-filter-panel {
+    @apply min-w-0 border-b border-border bg-background p-4 lg:sticky lg:top-0 lg:h-[calc(100vh-4rem)] lg:border-b-0 lg:border-r lg:p-5;
   }
 
   .paper-search-filter-heading {
-    @apply flex items-center justify-between gap-3 border-b border-border pb-3;
+    @apply flex items-center justify-between gap-3;
   }
 
   .paper-search-filter-title {
-    @apply text-sm font-semibold text-foreground;
+    @apply flex items-center gap-2 text-sm font-semibold text-foreground;
+  }
+
+  .paper-search-filter-title svg {
+    @apply size-4 text-foreground;
   }
 
   .paper-search-filter-list {
-    @apply mt-4 space-y-4;
+    @apply mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1;
   }
 
   .paper-search-filter-field {
-    @apply block space-y-1.5 text-xs font-medium text-foreground;
+    @apply min-w-0 space-y-1.5 text-xs font-medium text-muted-foreground;
   }
 
-  .paper-search-filter-field input {
-    @apply h-9 bg-input-background text-sm;
+  .paper-search-filter-field > span {
+    @apply block;
   }
 
   .paper-search-select {
@@ -860,7 +895,7 @@
   }
 
   .paper-search-filter-button {
-    @apply h-10 min-w-24 justify-between rounded-md border-border bg-background px-3 text-sm font-normal shadow-none hover:bg-muted;
+    @apply h-9 w-full justify-between rounded-lg border-border bg-input-background px-3 text-xs font-normal text-foreground shadow-none hover:bg-muted;
   }
 
   .paper-search-filter-button svg {
@@ -868,7 +903,7 @@
   }
 
   .paper-search-filter-reset {
-    @apply h-10 rounded-md px-3 text-xs text-muted-foreground hover:text-foreground;
+    @apply mt-5 h-9 w-full rounded-lg px-3 text-xs text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-60;
   }
 
   .paper-search-filter-menu {
@@ -891,8 +926,20 @@
     @apply relative min-w-0 flex-1;
   }
 
+  .paper-search-query-box input {
+    @apply pr-20;
+  }
+
+  .paper-search-submit {
+    @apply absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground;
+  }
+
+  .paper-search-submit svg {
+    @apply size-4;
+  }
+
   .paper-search-clear {
-    @apply absolute right-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground;
+    @apply absolute right-10 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground;
   }
 
   .paper-search-clear svg {
@@ -935,6 +982,43 @@
     @apply text-sm font-semibold;
   }
 
+
+  .paper-search-year-chart {
+    @apply relative flex h-36 w-full min-w-0 items-end gap-2 pb-0;
+    margin-bottom: 2rem;
+  }
+
+  .paper-search-year-chart::after {
+    content: "";
+    @apply absolute left-0 right-0 border-b border-border;
+    bottom: -2.25rem;
+  }
+
+  .paper-search-year-chart-item {
+    @apply relative flex h-full min-w-0 flex-1 cursor-pointer flex-col items-center justify-end gap-1 text-muted-foreground outline-none transition-colors;
+  }
+
+  .paper-search-year-chart-item > span {
+    @apply shrink-0 text-[10px] leading-none;
+  }
+
+  .paper-search-year-chart-item > i {
+    @apply flex h-28 w-full items-end overflow-hidden rounded-t bg-muted not-italic;
+  }
+
+  .paper-search-year-chart-item b {
+    @apply block w-full rounded-t bg-primary transition-colors;
+  }
+
+  .paper-search-year-chart-item:hover b,
+  .paper-search-year-chart-item:focus-visible b {
+    @apply bg-primary/80;
+  }
+
+  .paper-search-year-chart-item > em {
+    @apply absolute left-1/2 top-full mt-3 inline-block w-8 -translate-x-1/2 rotate-[-35deg] text-center text-[9px] leading-none not-italic;
+    transform-origin: top center;
+  }
   .paper-search-year-bars {
     @apply flex h-24 items-end gap-1 border-b border-border pb-2;
   }
@@ -962,6 +1046,49 @@
 
   .paper-search-open-access span {
     @apply mt-1 block text-xs text-muted-foreground;
+  }
+
+  .paper-search-open-access-pie {
+    @apply flex flex-col items-center gap-2;
+  }
+
+  .paper-search-open-access-chart {
+    @apply order-1 mx-auto aspect-square h-[172px] w-full max-w-[210px];
+  }
+
+  .paper-search-open-access-summary {
+    @apply order-2 text-center;
+  }
+
+  .paper-search-open-access-summary strong {
+    @apply block text-xl font-semibold leading-none text-foreground;
+  }
+
+  .paper-search-open-access-summary span {
+    @apply mt-1 block text-[11px] text-muted-foreground;
+  }
+
+  .paper-search-open-access-legend {
+    @apply order-3 flex w-full items-center justify-center gap-3;
+  }
+
+  .paper-search-open-access-legend span {
+    @apply flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-muted-foreground;
+  }
+
+  .paper-search-open-access-legend span[data-active="true"] {
+    @apply text-primary;
+  }
+
+  .paper-search-open-access-legend i {
+    @apply size-2.5 shrink-0 rounded-full not-italic;
+  }
+
+  .paper-search-open-access-legend span span {
+    @apply truncate;
+  }
+  .paper-search-open-access-chart .recharts-sector {
+    cursor: pointer;
   }
 
   .paper-search-facet-list {
@@ -1084,6 +1211,18 @@
     @apply font-medium text-primary transition-colors hover:underline;
   }
 
+  button.paper-detail-inline-link {
+    @apply bg-transparent p-0 text-left;
+  }
+
+  .author-drawer-header {
+    @apply border-b border-border px-5 py-4 pr-14;
+  }
+
+  .author-drawer-body {
+    @apply min-h-0 flex-1 overflow-y-auto bg-background p-4 sm:p-5;
+  }
+
   .paper-detail-meta {
     @apply flex flex-wrap gap-x-5 gap-y-2 border-b border-border py-4 text-xs text-muted-foreground;
   }
@@ -1159,12 +1298,10 @@
   }
 
   .author-detail-list-item em,
-  .author-detail-topic-row span,
   .author-detail-year-bar span,
   .author-detail-year-bar em {
     @apply shrink-0 text-[11px] not-italic text-muted-foreground;
   }
-
   .author-detail-topic-list {
     @apply space-y-3;
   }
@@ -1174,23 +1311,27 @@
   }
 
   .author-detail-track {
-    @apply mt-2 h-1.5 overflow-hidden rounded-full bg-muted;
+    @apply mt-2 h-6 overflow-hidden rounded-full bg-muted;
   }
 
   .author-detail-track span {
-    @apply block h-full rounded-full bg-primary;
+    @apply flex h-full items-center justify-end rounded-full bg-primary px-2;
+  }
+
+  .author-detail-track strong {
+    @apply whitespace-nowrap text-[11px] font-semibold text-primary-foreground;
   }
 
   .author-detail-chip-list {
-    @apply flex flex-wrap gap-2;
+    @apply flex flex-wrap items-center gap-2;
   }
 
-  .author-detail-chip-list span {
-    @apply rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground;
+  .author-detail-concept-badge {
+    @apply transition-transform hover:scale-105;
   }
 
   .author-detail-year-bars {
-    @apply flex h-40 items-end gap-2 border-b border-border pb-6;
+    @apply flex h-40 items-end gap-2 border-b border-border pb-10;
   }
 
   .author-detail-year-bar {
@@ -1205,10 +1346,11 @@
     @apply block w-full rounded-t bg-primary not-italic;
   }
 
-  .author-detail-year-bar em {
-    @apply absolute -bottom-5;
+  .author-detail-year-label {
+    @apply absolute -bottom-8 left-1 inline-block w-8 text-right text-[9px];
+    transform: translateX(-65%) rotate(-30deg) !important;
+    transform-origin: top center;
   }
-
   .topic-search-page {
     @apply space-y-5 p-4 sm:p-6;
   }

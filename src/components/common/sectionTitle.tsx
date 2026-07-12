@@ -1,16 +1,27 @@
 import type { ReactNode } from "react";
 
+import { cn } from "@/lib/utils";
+
 export function SectionTitle({
-  children,
+  title,
+  description,
   action,
+  className,
 }: {
-  children: ReactNode;
+  title: string;
+  description?: string;
   action?: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="mb-3 flex items-center justify-between gap-3">
-      <h2 className="text-base font-semibold text-foreground">{children}</h2>
-      {action && <div className="text-sm text-primary">{action}</div>}
+    <div className={cn("flex items-start justify-between gap-4", className)}>
+      <div className="min-w-0">
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+        {description ? (
+          <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+        ) : null}
+      </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
 }

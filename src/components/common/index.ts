@@ -11,6 +11,8 @@ export { PageShell } from "@/components/common/pageShell";
 export { ProgressBar } from "@/components/common/progressBar";
 export { ResponsiveContainer } from "@/components/common/responsiveContainer";
 export { ResponsiveGrid } from "@/components/common/responsiveGrid";
+export { ResearchTopicBars } from "@/components/common/researchTopicBars";
+export type { ResearchTopicBarItem } from "@/components/common/researchTopicBars";
 export { ScrollAreaX } from "@/components/common/scrollAreaX";
 export { SearchInput } from "@/components/common/searchInput";
 export { SectionTitle } from "@/components/common/sectionTitle";
@@ -21,6 +23,8 @@ export { StatusBadge } from "@/components/common/statusBadge";
 export { StatusDot } from "@/components/common/statusDot";
 export { Tag } from "@/components/common/tag";
 export { UserAvatar } from "@/components/common/userAvatar";
+export { WorksByYearChart } from "@/components/common/worksByYearChart";
+export type { WorksByYearChartItem } from "@/components/common/worksByYearChart";
 export type { CommonSize, CommonStatus } from "@/types/common";
 export {
   AppSidebar,

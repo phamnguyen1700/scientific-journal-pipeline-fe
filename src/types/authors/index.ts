@@ -78,6 +78,10 @@ export type AuthorDetail = {
   twoYearMeanCitedness?: number | null;
   affiliations?: string | AuthorAffiliation[] | null;
   lastKnownInstitutions?: string | AuthorInstitution[] | null;
+  topics?: string | AuthorTopic[] | null;
+  topicShare?: string | AuthorTopic[] | null;
+  xConcepts?: string | AuthorConcept[] | null;
+  countsByYear?: string | AuthorYearCount[] | null;
   authorSourceMappings?: AuthorSourceMapping[];
   paperAuthors?: (PaperAuthor & { paper?: PaperApiModel | null })[];
 };

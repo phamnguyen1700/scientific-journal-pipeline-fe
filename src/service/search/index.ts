@@ -1,17 +1,51 @@
 import { apiEndpoints } from "@/config/apiEndpoints";
 import { deleteRequest, get, post } from "@/service/apiClient";
-import type { PaperApiModel } from "@/types/papers";
 import type {
   PaperSearchApiResponse,
-  PaperSearchApiPaper,
   PaperSearchRequest,
 } from "@/types/search";
 
 export const searchPapersService = (request: PaperSearchRequest) =>
-  get<PaperSearchApiResponse<PaperSearchApiPaper[]> | PaperApiModel[]>(
-    apiEndpoints.search.papers,
-    { params: request }
-  );
+  get<PaperSearchApiResponse>(apiEndpoints.search.papers, {
+    params: toPaperSearchParams(request),
+  });
+
+
+function toPaperSearchParams(request: PaperSearchRequest) {
+  const params = new URLSearchParams();
+
+  appendParam(params, "Q", request.q);
+  appendParam(params, "Page", request.page);
+  appendParam(params, "Size", request.size);
+  appendParam(params, "From", request.from);
+  appendParam(params, "To", request.to);
+  appendParam(params, "Language", request.language);
+  appendParam(params, "IsOpenAccess", request.isOpenAccess);
+  appendArrayParam(params, "FilterJournal", request.filterJournal);
+  appendArrayParam(params, "FilterAuthor", request.filterAuthor);
+  appendArrayParam(params, "FilterKeyword", request.filterKeyword);
+  appendArrayParam(params, "FilterYear", request.filterYear);
+
+  return params;
+}
+
+function appendParam(
+  params: URLSearchParams,
+  key: string,
+  value: string | number | boolean | undefined,
+) {
+  if (value === undefined || value === "") return;
+
+  params.append(key, String(value));
+}
+
+function appendArrayParam(
+  params: URLSearchParams,
+  key: string,
+  values: Array<string | number> | undefined,
+) {
+  values?.forEach((value) => appendParam(params, key, value));
+}
 
 export const searchAuthorsService = (request: Record<string, string | number | boolean | undefined> = {}) =>
   get<unknown>(apiEndpoints.search.authors, { params: request });

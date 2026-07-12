@@ -5,6 +5,7 @@ import type {
   AnalyticsDashboard,
   AnalyticsKeyValue,
   AnalyticsNetwork,
+  AnalyticsOpenAccessStat,
   AnalyticsSeries,
   AnalyticsTrend,
   AnalyticsTrendingTopic,
@@ -12,6 +13,12 @@ import type {
   JournalTrackerItem,
   TopicComparison,
 } from "@/types/analytics";
+import type {
+  DashboardApiResponse,
+  DashboardHotTopic,
+  DashboardPublicationTrend,
+  DashboardSummary,
+} from "@/types/dashboard";
 
 const withSize = (size: number) => ({ params: { size } });
 
@@ -49,7 +56,7 @@ export const getTopJournalsByCitationsService = (size = 10) =>
   get<AnalyticsApiResponse<AnalyticsKeyValue[]>>(apiEndpoints.analytics.topJournalsByCitations, withSize(size));
 
 export const getJournalOpenAccessRatioService = () =>
-  get<AnalyticsApiResponse<AnalyticsKeyValue[]>>(apiEndpoints.analytics.journalOpenAccessRatio);
+  get<AnalyticsApiResponse<AnalyticsOpenAccessStat[]>>(apiEndpoints.analytics.journalOpenAccessRatio);
 
 export const getKeywordWordCloudService = (size = 50) =>
   get<AnalyticsApiResponse<AnalyticsKeyValue[]>>(apiEndpoints.analytics.keywordWordCloud, withSize(size));
@@ -103,13 +110,13 @@ export const getAnalyticsDashboardService = () =>
   get<AnalyticsApiResponse<AnalyticsDashboard>>(apiEndpoints.analytics.dashboard);
 
 export const getDashboardSummaryService = () =>
-  get<unknown>(apiEndpoints.dashboard.summary);
+  get<DashboardApiResponse<DashboardSummary>>(apiEndpoints.dashboard.summary);
 
 export const getPublicationTrendsService = () =>
-  get<unknown>(apiEndpoints.dashboard.publicationTrends);
+  get<DashboardApiResponse<DashboardPublicationTrend[]>>(apiEndpoints.dashboard.publicationTrends);
 
 export const getDashboardHotTopicsService = () =>
-  get<unknown>(apiEndpoints.dashboard.hotTopics);
+  get<DashboardApiResponse<DashboardHotTopic[]>>(apiEndpoints.dashboard.hotTopics);
 
 export const analyticsService = {
   papersByYear: getPapersByYearService,

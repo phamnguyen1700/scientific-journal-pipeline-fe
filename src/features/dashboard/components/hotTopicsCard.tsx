@@ -4,6 +4,8 @@ import Link from "next/link";
 import type { TrendingTopic } from "@/types/dashboard";
 
 export function HotTopicsCard({ topics }: { topics: TrendingTopic[] }) {
+  const maxCount = Math.max(...topics.map((topic) => topic.count), 1);
+
   return (
     <section className="dashboard-card">
       <div className="dashboard-card-heading">
@@ -22,9 +24,9 @@ export function HotTopicsCard({ topics }: { topics: TrendingTopic[] }) {
                 <div className="dashboard-topic-volume">
                   <div className="dashboard-topic-track">
                     <div
-                      className="h-1 rounded-full"
+                      className="h-1.5 rounded-full"
                       style={{
-                        width: `${Math.min((topic.count / 5000) * 100, 100)}%`,
+                        width: `${Math.max((topic.count / maxCount) * 100, 4)}%`,
                         backgroundColor: topic.color,
                       }}
                     />
@@ -34,10 +36,12 @@ export function HotTopicsCard({ topics }: { topics: TrendingTopic[] }) {
                   </span>
                 </div>
               </div>
-              <div className="dashboard-topic-growth">
-                <TrendingUp className="size-[11px]" />
-                <span>{topic.growth}%</span>
-              </div>
+              {topic.growth !== undefined && (
+                <div className="dashboard-topic-growth">
+                  <TrendingUp className="size-[11px]" />
+                  <span>{topic.growth}%</span>
+                </div>
+              )}
             </div>
           ))
         ) : (

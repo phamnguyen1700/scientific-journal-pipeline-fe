@@ -9,6 +9,8 @@ import {
 } from "@/features/topicSearch/components";
 import { useTopics } from "@/hooks/topics";
 import { useUserFollowingTopics } from "@/hooks/user";
+import type { TagColor } from "@/types/common";
+import type { ResearchTopic, TopicApiModel } from "@/types/topics";
 
 export function TopicSearchPage() {
   const [query, setQuery] = useState("");
@@ -18,21 +20,25 @@ export function TopicSearchPage() {
     () =>
       new Set(
         followingTopicsQuery.topics.flatMap((topic) =>
-          [topic.id, topic.apiId, topic.name].filter(Boolean).map(String)
+          [topic.topicId, topic.topicName].filter(Boolean).map(String)
         )
       ),
     [followingTopicsQuery.topics]
   );
   const topics = useMemo(
     () =>
-      topicsQuery.topics.map((topic) => ({
-        ...topic,
-        followed:
-          topic.followed ||
-          followedTopicIds.has(String(topic.id)) ||
-          (topic.apiId ? followedTopicIds.has(topic.apiId) : false) ||
-          followedTopicIds.has(topic.name),
-      })),
+      topicsQuery.topics.map((topic) => {
+        const topicItem = toResearchTopic(topic);
+
+        return {
+          ...topicItem,
+          followed:
+            topicItem.followed ||
+            followedTopicIds.has(String(topicItem.id)) ||
+            (topicItem.apiId ? followedTopicIds.has(topicItem.apiId) : false) ||
+            followedTopicIds.has(topicItem.name),
+        };
+      }),
     [followedTopicIds, topicsQuery.topics]
   );
 
@@ -91,4 +97,31 @@ export function TopicSearchPage() {
       </section>
     </div>
   );
+}
+
+function toResearchTopic(topic: TopicApiModel): ResearchTopic {
+  return {
+    id: topic.topicId,
+    apiId: topic.topicId,
+    name: topic.topicName,
+    description: topic.description ?? "No topic description available.",
+    category: topic.category ?? "Research Topic",
+    color: getTopicColor(topic.category),
+    papers: topic.paperCount ?? 0,
+    growth: topic.growthPercentage ?? 0,
+    trend: "up",
+    followed: topic.followed ?? false,
+    keywords: topic.keywords ?? [],
+  };
+}
+
+function getTopicColor(category: string | null | undefined): TagColor {
+  const colors: TagColor[] = ["purple", "blue", "green", "amber", "red", "cyan"];
+  if (!category) return "gray";
+
+  const index = category
+    .split("")
+    .reduce((total, character) => total + character.charCodeAt(0), 0);
+
+  return colors[index % colors.length];
 }

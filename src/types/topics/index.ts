@@ -2,6 +2,18 @@ import type { TagColor } from "@/types/common";
 
 export type TopicTrend = "up" | "stable";
 
+export type TopicApiModel = {
+  topicId: string;
+  topicName: string;
+  normalizedName?: string | null;
+  description?: string | null;
+  category?: string | null;
+  paperCount?: number;
+  growthPercentage?: number;
+  keywords?: string[];
+  followed?: boolean;
+};
+
 export type ResearchTopic = {
   id: string | number;
   apiId?: string;
@@ -37,3 +49,20 @@ export type TrendingTopicChartPoint = {
   quantum: number;
   climate: number;
 };
+
+export type TopicApiResponse<T> = {
+  succeeded: boolean;
+  result: T | null;
+  errors: string[];
+};
+
+export type TopicListResult = {
+  total?: number;
+  page?: number;
+  size?: number;
+  totalPages?: number;
+  results: TopicApiModel[];
+};
+
+export type TopicListApiResponse = TopicApiResponse<TopicListResult>;
+export type TopicDetailApiResponse = TopicApiResponse<TopicApiModel | null>;
