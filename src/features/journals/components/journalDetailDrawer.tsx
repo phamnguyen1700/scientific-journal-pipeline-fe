@@ -15,12 +15,14 @@ export function JournalDetailDrawer({
   loading,
   open,
   onOpenChange,
+  showPapers = true,
 }: {
   error: string | null;
   journal: Journal | null;
   loading: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showPapers?: boolean;
 }) {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -32,7 +34,7 @@ export function JournalDetailDrawer({
           </DrawerDescription>
         </DrawerHeader>
         <div className="author-drawer-body">
-          <JournalDetailContent error={error} journal={journal} loading={loading} />
+          <JournalDetailContent error={error} journal={journal} loading={loading} showPapers={showPapers} />
         </div>
       </DrawerContent>
     </Drawer>
