@@ -99,3 +99,24 @@ export type AuthorDetailApiResponse =
     }
   | AuthorDetail;
 
+export type AuthorListResult = {
+  total: number;
+  page: number;
+  size: number;
+  totalPages?: number;
+  results: AuthorDetail[];
+};
+
+export type AuthorListApiResponse =
+  | {
+      succeeded?: boolean;
+      Succeeded?: boolean;
+      success?: boolean;
+      result?: AuthorListResult | null;
+      Result?: AuthorListResult | null;
+      data?: AuthorListResult | null;
+      errors?: string[];
+      Errors?: string[];
+    }
+  | AuthorListResult;
+

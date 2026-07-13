@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "motion/react";
 import { SidebarProvider, AppSidebar, SidebarInset } from "./sidebar";
 import { Navbar } from "./navbar";
 import { useAuthStore } from "@/store/auth";
@@ -92,11 +93,30 @@ export function LayoutContent({ children }: LayoutContentProps) {
 
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <motion.div
+        key={`sidebar-${pathname}`}
+        initial={{ opacity: 0.92, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ type: "spring", stiffness: 320, damping: 34 }}
+        className="shrink-0"
+      >
+        <AppSidebar />
+      </motion.div>
       <SidebarInset>
         <Navbar />
-        <main className="min-h-0 flex-1 overflow-y-auto">
-          {children}
+        <main className="relative min-h-0 flex-1 overflow-y-auto">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              className="min-h-full"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </SidebarInset>
     </SidebarProvider>

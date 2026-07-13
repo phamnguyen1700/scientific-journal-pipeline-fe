@@ -11,7 +11,7 @@ const SidebarContext = React.createContext<{
 
 export function SidebarProvider({
   children,
-  defaultOpen = true,
+  defaultOpen = false,
 }: {
   children: React.ReactNode;
   defaultOpen?: boolean;
@@ -45,7 +45,7 @@ export function Sidebar({
         "flex h-dvh flex-col shrink-0 overflow-hidden bg-card border-r border-border transition-all duration-200",
         className,
       )}
-      style={{ width: open ? 240 : 60 }}
+      style={{ width: open ? 260 : 84 }}
       {...props}
     />
   );
@@ -55,9 +55,15 @@ export function SidebarHeader({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
+  const { open } = useSidebar();
+
   return (
     <div
-      className={cn("flex items-center gap-3 px-4 h-16 border-b border-border shrink-0", className)}
+      className={cn(
+        "flex h-16 shrink-0 items-center gap-3 border-b border-border px-4",
+        !open && "justify-center px-3",
+        className,
+      )}
       {...props}
     />
   );
@@ -69,7 +75,7 @@ export function SidebarContent({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex-1 overflow-y-auto py-4 px-2 space-y-4", className)}
+      className={cn("flex-1 overflow-y-auto px-3 py-4 space-y-4", className)}
       {...props}
     />
   );
@@ -81,7 +87,7 @@ export function SidebarFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("shrink-0 border-t border-border p-2", className)}
+      className={cn("shrink-0 border-t border-border p-3", className)}
       {...props}
     />
   );
@@ -155,7 +161,8 @@ export function SidebarMenuButton({
   const { open } = useSidebar();
   
   const buttonClass = cn(
-    "flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm transition-colors w-full",
+        "flex min-h-11 w-full items-center rounded-lg transition-colors",
+        open ? "gap-2.5 px-3 py-2" : "justify-center px-0 py-2.5",
     isActive
       ? "bg-primary text-primary-foreground font-medium"
       : "text-foreground hover:bg-muted",
@@ -172,7 +179,9 @@ export function SidebarMenuButton({
         title={!open ? title : undefined}
         className={buttonClass}
       >
-        {children}
+        <span className={cn("flex items-center", open ? "gap-2.5" : "justify-center")}>
+          {children}
+        </span>
       </Link>
     );
   }
@@ -183,7 +192,9 @@ export function SidebarMenuButton({
       className={buttonClass}
       {...props}
     >
-      {children}
+      <span className={cn("flex items-center", open ? "gap-2.5" : "justify-center")}>
+        {children}
+      </span>
     </button>
   );
 }

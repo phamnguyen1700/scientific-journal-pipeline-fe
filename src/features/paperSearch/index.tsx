@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { motion } from "motion/react";
 
 import {
   PaperResultCard,
@@ -57,9 +58,18 @@ const initialSearchValues: PaperSearchFormValues = {
   ...initialFilters,
 };
 
-export function PaperSearchPage() {
+export function PaperSearchPage({
+  initialFromHome = false,
+  initialQuery = "",
+}: {
+  initialFromHome?: boolean;
+  initialQuery?: string;
+}) {
   const { control, reset, setValue } = useForm<PaperSearchFormValues>({
-    defaultValues: initialSearchValues,
+    defaultValues: {
+      ...initialSearchValues,
+      q: initialQuery,
+    },
   });
   const formValues = useWatch({ control });
   const q = formValues.q ?? "";
@@ -193,7 +203,16 @@ export function PaperSearchPage() {
   }
 
   return (
-    <div className="paper-search-page">
+    <motion.div
+      initial={
+        initialFromHome
+          ? { opacity: 0, y: 26, scale: 0.985, filter: "blur(2px)" }
+          : false
+      }
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      transition={{ type: "spring", stiffness: 260, damping: 32 }}
+      className="paper-search-page"
+    >
       <div className="paper-search-workspace">
         <PaperSearchFilters
           facets={{
@@ -261,7 +280,7 @@ export function PaperSearchPage() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
