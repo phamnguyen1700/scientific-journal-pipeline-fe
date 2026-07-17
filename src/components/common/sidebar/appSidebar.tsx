@@ -100,13 +100,13 @@ function AppSidebarContent() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground font-bold text-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
             SJ
           </div>
           {open && (
             <div className="flex flex-col">
-              <span className="text-sm font-bold">Journal</span>
-              <span className="text-[10px] text-muted-foreground">Pipeline</span>
+              <span className="font-bold">Journal</span>
+              <span className="text-xs text-muted-foreground">Pipeline</span>
             </div>
           )}
         </div>
@@ -128,7 +128,7 @@ function AppSidebarContent() {
                         isActive={pathname === item.href}
                         title={item.label}
                       >
-                        <item.icon className="h-4 w-4 shrink-0" />
+                        <item.icon className="size-6 shrink-0" />
                         {open && <span>{item.label}</span>}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -142,16 +142,16 @@ function AppSidebarContent() {
 
       {/* User Card Footer */}
       <SidebarFooter>
-        <div className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-muted transition-colors">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-primary to-primary/60 text-primary-foreground text-xs font-semibold shrink-0">
+        <div className={`flex items-center gap-2 rounded-lg py-2 transition-colors hover:bg-muted ${open ? "px-2" : "justify-center px-0"}`}>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br from-primary to-primary/60 text-primary-foreground text-sm font-semibold shrink-0">
             A
           </div>
           {open && (
             <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-sm font-medium truncate">
+              <span className="font-medium truncate">
                 {user?.username ?? "User"}
               </span>
-              <span className="text-[10px] text-muted-foreground truncate">
+              <span className="text-xs text-muted-foreground truncate">
                 {user?.email ?? "Signed in"}
               </span>
             </div>
@@ -159,10 +159,10 @@ function AppSidebarContent() {
         </div>
         <button
           onClick={logout}
-          className="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg text-sm transition-colors text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+          className={`flex min-h-11 w-full items-center rounded-lg text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-950/30 ${open ? "gap-2.5 px-2 py-1.5" : "justify-center px-0 py-2.5"}`}
           title={open ? undefined : "Logout"}
         >
-          <LogOut className="h-4 w-4 shrink-0" />
+          <LogOut className="size-6 shrink-0" />
           {open && <span>Logout</span>}
         </button>
       </SidebarFooter>
@@ -174,7 +174,7 @@ export const MemoizedAppSidebarContent = memo(AppSidebarContent);
 
 export function AppSidebar() {
   return (
-    <Suspense fallback={<div className="w-16 bg-card border-r border-border" />}>
+    <Suspense fallback={<div className="w-[84px] bg-card border-r border-border" />}>
       <MemoizedAppSidebarContent />
     </Suspense>
   );

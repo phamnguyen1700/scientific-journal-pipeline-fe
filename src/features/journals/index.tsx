@@ -38,10 +38,12 @@ export function JournalDetailDrawer({
   journalId,
   open,
   onOpenChange,
+  showPapers = true,
 }: {
   journalId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showPapers?: boolean;
 }) {
   const journalQuery = useJournal(journalId);
 
@@ -52,6 +54,7 @@ export function JournalDetailDrawer({
       loading={journalQuery.loading}
       open={open}
       onOpenChange={onOpenChange}
+      showPapers={showPapers}
     />
   );
 }

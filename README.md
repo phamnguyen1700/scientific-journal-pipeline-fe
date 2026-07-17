@@ -52,6 +52,62 @@ src/
 
 ## Agent Implementation Guide
 
+This section is the source of truth for future implementation work in this
+repo. When adding or changing a feature, keep the same architecture unless the
+user explicitly asks for a different approach.
+
+### Mandatory Feature Pattern
+
+Default flow for every API-backed feature:
+
+```txt
+config/apiEndpoints
+  -> service/apiClient
+  -> service/<domain>/index.ts
+  -> hooks/<domain>/index.ts
+  -> store/<domain> only for global client state
+  -> features/<feature>/index.tsx
+  -> features/<feature>/components/*
+  -> app route/page imports the feature entry
+```
+
+Rules:
+
+- `apiClient` owns shared Axios setup, auth header injection, response unwrap,
+  and error normalization.
+- `service/<domain>/index.ts` owns endpoint calls only.
+- `hooks/<domain>/index.ts` owns TanStack Query mutations/queries, query keys,
+  request handling, standard response unwrap, error throwing, and cache behavior.
+  Hooks must stay UI-agnostic and must not map API data into UI-specific shapes.
+- `store/<domain>` is used only for global client state such as auth/user or
+  shared UI state. Do not store server cache in Zustand.
+- `features/<feature>/index.tsx` is the orchestration layer. It calls hooks,
+  keeps page/form state, prepares request payloads, adapts typed API data for
+  the current screen when needed, handles toast/redirect/page-specific side
+  effects, and passes props down.
+- `features/<feature>/components/*` are presentational. They receive data and
+  callbacks via props and should not call APIs directly.
+- `src/app/**/page.tsx` should stay thin and import the feature entry.
+
+Current auth login flow:
+
+```txt
+src/config/apiEndpoints.ts
+  -> src/service/apiClient.ts
+  -> src/service/auth/index.ts
+  -> src/hooks/auth/index.ts
+  -> src/store/auth/index.ts
+  -> src/features/auth/index.tsx
+  -> src/features/auth/components/*
+  -> src/app/(auth)/login/page.tsx
+```
+
+Auth-specific note: `useLogin` is the model for mutation hooks that need a
+real domain side effect. It receives the login request, calls `loginService`,
+unwraps the standard backend response, stores auth via `useAuthStore.setAuth`,
+and returns `{ user, token }`. Keep this behavior consistent when touching
+login unless intentionally refactoring the whole auth flow.
+
 ### Feature Implementation Order
 
 When implementing any new feature, always follow this order:
@@ -67,7 +123,7 @@ Rules:
 
 - `src/app` only wires routes/pages/layouts.
 - `src/features/<feature>/index.tsx` is the feature entry point.
-- Fetching, hook calls, local orchestration, fake data, and data mapping live in `features/<feature>/index.tsx`.
+- Hook calls, local orchestration, page state, request preparation, and small screen-specific data adaptation live in `features/<feature>/index.tsx`.
 - Feature UI must be split into components under `features/<feature>/components`.
 - Feature components receive data via props from the feature `index.tsx`.
 - Do not put large UI directly in route files.
@@ -204,21 +260,24 @@ export const loginService = (data: ILoginRequest) =>
   post<ILoginResponse, ILoginRequest>(apiEndpoints.auth.login, data);
 ```
 
-Do not put toast, redirect, component state, or UI behavior in service functions.
+Do not put toast, redirect, component state, UI behavior, or UI data mapping in service functions.
 
 #### `hooks/<domain>/index.ts`
 
-Owns TanStack Query state.
+Owns TanStack Query state, query keys, request normalization, standard response unwrap, error throwing, and cache invalidation.
 
-Hooks should generally expose query/mutation behavior and stay UI-agnostic:
+Hooks should call typed service functions and return typed domain data, not raw backend wrappers:
 
 ```ts
-export function useLogin() {
-  return useMutation({
-    mutationFn: (data: ILoginRequest) => loginService(data),
+export function useDashboardSummary() {
+  return useQuery({
+    queryKey: dashboardQueryKeys.summary(),
+    queryFn: async () => unwrapApiResponse(await getDashboardSummaryService()),
   });
 }
 ```
+
+Do not map API data into UI-only shapes in hooks. Do not use broad guessing helpers such as `readString`, `readNumber`, or `extractArray` to support unknown response shapes. If the backend response changes, update `types/<domain>` first, then service, hook, feature, and components.
 
 Do not hard-code route redirects in reusable hooks.
 Do not hard-code toasts in reusable hooks by default.

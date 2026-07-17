@@ -1,6 +1,10 @@
 export { BookmarksCard } from "@/features/dashboard/components/bookmarksCard";
+export { CitationRankingChart } from "@/features/dashboard/components/citationRankingChart";
 export { DashboardHeader } from "@/features/dashboard/components/dashboardHeader";
 export { DashboardKpiGrid } from "@/features/dashboard/components/dashboardKpiGrid";
 export { HotTopicsCard } from "@/features/dashboard/components/hotTopicsCard";
+export { HomeMetricCarousel } from "@/features/dashboard/components/homeMetricCarousel";
+export { HomeRightRailCarousel } from "@/features/dashboard/components/homeRightRailCarousel";
 export { PublicationTrendsCard } from "@/features/dashboard/components/publicationTrendsCard";
 export { RecentPapersCard } from "@/features/dashboard/components/recentPapersCard";
+export { VerticalLoopCarousel } from "@/features/dashboard/components/verticalLoopCarousel";

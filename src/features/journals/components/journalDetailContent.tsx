@@ -19,10 +19,12 @@ export function JournalDetailContent({
   error,
   journal,
   loading,
+  showPapers = true,
 }: {
   error: string | null;
   journal: Journal | null;
   loading: boolean;
+  showPapers?: boolean;
 }) {
   if (loading) {
     return (
@@ -114,14 +116,18 @@ export function JournalDetailContent({
         </div>
       </article>
 
-      <section className="paper-detail-section">
-        <h2>Papers in this journal</h2>
-        <p>
-          {papers.length.toLocaleString()} related paper{papers.length === 1 ? "" : "s"} found for this journal.
-        </p>
-      </section>
+      {showPapers ? (
+        <>
+          <section className="paper-detail-section">
+            <h2>Papers in this journal</h2>
+            <p>
+              {papers.length.toLocaleString()} related paper{papers.length === 1 ? "" : "s"} found for this journal.
+            </p>
+          </section>
 
-      <JournalPaperList papers={papers} />
+          <JournalPaperList papers={papers} />
+        </>
+      ) : null}
     </>
   );
 }

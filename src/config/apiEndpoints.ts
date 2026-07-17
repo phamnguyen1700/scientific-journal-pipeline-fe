@@ -19,6 +19,7 @@ export const apiEndpoints = {
     byAuthor: (authorId: string) => `/Paper/author/${authorId}`,
   },
   authors: {
+    list: "/Author",
     detail: (id: string) => `/Author/${id}`,
   },
   search: {
