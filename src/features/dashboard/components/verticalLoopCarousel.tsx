@@ -122,6 +122,7 @@ export function VerticalLoopCarousel({
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (mode !== "step" || itemCount <= 1 || stepSize <= 0) return;
+    if (isInteractiveCarouselTarget(event.target)) return;
 
     event.currentTarget.setPointerCapture(event.pointerId);
     dragStartRef.current = axis === "x" ? event.clientX : event.clientY;
@@ -198,6 +199,16 @@ export function VerticalLoopCarousel({
         />
       </div>
     </div>
+  );
+}
+
+function isInteractiveCarouselTarget(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false;
+
+  return Boolean(
+    target.closest(
+      "a, button, input, textarea, select, [role='button'], [data-carousel-ignore-drag]",
+    ),
   );
 }
 

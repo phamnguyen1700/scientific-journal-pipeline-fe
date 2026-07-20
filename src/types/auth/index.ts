@@ -42,6 +42,7 @@ export type LoginResult = {
   phonenumber?: string;
   roleName: UserRole;
   token: string;
+  isVerified?: boolean;
 };
 
 export type BackendResponse<T> = {

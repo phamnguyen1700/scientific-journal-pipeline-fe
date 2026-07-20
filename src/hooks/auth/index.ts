@@ -21,6 +21,7 @@ import {
 } from "@/types/auth";
 
 type UseLoginResult = {
+  isVerified: boolean;
   user: AuthUser;
   token: string;
 };
@@ -38,10 +39,13 @@ export function useLogin() {
 
       const user = mapLoginResultToUser(response.result);
       const token = response.result.token;
+      const isVerified = response.result.isVerified ?? true;
 
-      setAuth({ user, token });
+      if (isVerified) {
+        setAuth({ user, token });
+      }
 
-      return { user, token };
+      return { isVerified, user, token };
     },
   });
 }

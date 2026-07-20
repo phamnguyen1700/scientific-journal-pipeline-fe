@@ -41,6 +41,7 @@ export function LoginPage() {
   const verifyMutation = useVerifyRegistration();
   const resendMutation = useResendConfirmationCode();
   const [mode, setMode] = useState<AuthPanelMode>("login");
+  const [otpBackMode, setOtpBackMode] = useState<AuthPanelMode>("register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [registerName, setRegisterName] = useState("");
@@ -65,7 +66,34 @@ export function LoginPage() {
     loginMutation.mutate(
       { email: emailValue, password },
       {
-        onSuccess: ({ user }) => {
+        onSuccess: ({ isVerified, user }) => {
+          if (!isVerified) {
+            const verificationEmail = user.email || emailValue;
+
+            resendMutation.mutate(
+              { email: verificationEmail },
+              {
+                onSuccess: () => {
+                  toast.success("Please verify your email before signing in.");
+                  setRegisterEmail(verificationEmail);
+                  setEmail(verificationEmail);
+                  setOtpCode("");
+                  setOtpBackMode("login");
+                  setMode("otp");
+                },
+                onError: (error) => {
+                  toast.error(
+                    getApiErrorMessage(
+                      error,
+                      "Account is not verified, and we could not resend the code.",
+                    ),
+                  );
+                },
+              },
+            );
+            return;
+          }
+
           toast.success("Signed in successfully.");
           router.push(getDefaultRouteByRole(user.roleName));
         },
@@ -116,6 +144,7 @@ export function LoginPage() {
           toast.success("Registration submitted. Check your email for the code.");
           setEmail(nextEmail);
           setOtpCode("");
+          setOtpBackMode("register");
           setMode("otp");
         },
         onError: (error) => {
@@ -189,6 +218,7 @@ export function LoginPage() {
         loading={loginMutation.isPending}
         mode={mode}
         otpCode={otpCode}
+        otpBackMode={otpBackMode}
         registerConfirmPassword={registerConfirmPassword}
         registerEmail={registerEmail}
         registerName={registerName}

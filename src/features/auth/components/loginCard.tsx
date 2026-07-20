@@ -58,6 +58,7 @@ export function LoginCard({
   onSubmit,
   onVerifySubmit,
   otpCode,
+  otpBackMode,
   password,
   registerConfirmPassword,
   registerEmail,
@@ -88,6 +89,7 @@ export function LoginCard({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onVerifySubmit: (event: FormEvent<HTMLFormElement>) => void;
   otpCode: string;
+  otpBackMode: AuthPanelMode;
   password: string;
   registerConfirmPassword: string;
   registerEmail: string;
@@ -161,7 +163,7 @@ export function LoginCard({
                 code={otpCode}
                 email={verifyEmail}
                 loading={verifyLoading}
-                onBack={() => onModeChange("register")}
+                onBack={() => onModeChange(otpBackMode)}
                 onCodeChange={onOtpCodeChange}
                 onResendCode={onResendCode}
                 onSubmit={onVerifySubmit}
