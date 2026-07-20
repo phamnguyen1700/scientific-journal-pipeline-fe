@@ -28,7 +28,7 @@ export type ResearchTopic = {
   keywords: string[];
 };
 
-export type TrendingTimeRange = "7-days" | "30-days" | "6-months";
+export type TrendingTimeRange = "7-days" | "30-days" | "6-months" | "20-years";
 
 export type TrendingTopicMetric = {
   id: string | number;
@@ -36,6 +36,7 @@ export type TrendingTopicMetric = {
   category: string;
   color: string;
   papers: number;
+  currentYearPapers: number;
   growth: number;
   citations: number;
   followers: number;
@@ -44,10 +45,13 @@ export type TrendingTopicMetric = {
 
 export type TrendingTopicChartPoint = {
   label: string;
-  llm: number;
-  federated: number;
-  quantum: number;
-  climate: number;
+  [topicKey: string]: string | number;
+};
+
+export type TrendingTopicChartSeries = {
+  color: string;
+  key: string;
+  name: string;
 };
 
 export type TopicApiResponse<T> = {

@@ -3,22 +3,19 @@
 import { useQuery } from "@tanstack/react-query";
 
 import {
-  getAnalyticsDashboardService,
+  type DashboardHotTopicsParams,
   getDashboardHotTopicsService,
   getDashboardSummaryService,
-  getPublicationTrendsService,
-  getTrendingTopicsService,
-} from "@/service/analytics";
-import type { AnalyticsApiResponse } from "@/types/analytics";
+  getDashboardPublicationTrendsService,
+} from "@/service/dashboard";
 import type { DashboardApiResponse } from "@/types/dashboard";
 
 export const dashboardQueryKeys = {
   all: ["dashboard"] as const,
   summary: () => [...dashboardQueryKeys.all, "summary"] as const,
   publicationTrends: () => [...dashboardQueryKeys.all, "publication-trends"] as const,
-  hotTopics: () => [...dashboardQueryKeys.all, "hot-topics"] as const,
-  analytics: () => [...dashboardQueryKeys.all, "analytics"] as const,
-  trendingTopics: () => [...dashboardQueryKeys.all, "trending-topics"] as const,
+  hotTopics: (params?: DashboardHotTopicsParams) =>
+    [...dashboardQueryKeys.all, "hot-topics", params] as const,
 };
 
 export function useDashboardSummary() {
@@ -37,41 +34,19 @@ export function useDashboardPublicationTrends() {
     queryKey: dashboardQueryKeys.publicationTrends(),
     queryFn: async () =>
       unwrapDashboardResponse(
-        await getPublicationTrendsService(),
+        await getDashboardPublicationTrendsService(),
         "Unable to load publication trends.",
       ),
   });
 }
 
-export function useDashboardHotTopics() {
+export function useDashboardHotTopics(params?: DashboardHotTopicsParams) {
   return useQuery({
-    queryKey: dashboardQueryKeys.hotTopics(),
+    queryKey: dashboardQueryKeys.hotTopics(params),
     queryFn: async () =>
       unwrapDashboardResponse(
-        await getDashboardHotTopicsService(),
+        await getDashboardHotTopicsService(params),
         "Unable to load hot topics.",
-      ),
-  });
-}
-
-export function useDashboardAnalytics() {
-  return useQuery({
-    queryKey: dashboardQueryKeys.analytics(),
-    queryFn: async () =>
-      unwrapAnalyticsResponse(
-        await getAnalyticsDashboardService(),
-        "Unable to load dashboard analytics.",
-      ),
-  });
-}
-
-export function useDashboardTrendingTopics() {
-  return useQuery({
-    queryKey: dashboardQueryKeys.trendingTopics(),
-    queryFn: async () =>
-      unwrapAnalyticsResponse(
-        await getTrendingTopicsService(),
-        "Unable to load trending topics.",
       ),
   });
 }
@@ -86,17 +61,6 @@ export function getDashboardErrorMessage(error: unknown) {
 
 function unwrapDashboardResponse<T>(
   response: DashboardApiResponse<T>,
-  fallbackMessage: string,
-): T {
-  if (!response.succeeded || response.result === null) {
-    throw new Error(response.errors.join(", ") || fallbackMessage);
-  }
-
-  return response.result;
-}
-
-function unwrapAnalyticsResponse<T>(
-  response: AnalyticsApiResponse<T>,
   fallbackMessage: string,
 ): T {
   if (!response.succeeded || response.result === null) {

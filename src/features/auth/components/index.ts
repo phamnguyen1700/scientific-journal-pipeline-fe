@@ -5,3 +5,4 @@ export type {
   LoginStatItem,
 } from "@/features/auth/components/loginBrandPanel";
 export { LoginCard } from "@/features/auth/components/loginCard";
+export type { AuthPanelMode } from "@/features/auth/components/loginCard";

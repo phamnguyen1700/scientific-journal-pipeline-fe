@@ -13,12 +13,6 @@ import type {
   JournalTrackerItem,
   TopicComparison,
 } from "@/types/analytics";
-import type {
-  DashboardApiResponse,
-  DashboardHotTopic,
-  DashboardPublicationTrend,
-  DashboardSummary,
-} from "@/types/dashboard";
 
 const withSize = (size: number) => ({ params: { size } });
 
@@ -109,15 +103,6 @@ export const getJournalTrackerService = (size = 20, years = 5) =>
 export const getAnalyticsDashboardService = () =>
   get<AnalyticsApiResponse<AnalyticsDashboard>>(apiEndpoints.analytics.dashboard);
 
-export const getDashboardSummaryService = () =>
-  get<DashboardApiResponse<DashboardSummary>>(apiEndpoints.dashboard.summary);
-
-export const getPublicationTrendsService = () =>
-  get<DashboardApiResponse<DashboardPublicationTrend[]>>(apiEndpoints.dashboard.publicationTrends);
-
-export const getDashboardHotTopicsService = () =>
-  get<DashboardApiResponse<DashboardHotTopic[]>>(apiEndpoints.dashboard.hotTopics);
-
 export const analyticsService = {
   papersByYear: getPapersByYearService,
   citationsByYear: getCitationsByYearService,
@@ -142,7 +127,4 @@ export const analyticsService = {
   topicComparison: getTopicComparisonService,
   journalTracker: getJournalTrackerService,
   dashboard: getAnalyticsDashboardService,
-  dashboardSummary: getDashboardSummaryService,
-  publicationTrends: getPublicationTrendsService,
-  dashboardHotTopics: getDashboardHotTopicsService,
 };

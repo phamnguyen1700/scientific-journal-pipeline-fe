@@ -2,6 +2,9 @@ export const apiEndpoints = {
   auth: {
     login: "/Auth/login",
     adminLogin: "/Auth/login",
+    register: "/Auth/register",
+    resendConfirmationCode: "/Auth/resend-confirmation-code",
+    verifyRegistration: "/Auth/verify-registration",
     me: "/Auth/me",
   },
   admin: {

@@ -4,9 +4,9 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import type { TrendingTopicMetric } from "@/types/topics";
 
-import { TopicSparkline } from "@/features/trendingTopics/components/topicSparkline";
+import { TopicSparkline } from "@/features/topicInsight/components/topicSparkline";
 
-export function TrendingTopicsRanking({
+export function TopicInsightRanking({
   topics,
 }: {
   topics: TrendingTopicMetric[];
@@ -28,11 +28,9 @@ export function TrendingTopicsRanking({
           <article key={topic.id} className="trending-topic-row">
             <span className="trending-topic-rank">{index + 1}</span>
             <div className="trending-topic-main">
-              <div>
-                <h3 className="trending-topic-name">{topic.name}</h3>
-                <p className="trending-topic-category">{topic.category}</p>
-              </div>
+              <h3 className="trending-topic-name">{topic.name}</h3>
               <div className="trending-topic-stats">
+                <span className="trending-topic-category">{topic.category}</span>
                 <span>{topic.papers.toLocaleString()} papers</span>
                 <span>{topic.citations.toLocaleString()} citations</span>
                 <span>

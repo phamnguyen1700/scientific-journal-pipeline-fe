@@ -6,7 +6,7 @@ import axios, {
 } from "axios";
 
 import { env } from "@/config/env";
-import { createApiError } from "@/service/apiError";
+import { createApiError } from "@/lib/apiError";
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: env.apiBaseUrl,

@@ -12,6 +12,7 @@ type AuthState = {
   hasHydrated: boolean;
   hydrateAuth: () => void;
   setAuth: (payload: { user: AuthUser; token: string }) => void;
+  updateUser: (user: Partial<AuthUser>) => void;
   clearAuth: () => void;
 };
 
@@ -66,6 +67,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
 
     set({ user, token, isAuthenticated: true, hasHydrated: true });
+  },
+  updateUser: (userUpdate) => {
+    set((state) => {
+      if (!state.user) return state;
+
+      const user = { ...state.user, ...userUpdate };
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(authUserStorageKey, JSON.stringify(user));
+      }
+
+      return { user };
+    });
   },
   clearAuth: () => {
     if (typeof window !== "undefined") {

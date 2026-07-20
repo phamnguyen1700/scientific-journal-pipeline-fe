@@ -6,7 +6,6 @@ import {
   Search,
   Users,
   LogOut,
-  TrendingUp,
   Tag,
   Bookmark,
   BookMarked,
@@ -19,6 +18,7 @@ import {
   Radio,
 } from "lucide-react";
 import { Suspense, useMemo, memo } from "react";
+import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -35,6 +35,8 @@ import {
 import { useLogout } from "@/hooks/auth";
 import { useAuthStore } from "@/store/auth";
 import { isAdminRole, type UserRole } from "@/types/role";
+import { ProfileDrawer } from "@/features/profile";
+import { UserAvatar } from "@/components/common/userAvatar";
 
 interface NavItem {
   label: string;
@@ -45,36 +47,103 @@ interface NavItem {
 
 // Student Navigation
 const studentNav: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", section: "Main" },
-  { label: "Paper Search", icon: Search, href: "/dashboard/papers", section: "Discover" },
-  { label: "Topic Search", icon: Tag, href: "/dashboard/topics", section: "Discover" },
-  { label: "Trending Topics", icon: TrendingUp, href: "/dashboard/trending", section: "Discover" },
-  { label: "Bookmarked Papers", icon: Bookmark, href: "/dashboard/bookmarks", section: "Library" },
-  { label: "Followed Topics", icon: BookMarked, href: "/dashboard/following", section: "Library" },
-  { label: "Notifications", icon: Bell, href: "/dashboard/notifications", section: "Library" },
+  { label: "Home", icon: LayoutDashboard, href: "/dashboard", section: "Main" },
+  {
+    label: "Paper Search",
+    icon: Search,
+    href: "/dashboard/papers",
+    section: "Discover",
+  },
+  {
+    label: "Topic Insight",
+    icon: Tag,
+    href: "/dashboard/topics",
+    section: "Discover",
+  },
+  {
+    label: "Bookmarked Papers",
+    icon: Bookmark,
+    href: "/dashboard/bookmarks",
+    section: "Library",
+  },
+  {
+    label: "Followed Topics",
+    icon: BookMarked,
+    href: "/dashboard/following",
+    section: "Library",
+  },
+  {
+    label: "Notifications",
+    icon: Bell,
+    href: "/dashboard/notifications",
+    section: "Library",
+  },
 ];
 
 // Researcher Navigation
 const researcherNav: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/researcher", section: "Main" },
-  { label: "Trend Research", icon: LineChart, href: "/researcher/trends", section: "Analytics" },
-  { label: "Topic Compare", icon: BarChart2, href: "/researcher/compare", section: "Analytics" },
-  { label: "Topic Cluster", icon: Network, href: "/researcher/cluster", section: "Analytics" },
-  { label: "Emerging Topics", icon: Zap, href: "/researcher/emerging", section: "Analytics" },
-  { label: "Publication Analytics", icon: Activity, href: "/researcher/analytics", section: "Research" },
+  {
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/researcher",
+    section: "Main",
+  },
+  {
+    label: "Trend Research",
+    icon: LineChart,
+    href: "/researcher/trends",
+    section: "Analytics",
+  },
+  {
+    label: "Topic Compare",
+    icon: BarChart2,
+    href: "/researcher/compare",
+    section: "Analytics",
+  },
+  {
+    label: "Topic Cluster",
+    icon: Network,
+    href: "/researcher/cluster",
+    section: "Analytics",
+  },
+  {
+    label: "Emerging Topics",
+    icon: Zap,
+    href: "/researcher/emerging",
+    section: "Analytics",
+  },
+  {
+    label: "Publication Analytics",
+    icon: Activity,
+    href: "/researcher/analytics",
+    section: "Research",
+  },
   // { label: "Reports & Analytics", icon: FileText, href: "/researcher/reports", section: "Research" },
-  { label: "Journal Tracker", icon: Radio, href: "/researcher/tracker", section: "Research" },
+  {
+    label: "Journal Tracker",
+    icon: Radio,
+    href: "/researcher/tracker",
+    section: "Research",
+  },
 ];
 
 // Admin Navigation
 const adminNav: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/admin", section: "Main" },
-  { label: "User Management", icon: Users, href: "/admin/users", section: "Manage" },
+  {
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/admin",
+    section: "Main",
+  },
+  {
+    label: "User Management",
+    icon: Users,
+    href: "/admin/users",
+    section: "Manage",
+  },
   // { label: "API Management", icon: Database, href: "/admin/api", section: "Manage" },
   // { label: "System Config", icon: SlidersHorizontal, href: "/admin/config", section: "Manage" },
 ];
-
-
 
 function getNavigation(role: UserRole): NavItem[] {
   if (isAdminRole(role)) return adminNav;
@@ -87,6 +156,7 @@ function AppSidebarContent() {
   const { open } = useSidebar();
   const user = useAuthStore((state) => state.user);
   const logout = useLogout();
+  const [profileOpen, setProfileOpen] = useState(false);
   const role = user?.roleName ?? "Student";
 
   // Memoize navigation structure so it only updates when role changes
@@ -137,15 +207,21 @@ function AppSidebarContent() {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
-
       </SidebarContent>
 
       {/* User Card Footer */}
       <SidebarFooter>
-        <div className={`flex items-center gap-2 rounded-lg py-2 transition-colors hover:bg-muted ${open ? "px-2" : "justify-center px-0"}`}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br from-primary to-primary/60 text-primary-foreground text-sm font-semibold shrink-0">
-            A
-          </div>
+        <button
+          type="button"
+          onClick={() => setProfileOpen(true)}
+          className={`flex w-full items-center gap-2 rounded-lg py-2 text-left transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-primary/30 ${open ? "px-2" : "justify-center px-0"}`}
+          title={open ? undefined : "Open profile"}
+        >
+          <UserAvatar
+            name={user?.username ?? user?.email ?? "User"}
+            size="sm"
+            className="shrink-0"
+          />
           {open && (
             <div className="flex flex-col flex-1 min-w-0">
               <span className="font-medium truncate">
@@ -156,7 +232,7 @@ function AppSidebarContent() {
               </span>
             </div>
           )}
-        </div>
+        </button>
         <button
           onClick={logout}
           className={`flex min-h-11 w-full items-center rounded-lg text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-950/30 ${open ? "gap-2.5 px-2 py-1.5" : "justify-center px-0 py-2.5"}`}
@@ -166,6 +242,7 @@ function AppSidebarContent() {
           {open && <span>Logout</span>}
         </button>
       </SidebarFooter>
+      <ProfileDrawer open={profileOpen} onOpenChange={setProfileOpen} />
     </Sidebar>
   );
 }
@@ -174,7 +251,9 @@ export const MemoizedAppSidebarContent = memo(AppSidebarContent);
 
 export function AppSidebar() {
   return (
-    <Suspense fallback={<div className="w-[84px] bg-card border-r border-border" />}>
+    <Suspense
+      fallback={<div className="w-[84px] bg-card border-r border-border" />}
+    >
       <MemoizedAppSidebarContent />
     </Suspense>
   );

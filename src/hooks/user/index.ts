@@ -10,9 +10,10 @@ import {
   getUserFollowingTopicsService,
   getUserProfileService,
   removeUserBookmarkService,
+  updateUserProfileService,
   unfollowTopicService,
 } from "@/service/user";
-import type { UserApiResponse } from "@/types/user";
+import type { UpdateUserProfilePayload, UserApiResponse } from "@/types/user";
 
 export const userQueryKeys = {
   all: ["user"] as const,
@@ -112,4 +113,16 @@ function getErrorMessage(error: unknown) {
   if (!error) return null;
 
   return error instanceof Error ? error.message : "Unable to connect to the user service.";
+}
+
+export function useUpdateUserProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: UpdateUserProfilePayload) =>
+      updateUserProfileService(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: userQueryKeys.profile() });
+    },
+  });
 }

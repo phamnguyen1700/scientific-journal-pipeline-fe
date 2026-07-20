@@ -27,6 +27,7 @@ import {
 } from "@/features/dashboard/components";
 import { useAuthors } from "@/hooks/authors";
 import {
+  useAnalyticsDashboard,
   useKeywordsOverTime,
   useTopAuthorsByCitations,
   useTopJournalsByCitations,
@@ -34,7 +35,6 @@ import {
 } from "@/hooks/analytics";
 import {
   getDashboardErrorMessage,
-  useDashboardAnalytics,
   useDashboardSummary,
 } from "@/hooks/dashboard";
 import { useJournals } from "@/hooks/journals";
@@ -145,7 +145,7 @@ export function StudentDashboardPage() {
   const bookmarksQuery = useUserBookmarks();
   const followingTopicsQuery = useUserFollowingTopics();
   const summaryQuery = useDashboardSummary();
-  const analyticsQuery = useDashboardAnalytics();
+  const analyticsQuery = useAnalyticsDashboard();
   const topTopicsQuery = useTopTopics(10);
   const topAuthorsQuery = useTopAuthorsByCitations(10);
   const topJournalsQuery = useTopJournalsByCitations(10);

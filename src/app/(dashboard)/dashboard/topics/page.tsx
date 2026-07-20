@@ -1,3 +1,3 @@
-import { TopicSearchPage } from "@/features/topicSearch";
+import { TopicInsightPage } from "@/features/topicInsight";
 
-export default TopicSearchPage;
+export default TopicInsightPage;

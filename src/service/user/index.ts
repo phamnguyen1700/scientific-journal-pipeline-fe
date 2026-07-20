@@ -5,13 +5,17 @@ import type {
   UserBookmark,
   UserFollowedTopic,
   UserProfile,
+  UpdateUserProfilePayload,
 } from "@/types/user";
 
 export const getUserProfileService = () =>
   get<UserApiResponse<UserProfile>>(apiEndpoints.user.profile);
 
-export const updateUserProfileService = (payload: Partial<UserProfile>) =>
-  put<UserApiResponse<UserProfile>, Partial<UserProfile>>(apiEndpoints.user.profile, payload);
+export const updateUserProfileService = (payload: UpdateUserProfilePayload) =>
+  put<UserApiResponse<UserProfile>, UpdateUserProfilePayload>(
+    apiEndpoints.user.profile,
+    payload,
+  );
 
 export const getLegacyProfileService = () =>
   get<UserApiResponse<UserProfile>>(apiEndpoints.user.legacyProfile);

@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   AuthorDetailContent,
   AuthorDetailDrawer,
-} from "@/features/authors/components/authorDetailDrawer";
+} from "@/features/authors/authorDetailDrawer";
 
 export function AuthorDetailPage({
   id,

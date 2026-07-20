@@ -1,5 +1,8 @@
 import type { AdminUser, ManagedApi, SystemConfig } from "@/types/admin";
-import { AdminDashboardPage, UserManagementPage, ApiManagementPage, SystemConfigPage } from "./components";
+import { AdminDashboardPage } from "@/features/admin/adminDashboardPage";
+import { ApiManagementPage } from "@/features/admin/apiManagementPage";
+import { SystemConfigPage } from "@/features/admin/systemConfigPage";
+import { UserManagementPage } from "@/features/admin/userManagementPage";
 
 // Mock data
 export const mockUsers: AdminUser[] = [

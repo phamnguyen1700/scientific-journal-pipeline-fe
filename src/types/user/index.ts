@@ -11,6 +11,15 @@ export type UserProfile = {
   phonenumber?: string;
   roleName?: string;
   isActive?: boolean;
+  createdAt?: string;
+};
+
+export type UpdateUserProfilePayload = {
+  username: string;
+  email: string;
+  phonenumber: string;
+  oldPassword?: string;
+  newPassword?: string;
 };
 
 export type UserBookmark = {

@@ -2,9 +2,11 @@
 
 import { Bell, Menu } from "lucide-react";
 import { useSidebar } from "./sidebar";
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import type { UserRole } from "@/types/role";
 import { useAuthStore } from "@/store/auth";
+import { ProfileDrawer } from "@/features/profile";
+import { UserAvatar } from "@/components/common/userAvatar";
 
 interface NavbarProps {
   onToggleSidebar?: () => void;
@@ -21,6 +23,7 @@ const ROLES = [
 function NavbarContent({ onToggleSidebar }: NavbarProps) {
   const { open, setOpen } = useSidebar();
   const user = useAuthStore((state) => state.user);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const handleToggle = () => {
     setOpen(!open);
@@ -51,10 +54,17 @@ function NavbarContent({ onToggleSidebar }: NavbarProps) {
           <Bell className="h-5 w-5" />
           <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full" />
         </button>
-        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold">
-          M
-        </div>
+        <button
+          type="button"
+          className="rounded-full outline-none transition-transform hover:scale-105 focus-visible:ring-3 focus-visible:ring-primary/30"
+          onClick={() => setProfileOpen(true)}
+          aria-label="Open profile"
+          title="Open profile"
+        >
+          <UserAvatar name={user?.username ?? user?.email ?? "User"} size="sm" />
+        </button>
       </div>
+      <ProfileDrawer open={profileOpen} onOpenChange={setProfileOpen} />
     </header>
   );
 }

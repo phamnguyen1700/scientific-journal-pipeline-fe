@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Save, Globe, Mail, Shield, Bell, Database, Server } from "lucide-react";
 import type { SystemConfig } from "@/types/admin";
-import { mockSystemConfig } from "../index";
+import { mockSystemConfig } from "@/features/admin";
 
 function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (

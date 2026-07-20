@@ -10,7 +10,7 @@ export function HotTopicsCard({ topics }: { topics: TrendingTopic[] }) {
     <section className="dashboard-card">
       <div className="dashboard-card-heading">
         <h2 className="dashboard-card-title">Hot Topics</h2>
-        <Link href="/dashboard/trending" className="dashboard-card-link">
+        <Link href="/dashboard/topics" className="dashboard-card-link">
           View all <ExternalLink className="size-[11px]" />
         </Link>
       </div>
