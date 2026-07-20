@@ -1,19 +1,22 @@
 import { SearchInput } from "@/components/common";
 
 export function TopicSearchHeader({
+  description = "Explore research areas, discover active fields, and follow the topics that matter to you.",
   query,
   onQueryChange,
+  title = "Topic Search",
 }: {
+  description?: string;
   query: string;
   onQueryChange: (query: string) => void;
+  title?: string;
 }) {
   return (
     <div className="topic-search-header">
       <div>
-        <h1 className="topic-search-title">Topic Search</h1>
+        <h1 className="topic-search-title">{title}</h1>
         <p className="topic-search-description">
-          Explore research areas, discover active fields, and follow the topics
-          that matter to you.
+          {description}
         </p>
       </div>
       <SearchInput

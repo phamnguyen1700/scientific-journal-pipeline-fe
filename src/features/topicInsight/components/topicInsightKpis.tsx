@@ -3,13 +3,31 @@ import { Activity, FileText, TrendingUp, Users } from "lucide-react";
 import { KpiCard } from "@/components/common";
 import type { TrendingTopicMetric } from "@/types/topics";
 
-export function TrendingTopicKpis({ topics }: { topics: TrendingTopicMetric[] }) {
+export function TopicInsightKpis({
+  topics,
+}: {
+  topics: TrendingTopicMetric[];
+}) {
   const fastestTopic = topics.reduce<TrendingTopicMetric | null>(
-    (current, topic) => !current || topic.growth > current.growth ? topic : current,
-    null
+    (current, topic) =>
+      !current || topic.growth > current.growth ? topic : current,
+    null,
   );
-  const totalPapers = topics.reduce((total, topic) => total + topic.papers, 0);
-  const totalFollowers = topics.reduce((total, topic) => total + topic.followers, 0);
+  const currentYearPapers = topics.reduce(
+    (total, topic) => total + topic.currentYearPapers,
+    0,
+  );
+  const topCurrentYearTopic = topics.reduce<TrendingTopicMetric | null>(
+    (current, topic) =>
+      !current || topic.currentYearPapers > current.currentYearPapers
+        ? topic
+        : current,
+    null,
+  );
+  const totalFollowers = topics.reduce(
+    (total, topic) => total + topic.followers,
+    0,
+  );
 
   return (
     <div className="trending-topics-kpi-grid">
@@ -28,16 +46,19 @@ export function TrendingTopicKpis({ topics }: { topics: TrendingTopicMetric[] })
         iconColor="bg-blue-100"
         iconTextColor="text-blue-600"
         label="New Publications"
-        value={formatCompactNumber(totalPapers)}
+        value={currentYearPapers.toLocaleString()}
         trend="up"
-        trendValue={fastestTopic ? `${fastestTopic.growth}%` : "0%"}
-        sub="vs previous period"
+        sub={
+          topCurrentYearTopic?.currentYearPapers
+            ? topCurrentYearTopic.name
+            : `No publications in ${new Date().getFullYear()}`
+        }
       />
       <KpiCard
         icon={<TrendingUp />}
         iconColor="bg-emerald-100"
         iconTextColor="text-emerald-600"
-        label="Fastest Growth"
+        label="Most Growth"
         value={fastestTopic ? `${fastestTopic.growth}%` : "0%"}
         sub={fastestTopic?.name ?? "No topic data"}
       />

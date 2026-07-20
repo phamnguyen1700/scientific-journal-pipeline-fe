@@ -16,7 +16,6 @@ export function HomeRightRailCarousel({
       ariaLabel="Dashboard highlights"
       className="home-right-carousel"
       itemClassName="home-right-carousel-item"
-      mode="step"
       stepIntervalMs={4200}
     >
       {children}

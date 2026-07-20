@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Plus, RefreshCw, Eye, EyeOff, Copy, CheckCircle, AlertCircle, Clock } from "lucide-react";
 import type { ManagedApi } from "@/types/admin";
-import { mockApis } from "../index";
+import { mockApis } from "@/features/admin";
 
 export function ApiManagementPage() {
   const [apis, setApis] = useState<ManagedApi[]>(mockApis);

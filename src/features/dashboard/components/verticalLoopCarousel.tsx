@@ -3,10 +3,12 @@
 import {
   Children,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type CSSProperties,
+  type PointerEvent,
   type ReactNode,
 } from "react";
 
@@ -29,52 +31,68 @@ export function VerticalLoopCarousel({
   className,
   groupClassName,
   itemClassName,
-  mode = "continuous",
+  mode = "step",
   stepIntervalMs = 3200,
   trackClassName,
 }: VerticalLoopCarouselProps) {
   const items = Children.toArray(children);
   const [stepIndex, setStepIndex] = useState(0);
   const [stepSize, setStepSize] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [axis, setAxis] = useState<"x" | "y">("y");
   const carouselRef = useRef<HTMLDivElement>(null);
   const firstItemRef = useRef<HTMLDivElement>(null);
+  const dragStartRef = useRef(0);
+  const dragStartIndexRef = useRef(0);
   const itemCount = items.length;
-  const renderedGroups = mode === "step" ? 2 : 2;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (mode !== "step") return;
 
     const updateMetrics = () => {
       const firstItem = firstItemRef.current;
-      const carousel = carouselRef.current;
-      if (!firstItem || !carousel) return;
+      if (!firstItem) return;
 
       const nextAxis = window.matchMedia("(max-width: 767px)").matches ? "x" : "y";
       const group = firstItem.parentElement;
       const groupStyles = group ? window.getComputedStyle(group) : null;
       const gap = groupStyles ? Number.parseFloat(groupStyles.gap || "0") : 0;
       const rect = firstItem.getBoundingClientRect();
+      const nextStepSize = (nextAxis === "x" ? rect.width : rect.height) + gap;
 
       setAxis(nextAxis);
-      setStepSize((nextAxis === "x" ? rect.width : rect.height) + gap);
+      if (nextStepSize > 0) {
+        setStepSize(nextStepSize);
+        setStepIndex(0);
+      }
     };
 
-    updateMetrics();
+    const frame = window.requestAnimationFrame(updateMetrics);
+    const observer = new ResizeObserver(updateMetrics);
+    if (firstItemRef.current) observer.observe(firstItemRef.current);
+    if (carouselRef.current) observer.observe(carouselRef.current);
+
     window.addEventListener("resize", updateMetrics);
-    return () => window.removeEventListener("resize", updateMetrics);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", updateMetrics);
+    };
   }, [mode, itemCount]);
 
   useEffect(() => {
-    if (mode !== "step" || itemCount <= 1) return;
+    if (mode !== "step" || itemCount <= 1 || stepSize <= 0 || isDragging) {
+      return;
+    }
 
     const interval = window.setInterval(() => {
       setStepIndex((current) => current + 1);
     }, stepIntervalMs);
 
     return () => window.clearInterval(interval);
-  }, [itemCount, mode, stepIntervalMs]);
+  }, [isDragging, itemCount, mode, stepIntervalMs, stepSize]);
 
   useEffect(() => {
     if (mode !== "step" || itemCount === 0 || stepIndex !== itemCount) return;
@@ -93,12 +111,63 @@ export function VerticalLoopCarousel({
   const trackStyle = useMemo<CSSProperties>(() => {
     if (mode !== "step") return {};
 
-    const offset = -(stepIndex * stepSize);
+    const offset = -(stepIndex * stepSize) + dragOffset;
     return {
       transform: axis === "x" ? `translateX(${offset}px)` : `translateY(${offset}px)`,
-      transition: isResetting ? "none" : "transform 640ms cubic-bezier(0.22, 1, 0.36, 1)",
+      transition: isResetting || isDragging
+        ? "none"
+        : "transform 640ms cubic-bezier(0.22, 1, 0.36, 1)",
     };
-  }, [axis, isResetting, mode, stepIndex, stepSize]);
+  }, [axis, dragOffset, isDragging, isResetting, mode, stepIndex, stepSize]);
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (mode !== "step" || itemCount <= 1 || stepSize <= 0) return;
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStartRef.current = axis === "x" ? event.clientX : event.clientY;
+    dragStartIndexRef.current = stepIndex;
+    setIsDragging(true);
+    setDragOffset(0);
+  };
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+
+    const currentPosition = axis === "x" ? event.clientX : event.clientY;
+    setDragOffset(currentPosition - dragStartRef.current);
+  };
+
+  const handlePointerEnd = (event: PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+
+    event.currentTarget.releasePointerCapture(event.pointerId);
+
+    const threshold = Math.min(stepSize * 0.28, 90);
+    let nextIndex = dragStartIndexRef.current;
+
+    if (dragOffset <= -threshold) {
+      nextIndex = dragStartIndexRef.current + 1;
+    } else if (dragOffset >= threshold) {
+      nextIndex = dragStartIndexRef.current - 1;
+    }
+
+    setIsDragging(false);
+    setDragOffset(0);
+
+    if (nextIndex < 0) {
+      setIsResetting(true);
+      setStepIndex(itemCount);
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          setIsResetting(false);
+          setStepIndex(itemCount - 1);
+        });
+      });
+      return;
+    }
+
+    setStepIndex(nextIndex);
+  };
 
   return (
     <div
@@ -106,21 +175,27 @@ export function VerticalLoopCarousel({
       aria-label={ariaLabel}
       className={cn("home-loop-carousel", className)}
       data-loop-mode={mode}
+      onPointerCancel={handlePointerEnd}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
     >
       <div
         className={cn("home-loop-carousel-track", trackClassName)}
         style={trackStyle}
       >
-        {Array.from({ length: renderedGroups }).map((_, groupIndex) => (
-          <LoopGroup
-            ariaHidden={groupIndex > 0}
-            firstItemRef={groupIndex === 0 ? firstItemRef : undefined}
-            groupClassName={groupClassName}
-            itemClassName={itemClassName}
-            items={items}
-            key={groupIndex}
-          />
-        ))}
+        <LoopGroup
+          firstItemRef={firstItemRef}
+          groupClassName={groupClassName}
+          itemClassName={itemClassName}
+          items={items}
+        />
+        <LoopGroup
+          ariaHidden
+          groupClassName={groupClassName}
+          itemClassName={itemClassName}
+          items={items}
+        />
       </div>
     </div>
   );

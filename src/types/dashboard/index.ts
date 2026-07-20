@@ -75,7 +75,13 @@ export type DashboardSummary = {
 export type DashboardHotTopic = {
   topicName: string;
   paperCount: number;
-  growthPercentage: number;
+  averageGrowthPercentage?: number;
+  growthPercentage?: number;
+  totalPercentage?: number;
+  yearlyCounts?: Array<{
+    year: number;
+    count: number;
+  }>;
 };
 
 export type DashboardPublicationTrendPoint = {

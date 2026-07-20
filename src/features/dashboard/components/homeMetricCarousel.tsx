@@ -17,7 +17,6 @@ export function HomeMetricCarousel({
     <VerticalLoopCarousel
       ariaLabel="Research totals"
       className="home-metric-carousel"
-      mode="step"
       stepIntervalMs={3600}
     >
       {items.map((item) => {

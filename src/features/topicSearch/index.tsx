@@ -12,7 +12,7 @@ import { useUserFollowingTopics } from "@/hooks/user";
 import type { TagColor } from "@/types/common";
 import type { ResearchTopic, TopicApiModel } from "@/types/topics";
 
-export function TopicSearchPage() {
+export function TopicSearchPage({ embedded = false }: { embedded?: boolean }) {
   const [query, setQuery] = useState("");
   const topicsQuery = useTopics();
   const followingTopicsQuery = useUserFollowingTopics();
@@ -77,8 +77,17 @@ export function TopicSearchPage() {
   }
 
   return (
-    <div className="topic-search-page">
-      <TopicSearchHeader query={query} onQueryChange={setQuery} />
+    <div className={embedded ? "topic-search-embedded" : "topic-search-page"}>
+      <TopicSearchHeader
+        description={
+          embedded
+            ? "Search the topic catalog and follow the areas you want to track."
+            : undefined
+        }
+        query={query}
+        onQueryChange={setQuery}
+        title={embedded ? "Topic Search" : undefined}
+      />
       <PopularTopics topics={popularTopics} onSelect={setQuery} />
       <section className="topic-search-results">
         <div>

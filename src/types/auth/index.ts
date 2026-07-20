@@ -7,6 +7,25 @@ export type LoginPayload = {
 
 export type ILoginRequest = LoginPayload;
 
+export type RegisterRoleName = "Student" | "Lecturer" | "Researcher";
+
+export type RegisterPayload = {
+  username: string;
+  email: string;
+  phoneNumber: string;
+  password: string;
+  roleName: RegisterRoleName;
+};
+
+export type VerifyRegistrationPayload = {
+  email: string;
+  code: string;
+};
+
+export type ResendConfirmationCodePayload = {
+  email: string;
+};
+
 export type AuthUser = {
   id: string;
   username: string;
@@ -37,6 +56,8 @@ export type BackendResponse<T> = {
 export type LoginResponse = BackendResponse<LoginResult>;
 
 export type ILoginResponse = LoginResponse;
+
+export type AuthActionResponse = BackendResponse<unknown>;
 
 export function normalizeBackendResponse<T>(response: BackendResponse<T>) {
   return {

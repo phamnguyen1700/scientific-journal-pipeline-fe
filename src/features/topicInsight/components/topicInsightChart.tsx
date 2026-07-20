@@ -11,12 +11,17 @@ import {
   YAxis,
 } from "recharts";
 
-import type { TrendingTopicChartPoint } from "@/types/topics";
+import type {
+  TrendingTopicChartPoint,
+  TrendingTopicChartSeries,
+} from "@/types/topics";
 
-export function TrendingTopicsChart({
+export function TopicInsightChart({
   data,
+  series,
 }: {
   data: TrendingTopicChartPoint[];
+  series: TrendingTopicChartSeries[];
 }) {
   return (
     <section className="trending-topics-chart-card">
@@ -39,10 +44,17 @@ export function TrendingTopicsChart({
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#9CA3AF" }} />
             <Tooltip contentStyle={{ border: "1px solid #E5E7EB", borderRadius: 8, fontSize: 12 }} />
             <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-            <Line type="monotone" dataKey="llm" name="Large Language Models" stroke="#6C4CF1" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="federated" name="Federated Learning" stroke="#EF4444" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="quantum" name="Quantum Computing" stroke="#3B82F6" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="climate" name="Climate Modeling" stroke="#10B981" strokeWidth={2} dot={false} />
+            {series.map((item) => (
+              <Line
+                dataKey={item.key}
+                dot={false}
+                key={item.key}
+                name={item.name}
+                stroke={item.color}
+                strokeWidth={2}
+                type="monotone"
+              />
+            ))}
           </LineChart>
         </ResponsiveContainer>
       </div>

@@ -8,11 +8,18 @@ import toast from "react-hot-toast";
 import {
   LoginBrandPanel,
   LoginCard,
+  type AuthPanelMode,
   type LoginFeatureItem,
   type LoginStatItem,
 } from "@/features/auth/components";
-import { useLogin } from "@/hooks/auth";
-import { getApiErrorMessage } from "@/service/apiError";
+import {
+  useLogin,
+  useRegister,
+  useResendConfirmationCode,
+  useVerifyRegistration,
+} from "@/hooks/auth";
+import { getApiErrorMessage } from "@/lib/apiError";
+import type { RegisterRoleName } from "@/types/auth";
 import { getDefaultRouteByRole } from "@/types/role";
 
 const loginFeatures: LoginFeatureItem[] = [
@@ -30,8 +37,20 @@ const loginStats: LoginStatItem[] = [
 export function LoginPage() {
   const router = useRouter();
   const loginMutation = useLogin();
+  const registerMutation = useRegister();
+  const verifyMutation = useVerifyRegistration();
+  const resendMutation = useResendConfirmationCode();
+  const [mode, setMode] = useState<AuthPanelMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [registerName, setRegisterName] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
+  const [registerRole, setRegisterRole] =
+    useState<RegisterRoleName>("Student");
+  const [otpCode, setOtpCode] = useState("");
 
   function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -57,6 +76,105 @@ export function LoginPage() {
     );
   }
 
+  function handleRegister(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const username = registerName.trim();
+    const nextEmail = registerEmail.trim();
+    const phoneNumber = registerPhone.trim();
+
+    if (!username) {
+      toast.error("Name is required.");
+      return;
+    }
+
+    if (!isValidEmail(nextEmail)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    if (!isValidPhoneNumber(phoneNumber)) {
+      toast.error("Phone number must contain 10 to 12 digits.");
+      return;
+    }
+
+    if (!registerPassword) {
+      toast.error("Password is required.");
+      return;
+    }
+
+    registerMutation.mutate(
+      {
+        username,
+        email: nextEmail,
+        phoneNumber,
+        password: registerPassword,
+        roleName: registerRole,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Registration submitted. Check your email for the code.");
+          setEmail(nextEmail);
+          setOtpCode("");
+          setMode("otp");
+        },
+        onError: (error) => {
+          toast.error(getApiErrorMessage(error, "Unable to register."));
+        },
+      },
+    );
+  }
+
+  function handleVerifyRegistration(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const nextEmail = registerEmail.trim() || email.trim();
+    const code = otpCode.trim();
+
+    if (!nextEmail || code.length < 6) {
+      toast.error("Please enter the verification code.");
+      return;
+    }
+
+    verifyMutation.mutate(
+      { email: nextEmail, code },
+      {
+        onSuccess: () => {
+          toast.success("Account verified. Please sign in.");
+          setMode("login");
+          setPassword("");
+          setRegisterPassword("");
+          setRegisterConfirmPassword("");
+          setOtpCode("");
+        },
+        onError: (error) => {
+          toast.error(getApiErrorMessage(error, "Unable to verify registration."));
+        },
+      },
+    );
+  }
+
+  function handleResendCode() {
+    const nextEmail = registerEmail.trim() || email.trim();
+
+    if (!nextEmail) {
+      toast.error("Email is required to resend the code.");
+      return;
+    }
+
+    resendMutation.mutate(
+      { email: nextEmail },
+      {
+        onSuccess: () => {
+          toast.success("A new verification code has been sent.");
+        },
+        onError: (error) => {
+          toast.error(getApiErrorMessage(error, "Unable to resend code."));
+        },
+      },
+    );
+  }
+
   return (
     <main className="auth-page">
       <LoginBrandPanel
@@ -69,9 +187,32 @@ export function LoginPage() {
         email={email}
         password={password}
         loading={loginMutation.isPending}
+        mode={mode}
+        otpCode={otpCode}
+        registerConfirmPassword={registerConfirmPassword}
+        registerEmail={registerEmail}
+        registerName={registerName}
+        registerPassword={registerPassword}
+        registerPhone={registerPhone}
+        registerRole={registerRole}
+        registerLoading={registerMutation.isPending}
+        resendLoading={resendMutation.isPending}
+        verifyEmail={registerEmail.trim() || email.trim()}
+        verifyLoading={verifyMutation.isPending}
         onEmailChange={setEmail}
+        onModeChange={setMode}
+        onOtpCodeChange={setOtpCode}
         onPasswordChange={setPassword}
+        onRegisterConfirmPasswordChange={setRegisterConfirmPassword}
+        onRegisterEmailChange={setRegisterEmail}
+        onRegisterNameChange={setRegisterName}
+        onRegisterPasswordChange={setRegisterPassword}
+        onRegisterPhoneChange={setRegisterPhone}
+        onRegisterRoleChange={setRegisterRole}
+        onRegisterSubmit={handleRegister}
+        onResendCode={handleResendCode}
         onSubmit={handleLogin}
+        onVerifySubmit={handleVerifyRegistration}
       />
       <section className="auth-stats-mobile">
         {loginStats.map((stat) => (
@@ -86,3 +227,11 @@ export function LoginPage() {
 }
 
 export { loginFeatures, loginStats };
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isValidPhoneNumber(value: string) {
+  return /^\d{10,12}$/.test(value);
+}
