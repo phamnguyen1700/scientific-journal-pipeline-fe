@@ -18,6 +18,7 @@ import type {
   AdminUserActionApiResponse,
   AdminUserApiModel,
   AdminUsersApiResponse,
+  AdminUsersResult,
 } from "@/types/admin";
 
 export const adminQueryKeys = {
@@ -26,6 +27,7 @@ export const adminQueryKeys = {
   dashboardApiStatus: () => [...adminQueryKeys.dashboard(), "api-status"] as const,
   dashboardApiCalls: () => [...adminQueryKeys.dashboard(), "api-calls"] as const,
   users: () => [...adminQueryKeys.all, "users"] as const,
+  usersPage: (page = 1, size = 10) => [...adminQueryKeys.users(), { page, size }] as const,
 };
 
 export function useAdminDashboard() {
@@ -72,15 +74,19 @@ export function useAdminDashboardApiCalls() {
   });
 }
 
-export function useAdminUsers() {
+export function useAdminUsers(page = 1, size = 10) {
   const query = useQuery({
-    queryKey: adminQueryKeys.users(),
-    queryFn: async () => normalizeAdminUsersResponse(await getAdminUsersService()),
+    queryKey: adminQueryKeys.usersPage(page, size),
+    queryFn: async () => normalizeAdminUsersResponse(await getAdminUsersService(page, size)),
   });
+  const usersResult = query.data ?? emptyAdminUsersResult(page, size);
 
   return {
     ...query,
-    users: query.data ?? [],
+    users: usersResult.users,
+    total: usersResult.total,
+    page: usersResult.page,
+    size: usersResult.size,
     loading: query.isPending,
     error: getErrorMessage(query.error),
   };
@@ -130,12 +136,36 @@ function normalizeAdminDashboardResponse(response: AdminDashboardApiResponse): A
   return response.result;
 }
 
-function normalizeAdminUsersResponse(response: AdminUsersApiResponse): AdminUser[] {
+function normalizeAdminUsersResponse(response: AdminUsersApiResponse) {
   if (!response.succeeded) {
     throw new Error(response.errors.join(", ") || "Unable to load users.");
   }
 
-  return response.result.map(mapAdminUser);
+  const result = Array.isArray(response.result)
+    ? {
+        total: response.result.length,
+        page: 1,
+        size: response.result.length || 10,
+        results: response.result,
+      }
+    : response.result;
+
+  return {
+    total: result.total,
+    page: result.page,
+    size: result.size,
+    users: result.results.map(mapAdminUser),
+  };
+}
+
+function emptyAdminUsersResult(page: number, size: number): AdminUsersResult & { users: AdminUser[] } {
+  return {
+    total: 0,
+    page,
+    size,
+    results: [],
+    users: [],
+  };
 }
 
 function normalizeAdminUserActionResponse(response?: AdminUserActionApiResponse) {

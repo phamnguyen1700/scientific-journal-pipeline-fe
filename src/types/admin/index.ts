@@ -24,9 +24,16 @@ export type AdminUserApiModel = {
   createdAt?: string;
 };
 
+export type AdminUsersResult = {
+  total: number;
+  page: number;
+  size: number;
+  results: AdminUserApiModel[];
+};
+
 export type AdminUsersApiResponse = {
   succeeded: boolean;
-  result: AdminUserApiModel[];
+  result: AdminUserApiModel[] | AdminUsersResult;
   errors: string[];
 };
 

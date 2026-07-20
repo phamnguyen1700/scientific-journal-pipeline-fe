@@ -29,8 +29,10 @@ export const getAdminDashboardApiStatusService = () =>
 export const getAdminDashboardApiCallsService = () =>
   get<AdminDashboardApiCallsResponse>(apiEndpoints.admin.dashboardApiCalls);
 
-export const getAdminUsersService = () =>
-  get<AdminUsersApiResponse>(apiEndpoints.admin.users);
+export const getAdminUsersService = (page = 1, size = 10) =>
+  get<AdminUsersApiResponse>(apiEndpoints.admin.users, {
+    params: { page, size },
+  });
 
 export const activateAdminUserService = (userId: string) =>
   put<AdminUserActionApiResponse>(apiEndpoints.admin.activateUser(userId));

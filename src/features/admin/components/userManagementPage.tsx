@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Search, ChevronDown, MoreHorizontal, RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, RefreshCw } from "lucide-react";
 import {
   useActivateAdminUser,
   useAdminUsers,
@@ -26,7 +26,9 @@ const roleColors: Record<UserRole, string> = {
 };
 
 export function UserManagementPage() {
-  const usersQuery = useAdminUsers();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const usersQuery = useAdminUsers(currentPage, pageSize);
   const activateUserMutation = useActivateAdminUser();
   const deactivateUserMutation = useDeactivateAdminUser();
   const deleteUserMutation = useDeleteAdminUser();
@@ -36,6 +38,9 @@ export function UserManagementPage() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const users = usersQuery.users;
+  const pageCount = Math.max(1, Math.ceil(usersQuery.total / usersQuery.size));
+  const firstResult = usersQuery.total ? (usersQuery.page - 1) * usersQuery.size + 1 : 0;
+  const lastResult = Math.min(usersQuery.page * usersQuery.size, usersQuery.total);
   const manageableUsers = useMemo(
     () => users.filter((user) => !isAdminRole(user.role)),
     [users]
@@ -72,6 +77,12 @@ export function UserManagementPage() {
     suspended: manageableUsers.filter((u) => u.status === "Suspended").length,
   };
 
+  useEffect(() => {
+    if (!usersQuery.loading && currentPage > pageCount) {
+      setCurrentPage(pageCount);
+    }
+  }, [currentPage, pageCount, usersQuery.loading]);
+
   const isUserActionPending = (id: string) =>
     activeActionUserId === id &&
     (activateUserMutation.isPending ||
@@ -104,7 +115,7 @@ export function UserManagementPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             {usersQuery.loading
               ? "Loading registered users..."
-              : `${manageableUsers.length} manageable users registered on the platform`}
+              : `Showing ${manageableUsers.length} manageable users on this page · ${usersQuery.total} total registered`}
           </p>
         </div>
         <button
@@ -149,7 +160,10 @@ export function UserManagementPage() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Search by name or email..."
             className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary"
           />
@@ -157,7 +171,10 @@ export function UserManagementPage() {
         <div className="relative">
           <select
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
+            onChange={(e) => {
+              setRoleFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="appearance-none rounded-lg border border-border bg-card py-2 pl-3 pr-8 text-sm text-foreground outline-none focus:border-primary"
           >
             <option value="All">All Roles</option>
@@ -170,7 +187,10 @@ export function UserManagementPage() {
         <div className="relative">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="appearance-none rounded-lg border border-border bg-card py-2 pl-3 pr-8 text-sm text-foreground outline-none focus:border-primary"
           >
             <option value="All">All Statuses</option>
@@ -261,6 +281,51 @@ export function UserManagementPage() {
         ) : filtered.length === 0 && (
           <div className="py-12 text-center text-sm text-muted-foreground">No users found</div>
         )}
+        <div className="flex flex-col gap-3 border-t border-border px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-muted-foreground">
+            Showing {firstResult}-{lastResult} of {usersQuery.total}
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <select
+                value={pageSize}
+                onChange={(event) => {
+                  setPageSize(Number(event.target.value));
+                  setCurrentPage(1);
+                }}
+                className="appearance-none rounded-lg border border-border bg-card py-2 pl-3 pr-8 text-xs text-foreground outline-none focus:border-primary"
+              >
+                <option value={10}>10 rows</option>
+                <option value={20}>20 rows</option>
+                <option value={50}>50 rows</option>
+              </select>
+              <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={usersQuery.loading || currentPage <= 1}
+                className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ChevronLeft size={14} />
+                Previous
+              </button>
+              <span className="min-w-20 text-center text-xs text-muted-foreground">
+                Page {currentPage} of {pageCount}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
+                disabled={usersQuery.loading || currentPage >= pageCount}
+                className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
