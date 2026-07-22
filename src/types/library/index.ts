@@ -25,9 +25,11 @@ export type FollowedTopic = {
 
 export type FollowedJournal = {
   id: string | number;
+  apiId?: string;
   name: string;
   publisher: string;
-  papers: number;
-  impactFactor: number;
+  papers?: number;
+  impactFactor?: number;
+  followedAt?: string;
   alertOn: boolean;
 };

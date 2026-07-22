@@ -1,12 +1,13 @@
 "use client";
 
-import { Bell, Menu } from "lucide-react";
+import { Bell, LogOut, Menu } from "lucide-react";
 import { useSidebar } from "./sidebar";
 import { memo, useMemo, useState } from "react";
 import type { UserRole } from "@/types/role";
 import { useAuthStore } from "@/store/auth";
 import { ProfileDrawer } from "@/features/profile";
 import { UserAvatar } from "@/components/common/userAvatar";
+import { useLogout } from "@/hooks/auth";
 
 interface NavbarProps {
   onToggleSidebar?: () => void;
@@ -24,6 +25,7 @@ function NavbarContent({ onToggleSidebar }: NavbarProps) {
   const { open, setOpen } = useSidebar();
   const user = useAuthStore((state) => state.user);
   const [profileOpen, setProfileOpen] = useState(false);
+  const logout = useLogout();
 
   const handleToggle = () => {
     setOpen(!open);
@@ -39,10 +41,18 @@ function NavbarContent({ onToggleSidebar }: NavbarProps) {
     <header className="h-16 bg-card border-b border-border flex items-center px-6 gap-4 shrink-0">
       <button
         onClick={handleToggle}
-        className="text-muted-foreground hover:text-foreground transition-colors"
+        className="hidden text-muted-foreground transition-colors hover:text-foreground md:inline-flex"
         title={open ? "Collapse sidebar" : "Expand sidebar"}
       >
         <Menu className="h-5 w-5" />
+      </button>
+      <button
+        onClick={logout}
+        className="text-red-600 transition-colors hover:text-red-700 md:hidden"
+        title="Logout"
+        aria-label="Logout"
+      >
+        <LogOut className="h-5 w-5" />
       </button>
 
       <div className="flex items-center gap-3 ml-auto">

@@ -20,7 +20,9 @@ export function SidebarProvider({
 
   return (
     <SidebarContext.Provider value={{ open, setOpen }}>
-      <div className="flex h-dvh w-full overflow-hidden bg-background">{children}</div>
+      <div className="flex h-dvh w-full overflow-hidden bg-background">
+        {children}
+      </div>
     </SidebarContext.Provider>
   );
 }
@@ -45,7 +47,7 @@ export function Sidebar({
         "flex h-dvh flex-col shrink-0 overflow-hidden bg-card border-r border-border transition-all duration-200",
         className,
       )}
-      style={{ width: open ? 260 : 84 }}
+      style={{ width: open ? 232 : 72 }}
       {...props}
     />
   );
@@ -105,9 +107,9 @@ export function SidebarGroupLabel({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   const { open } = useSidebar();
-  
+
   if (!open) return null;
-  
+
   return (
     <div
       className={cn(
@@ -130,18 +132,14 @@ export function SidebarMenu({
   className,
   ...props
 }: React.HTMLAttributes<HTMLUListElement>) {
-  return (
-    <ul className={cn("flex flex-col gap-1", className)} {...props} />
-  );
+  return <ul className={cn("flex flex-col gap-1", className)} {...props} />;
 }
 
 export function SidebarMenuItem({
   className,
   ...props
 }: React.HTMLAttributes<HTMLLIElement>) {
-  return (
-    <li className={cn("relative", className)} {...props} />
-  );
+  return <li className={cn("relative", className)} {...props} />;
 }
 
 export function SidebarMenuButton({
@@ -159,10 +157,10 @@ export function SidebarMenuButton({
   children?: React.ReactNode;
 }) {
   const { open } = useSidebar();
-  
+
   const buttonClass = cn(
-        "flex min-h-11 w-full items-center rounded-lg transition-colors",
-        open ? "gap-2.5 px-3 py-2" : "justify-center px-0 py-2.5",
+    "flex min-h-11 w-full items-center rounded-lg transition-colors",
+    open ? "gap-2.5 px-3 py-2" : "justify-center px-0 py-2.5",
     isActive
       ? "bg-primary text-primary-foreground font-medium"
       : "text-foreground hover:bg-muted",
@@ -179,7 +177,12 @@ export function SidebarMenuButton({
         title={!open ? title : undefined}
         className={buttonClass}
       >
-        <span className={cn("flex items-center", open ? "gap-2.5" : "justify-center")}>
+        <span
+          className={cn(
+            "flex items-center",
+            open ? "gap-2.5" : "justify-center",
+          )}
+        >
           {children}
         </span>
       </Link>
@@ -192,7 +195,9 @@ export function SidebarMenuButton({
       className={buttonClass}
       {...props}
     >
-      <span className={cn("flex items-center", open ? "gap-2.5" : "justify-center")}>
+      <span
+        className={cn("flex items-center", open ? "gap-2.5" : "justify-center")}
+      >
         {children}
       </span>
     </button>
@@ -212,7 +217,10 @@ export function SidebarTrigger({
         onClick?.(e);
         setOpen(!open);
       }}
-      className={cn("text-muted-foreground hover:text-foreground transition-colors", className)}
+      className={cn(
+        "text-muted-foreground hover:text-foreground transition-colors",
+        className,
+      )}
       {...props}
     />
   );
@@ -224,10 +232,7 @@ export function SidebarInset({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn(
-        "flex min-h-0 flex-1 flex-col overflow-hidden",
-        className,
-      )}
+      className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", className)}
       {...props}
     />
   );

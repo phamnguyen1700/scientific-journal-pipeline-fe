@@ -104,7 +104,7 @@ export function LayoutContent({ children }: LayoutContentProps) {
       </motion.div>
       <SidebarInset>
         <Navbar />
-        <main className="relative min-h-0 flex-1 overflow-y-auto">
+        <main className="relative min-h-0 flex-1 overflow-y-auto pb-20 md:pb-0">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={pathname}

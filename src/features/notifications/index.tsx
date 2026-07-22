@@ -1,32 +1,125 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { NotificationFilters, NotificationItem, NotificationsHeader } from "@/features/notifications/components";
-import type { NotificationFilter, UserNotification } from "@/types/notifications";
-
-const initialNotifications: UserNotification[] = [
-  { id: 1, kind: "paper", title: "New papers in Large Language Models", description: "12 new publications match your followed topic, including research on scientific reasoning agents.", time: "12 minutes ago", read: false },
-  { id: 2, kind: "citation", title: "Citation alert", description: 'A paper you bookmarked, "Protein Structure Prediction with AlphaFold 3", reached 392 citations.', time: "1 hour ago", read: false },
-  { id: 3, kind: "keyword", title: 'Keyword alert: "federated learning"', description: "Publication activity increased by 18% this week. 24 new papers are available.", time: "3 hours ago", read: false },
-  { id: 4, kind: "journal", title: "Nature Machine Intelligence update", description: "The journal published a new issue with 8 articles related to your research interests.", time: "Yesterday", read: true },
-  { id: 5, kind: "paper", title: "New papers in Climate Modeling", description: "7 new publications were indexed for your followed topic.", time: "Yesterday", read: true },
-  { id: 6, kind: "journal", title: "Cell journal update", description: "A new genomics collection is now available with 14 selected papers.", time: "2 days ago", read: true },
-];
+import {
+  getNotificationErrorMessage,
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+  useNotifications,
+  useUnreadNotificationCount,
+} from "@/hooks/notifications";
+import type {
+  NotificationEventType,
+  NotificationFilter,
+  NotificationHistoryItem,
+  NotificationKind,
+  UserNotification,
+} from "@/types/notifications";
 
 export function NotificationsPage() {
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const router = useRouter();
   const [filter, setFilter] = useState<NotificationFilter>("all");
-  const unreadCount = notifications.filter((item) => !item.read).length;
+  const notificationsQuery = useNotifications();
+  const unreadCountQuery = useUnreadNotificationCount();
+  const markReadMutation = useMarkNotificationRead();
+  const markAllReadMutation = useMarkAllNotificationsRead();
+  const notifications = useMemo(
+    () => (notificationsQuery.data ?? []).map(mapHistoryNotification),
+    [notificationsQuery.data],
+  );
+  const unreadCount =
+    unreadCountQuery.data ?? notifications.filter((item) => !item.read).length;
   const visibleNotifications = useMemo(() => notifications.filter((item) => filter === "all" || (filter === "unread" ? !item.read : item.kind === filter)), [filter, notifications]);
+  const error = getNotificationErrorMessage(notificationsQuery.error);
 
   return (
     <div className="library-page">
-      <NotificationsHeader unreadCount={unreadCount} onMarkAllRead={() => setNotifications((items) => items.map((item) => ({ ...item, read: true })))} />
+      <NotificationsHeader
+        unreadCount={unreadCount}
+        onMarkAllRead={() => markAllReadMutation.mutate()}
+        saving={markAllReadMutation.isPending}
+      />
       <NotificationFilters active={filter} onChange={setFilter} />
       <section className="notifications-list">
-        {visibleNotifications.map((notification) => <NotificationItem key={notification.id} notification={notification} onRead={(id) => setNotifications((items) => items.map((item) => item.id === id ? { ...item, read: true } : item))} />)}
+        {notificationsQuery.isPending ? (
+          <div className="paper-search-empty">Loading notifications...</div>
+        ) : error ? (
+          <div className="paper-search-empty">{error}</div>
+        ) : visibleNotifications.length ? (
+          visibleNotifications.map((notification) => (
+            <NotificationItem
+              key={notification.id}
+              notification={notification}
+              onOpen={() => {
+                if (!notification.read) {
+                  markReadMutation.mutate(notification.id);
+                }
+
+                router.push(getNotificationHref(notification));
+              }}
+            />
+          ))
+        ) : (
+          <div className="paper-search-empty">No notifications found.</div>
+        )}
       </section>
     </div>
   );
+}
+
+function mapHistoryNotification(item: NotificationHistoryItem): UserNotification {
+  return {
+    id: item.notificationId,
+    kind: getNotificationKind(item.eventType),
+    title: item.title,
+    description: item.body,
+    time: formatNotificationTime(item.createdAt),
+    read: item.isRead,
+    paperId: item.paperId,
+    topicId: item.topicId,
+    journalId: item.journalId,
+    eventType: item.eventType,
+  };
+}
+
+function getNotificationKind(eventType: NotificationEventType): NotificationKind {
+  if (eventType === "NewPaperInFollowedJournal") return "journal";
+  if (eventType === "BookmarkedPaperUpdated") return "paper";
+  if (eventType === "NewPaperInFollowedTopic") return "paper";
+
+  return "paper";
+}
+
+function getNotificationHref(notification: UserNotification) {
+  if (notification.paperId) return `/dashboard/papers/${notification.paperId}`;
+  if (notification.journalId) return `/dashboard/journals/${notification.journalId}`;
+  if (notification.topicId) return `/dashboard/topics/${notification.topicId}`;
+
+  return "/dashboard/notifications";
+}
+
+function formatNotificationTime(value: string) {
+  const createdAt = new Date(value);
+  if (Number.isNaN(createdAt.getTime())) return value;
+
+  const diffMs = Date.now() - createdAt.getTime();
+  const diffMinutes = Math.max(0, Math.floor(diffMs / 60000));
+
+  if (diffMinutes < 1) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} hours ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays} days ago`;
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(createdAt);
 }

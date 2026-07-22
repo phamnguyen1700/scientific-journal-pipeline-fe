@@ -45,10 +45,19 @@ export const apiEndpoints = {
   user: {
     profile: "/User/profile",
     legacyProfile: "/profile",
+    deviceToken: "/User/device-token",
     bookmarks: "/User/bookmarks",
     bookmark: (paperId: string) => `/User/bookmarks/${paperId}`,
     followingTopics: "/User/following/topics",
     followingTopic: (topicId: string) => `/User/following/topics/${topicId}`,
+    followingJournals: "/User/following/journals",
+    followingJournal: (journalId: string) => `/User/following/journals/${journalId}`,
+  },
+  notifications: {
+    list: "/Notification",
+    unreadCount: "/Notification/unread-count",
+    markRead: (id: string) => `/Notification/${id}/read`,
+    markAllRead: "/Notification/read-all",
   },
   topics: {
     list: "/Topic",
