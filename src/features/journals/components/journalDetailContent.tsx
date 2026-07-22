@@ -1,7 +1,9 @@
 import {
   BarChart3,
+  Bell,
   BookOpen,
   Building2,
+  Check,
   ExternalLink,
   FileText,
   Hash,
@@ -9,10 +11,12 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import { ResearchTopicBars, WorksByYearChart } from "@/components/common";
 
 import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import type { Journal, JournalPaper, JournalTopic, JournalYearCount } from "@/types/journals";
 
 export function JournalDetailContent({
@@ -26,6 +30,8 @@ export function JournalDetailContent({
   loading: boolean;
   showPapers?: boolean;
 }) {
+  const [isFollowingJournal, setIsFollowingJournal] = useState(false);
+
   if (loading) {
     return (
       <JournalDetailStatus
@@ -55,7 +61,7 @@ export function JournalDetailContent({
     <>
       <article className="paper-detail-card">
         <div className="paper-detail-heading">
-          <div>
+          <div className="min-w-0">
             <div className="paper-result-badges">
               <span>Journal</span>
               <Badge variant={journal.isOpenAccess ? "success" : "muted"}>
@@ -75,6 +81,17 @@ export function JournalDetailContent({
               {formatJournalSubtitle(journal.normalizedName, journal.firstPublicationYear, journal.lastPublicationYear)}
             </p>
           </div>
+          <Button
+            type="button"
+            variant={isFollowingJournal ? "soft" : "outline"}
+            size="sm"
+            className="journal-detail-follow-button"
+            aria-pressed={isFollowingJournal}
+            onClick={() => setIsFollowingJournal((value) => !value)}
+          >
+            {isFollowingJournal ? <Check /> : <Bell />}
+            {isFollowingJournal ? "Following journal" : "Follow journal"}
+          </Button>
         </div>
 
         <div className="paper-detail-meta">

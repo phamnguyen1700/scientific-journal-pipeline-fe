@@ -41,6 +41,7 @@ const initialFilters: PaperSearchFiltersValue = {
   filterAuthor: "",
   filterKeyword: "",
   filterYear: "",
+  filterTopic: "",
 };
 
 const pageSize = 10;
@@ -81,6 +82,7 @@ export function PaperSearchPage({
   const filterAuthor = formValues.filterAuthor ?? "";
   const filterKeyword = formValues.filterKeyword ?? "";
   const filterYear = formValues.filterYear ?? "";
+  const filterTopic = formValues.filterTopic ?? "";
   const page = formValues.page ?? 1;
   const size = formValues.size ?? pageSize;
   const filters: PaperSearchFiltersValue = {
@@ -92,6 +94,7 @@ export function PaperSearchPage({
     filterAuthor,
     filterKeyword,
     filterYear,
+    filterTopic,
   };
   const hasSearchCriteria = Boolean(
     q.trim() ||
@@ -102,7 +105,8 @@ export function PaperSearchPage({
       filterJournal ||
       filterAuthor ||
       filterKeyword ||
-      filterYear,
+      filterYear ||
+      filterTopic,
   );
   const searchRequest = toPaperSearchRequest({
     q,
@@ -114,6 +118,7 @@ export function PaperSearchPage({
     filterAuthor,
     filterKeyword,
     filterYear,
+    filterTopic,
     page,
     size,
   });
@@ -143,7 +148,7 @@ export function PaperSearchPage({
             journals: toFacetItems(topJournalsQuery.data),
             keywords: toFacetItems(keywordWordCloudQuery.data),
             paperYears: toFacetItems(papersByYearQuery.data, "asc"),
-            topics: [],
+            topics: toTopicFacetItems(trendingTopicsQuery.data),
           })
         ),
         buildFacetsFromPapers(papers, resultCount)
@@ -154,6 +159,7 @@ export function PaperSearchPage({
       papers,
       papersByYearQuery.data,
       resultCount,
+      trendingTopicsQuery.data,
       topAuthorsQuery.data,
       topJournalsQuery.data,
     ]
@@ -180,6 +186,7 @@ export function PaperSearchPage({
     setValue("filterAuthor", value.filterAuthor);
     setValue("filterKeyword", value.filterKeyword);
     setValue("filterYear", value.filterYear);
+    setValue("filterTopic", value.filterTopic);
     setValue("page", 1);
   }
 
@@ -187,6 +194,21 @@ export function PaperSearchPage({
     setValue("from", String(year));
     setValue("to", String(year));
     setValue("filterYear", String(year));
+    setValue("page", 1);
+  }
+
+  function updateTopic(topic: string) {
+    setValue("filterTopic", topic);
+    setValue("page", 1);
+  }
+
+  function updateAuthor(author: string) {
+    setValue("filterAuthor", author);
+    setValue("page", 1);
+  }
+
+  function updateJournal(journal: string) {
+    setValue("filterJournal", journal);
     setValue("page", 1);
   }
 
@@ -219,6 +241,7 @@ export function PaperSearchPage({
             authors: relatedFacets.authors,
             journals: relatedFacets.journals,
             keywords: relatedFacets.keywords,
+            topics: relatedFacets.topics,
             years: relatedFacets.years,
           }}
           filters={filters}
@@ -271,7 +294,9 @@ export function PaperSearchPage({
               facets={relatedFacets}
               openAccessStats={openAccessRatioQuery.data ?? []}
               papersByYear={papersByYearQuery.data ?? []}
-              onSelectKeyword={updateQuery}
+              onSelectAuthor={updateAuthor}
+              onSelectJournal={updateJournal}
+              onSelectTopic={updateTopic}
               onSelectYear={updateYear}
               topAuthors={topAuthorsQuery.data ?? []}
               topJournals={topJournalsQuery.data ?? []}
@@ -309,6 +334,7 @@ function toPaperSearchRequest(values: PaperSearchFormValues) {
     filterAuthor: toStringArrayParam(values.filterAuthor),
     filterKeyword: toStringArrayParam(values.filterKeyword),
     filterYear: toNumberArrayParam(values.filterYear),
+    filterTopic: toStringArrayParam(values.filterTopic),
   };
 }
 
@@ -336,7 +362,6 @@ const emptyFacets: PaperSearchFacets = {
   journals: [],
   authors: [],
   keywords: [],
-  types: [],
   openAccess: {
     count: 0,
     total: 0,
@@ -347,11 +372,10 @@ const emptyFacets: PaperSearchFacets = {
 function toSearchFacets(facets: PaperSearchApiFacets | undefined): PaperSearchFacets {
   return {
     years: toSearchFacetItems(facets?.years, "asc"),
-    topics: [],
+    topics: toSearchFacetItems(facets?.topics),
     journals: toSearchFacetItems(facets?.journals),
     authors: toSearchFacetItems(facets?.authors),
     keywords: toSearchFacetItems(facets?.keywords),
-    types: [],
     openAccess: emptyFacets.openAccess,
   };
 }
@@ -388,7 +412,6 @@ function buildApiFacets({
     journals,
     authors,
     keywords,
-    types: [],
     openAccess: emptyFacets.openAccess,
   };
 }
@@ -404,6 +427,19 @@ function toFacetItems(items: AnalyticsKeyValue[] | undefined, order: "count" | "
   });
 }
 
+function toTopicFacetItems(
+  items: Array<{ topicName: string; paperCount: number }> | undefined,
+): PaperSearchFacetItem[] {
+  return (items ?? [])
+    .map((item) => ({
+      label: item.topicName,
+      value: item.topicName,
+      count: item.paperCount,
+    }))
+    .filter((item) => item.label && Number.isFinite(item.count))
+    .sort((first, second) => second.count - first.count || first.label.localeCompare(second.label));
+}
+
 
 
 function mergeFacets(apiFacets: PaperSearchFacets, derivedFacets: PaperSearchFacets): PaperSearchFacets {
@@ -413,7 +449,6 @@ function mergeFacets(apiFacets: PaperSearchFacets, derivedFacets: PaperSearchFac
     journals: apiFacets.journals.length ? apiFacets.journals : derivedFacets.journals,
     authors: apiFacets.authors.length ? apiFacets.authors : derivedFacets.authors,
     keywords: apiFacets.keywords.length ? apiFacets.keywords : derivedFacets.keywords,
-    types: apiFacets.types.length ? apiFacets.types : derivedFacets.types,
     openAccess: apiFacets.openAccess.count > 0 ? apiFacets.openAccess : derivedFacets.openAccess,
   };
 }
@@ -425,7 +460,6 @@ function buildFacetsFromPapers(papers: PaperSearchPaper[], total: number): Paper
     journals: [],
     authors: buildFacet(papers.flatMap((paper) => paper.authors)),
     keywords: buildFacet(papers.flatMap((paper) => paper.keywords)),
-    types: [],
     openAccess: {
       count: 0,
       total: total || papers.length,
