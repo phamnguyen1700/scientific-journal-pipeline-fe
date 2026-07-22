@@ -25,6 +25,7 @@ function toPaperSearchParams(request: PaperSearchRequest) {
   appendArrayParam(params, "FilterAuthor", request.filterAuthor);
   appendArrayParam(params, "FilterKeyword", request.filterKeyword);
   appendArrayParam(params, "FilterYear", request.filterYear);
+  appendArrayParam(params, "FilterTopic", request.filterTopic);
 
   return params;
 }

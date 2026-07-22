@@ -1617,6 +1617,10 @@
     @apply mt-2 text-sm text-muted-foreground;
   }
 
+  .journal-detail-follow-button {
+    @apply w-fit shrink-0 self-start;
+  }
+
   .paper-detail-inline-link {
     @apply font-medium text-primary transition-colors hover:underline;
   }

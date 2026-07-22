@@ -7,6 +7,7 @@ export type PaperSearchFilters = {
   filterAuthor: string;
   filterKeyword: string;
   filterYear: string;
+  filterTopic: string;
 };
 
 export type PaperSearchHighlight = {
@@ -38,6 +39,7 @@ export type PaperSearchRequest = {
   filterAuthor?: string[];
   filterKeyword?: string[];
   filterYear?: number[];
+  filterTopic?: string[];
 };
 
 export type PaperSearchFacetItem = {
@@ -52,7 +54,6 @@ export type PaperSearchFacets = {
   journals: PaperSearchFacetItem[];
   authors: PaperSearchFacetItem[];
   keywords: PaperSearchFacetItem[];
-  types: PaperSearchFacetItem[];
   openAccess: {
     count: number;
     total: number;
@@ -69,6 +70,7 @@ export type PaperSearchApiFacets = {
   journals?: PaperSearchApiFacetItem[];
   authors?: PaperSearchApiFacetItem[];
   keywords?: PaperSearchApiFacetItem[];
+  topics?: PaperSearchApiFacetItem[];
 };
 
 export type PaperSearchData = {

@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import {
   BookOpen,
   CalendarDays,
-  FileText,
   Globe2,
   Tags,
   UserRound,
@@ -15,7 +14,7 @@ import type {
   AnalyticsOpenAccessStat,
   AnalyticsTrendingTopic,
 } from "@/types/analytics";
-import type { PaperSearchFacetItem, PaperSearchFacets } from "@/types/search";
+import type { PaperSearchFacets } from "@/types/search";
 import { OpenAccessPieChart } from "./openAccessPieChart";
 export function PaperSearchInsights({
   facets,
@@ -23,7 +22,9 @@ export function PaperSearchInsights({
   papersByYear,
   topAuthors,
   topJournals,
-  onSelectKeyword,
+  onSelectAuthor,
+  onSelectJournal,
+  onSelectTopic,
   onSelectYear,
   trendingTopics,
 }: {
@@ -32,7 +33,9 @@ export function PaperSearchInsights({
   papersByYear: AnalyticsKeyValue[];
   topAuthors: AnalyticsKeyValue[];
   topJournals: AnalyticsKeyValue[];
-  onSelectKeyword: (keyword: string) => void;
+  onSelectAuthor: (author: string) => void;
+  onSelectJournal: (journal: string) => void;
+  onSelectTopic: (topic: string) => void;
   onSelectYear: (year: number) => void;
   trendingTopics: AnalyticsTrendingTopic[];
 }) {
@@ -53,24 +56,22 @@ export function PaperSearchInsights({
         <OpenAccessPieChart items={openAccessStats} />
       </InsightPanel>
 
-      <TrendingTopicPanel items={trendingTopics} onSelect={onSelectKeyword} />
+      <TrendingTopicPanel
+        facets={facets.topics}
+        items={trendingTopics}
+        onSelect={onSelectTopic}
+      />
       <AnalyticsFacetPanel
         title="Journal"
         icon={<BookOpen />}
         items={topJournals}
-        onSelect={onSelectKeyword}
+        onSelect={onSelectJournal}
       />
       <AnalyticsFacetPanel
         title="Author"
         icon={<UserRound />}
         items={topAuthors}
-        onSelect={onSelectKeyword}
-      />
-      <FacetPanel
-        title="Type"
-        icon={<FileText />}
-        items={facets.types}
-        onSelect={onSelectKeyword}
+        onSelect={onSelectAuthor}
       />
     </aside>
   );
@@ -98,26 +99,38 @@ function InsightPanel({
 }
 
 function TrendingTopicPanel({
+  facets,
   items,
   onSelect,
 }: {
+  facets: PaperSearchFacets["topics"];
   items: AnalyticsTrendingTopic[];
-  onSelect: (keyword: string) => void;
+  onSelect: (topic: string) => void;
 }) {
+  const topicItems = items.length
+    ? items.map((topic) => ({
+        count: topic.paperCount,
+        label: topic.topicName,
+      }))
+    : facets.map((topic) => ({
+        count: topic.count,
+        label: topic.label,
+      }));
+
   return (
     <InsightPanel title="Topic" icon={<Tags />}>
-      {items.length ? (
+      {topicItems.length ? (
         <div className="paper-search-facet-list">
-          {items.slice(0, 5).map((topic) => (
+          {topicItems.slice(0, 5).map((topic) => (
             <button
-              key={topic.topicName}
+              key={topic.label}
               type="button"
               className="flex w-full items-center justify-between gap-3 py-2 text-left text-xs"
-              onClick={() => onSelect(topic.topicName)}
+              onClick={() => onSelect(topic.label)}
             >
-              <span className="min-w-0 flex-1 truncate">{topic.topicName}</span>
+              <span className="min-w-0 flex-1 truncate">{topic.label}</span>
               <strong className="shrink-0 font-medium text-muted-foreground">
-                {topic.paperCount.toLocaleString()}
+                {topic.count.toLocaleString()}
               </strong>
             </button>
           ))}
@@ -164,42 +177,6 @@ function AnalyticsFacetPanel({
     </InsightPanel>
   );
 }
-function FacetPanel({
-  title,
-  icon,
-  items,
-  onSelect,
-}: {
-  title: string;
-  icon: ReactNode;
-  items: PaperSearchFacetItem[];
-  onSelect: (keyword: string) => void;
-}) {
-  return (
-    <InsightPanel title={title} icon={icon}>
-      {items.length ? (
-        <div className="paper-search-facet-list">
-          {items.slice(0, 5).map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              className="flex w-full items-center justify-between gap-3 py-2 text-left text-xs"
-              onClick={() => onSelect(item.label)}
-            >
-              <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              <strong className="shrink-0 font-medium text-muted-foreground">
-                {item.count.toLocaleString()}
-              </strong>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <InsightEmpty />
-      )}
-    </InsightPanel>
-  );
-}
-
 function YearBars({
   items,
   onSelectYear,

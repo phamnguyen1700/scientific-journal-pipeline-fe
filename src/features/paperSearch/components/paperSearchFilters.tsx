@@ -24,6 +24,7 @@ export function PaperSearchFilters({
     authors: PaperSearchFacetItem[];
     journals: PaperSearchFacetItem[];
     keywords: PaperSearchFacetItem[];
+    topics: PaperSearchFacetItem[];
     years: PaperSearchFacetItem[];
   };
   filters: PaperSearchFiltersValue;
@@ -49,7 +50,8 @@ export function PaperSearchFilters({
       filters.filterJournal ||
       filters.filterAuthor ||
       filters.filterKeyword ||
-      filters.filterYear,
+      filters.filterYear ||
+      filters.filterTopic,
   );
 
   return (
@@ -61,6 +63,14 @@ export function PaperSearchFilters({
         </div>
       </div>
       <div className="paper-search-filter-list">
+        <FacetDropdown
+          label={filters.filterTopic || "All topics"}
+          fieldLabel="Topic"
+          items={facets.topics}
+          emptyLabel="No topics"
+          selectedValue={filters.filterTopic}
+          onSelect={(value) => update("filterTopic", value)}
+        />
         <FacetDropdown
           label={filters.filterKeyword || "All keywords"}
           fieldLabel="Keyword"
