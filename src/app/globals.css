@@ -2204,6 +2204,10 @@
     @apply overflow-hidden rounded-xl border border-border bg-card p-4;
   }
 
+  .following-card-clickable {
+    @apply cursor-pointer transition hover:border-primary/35 hover:shadow-sm focus-visible:ring-3 focus-visible:ring-primary/25;
+  }
+
   .following-card-heading {
     @apply flex items-start justify-between gap-3;
   }
@@ -2283,6 +2287,55 @@
 
   .notification-item-time {
     @apply mt-1.5 text-[10px];
+  }
+
+  .notification-toast {
+    @apply flex w-[360px] max-w-[calc(100vw-32px)] items-start gap-3 rounded-lg border border-border bg-popover p-4 text-left text-popover-foreground shadow-lg transition hover:border-primary/40;
+  }
+
+  .notification-toast-icon {
+    @apply flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary;
+  }
+
+  .notification-toast-content {
+    @apply min-w-0 flex-1 space-y-1;
+  }
+
+  .notification-toast-title {
+    @apply block text-sm font-semibold text-foreground;
+  }
+
+  .notification-toast-body {
+    @apply line-clamp-2 block text-xs leading-5 text-muted-foreground;
+  }
+
+  .notification-toast-action {
+    @apply mt-1 shrink-0 text-muted-foreground;
+  }
+
+  .mobile-bottom-navbar {
+    @apply fixed inset-x-3 bottom-3 z-50 md:hidden;
+  }
+
+  .mobile-bottom-navbar-inner {
+    @apply grid items-center gap-1 rounded-2xl border border-border bg-card/95 p-1.5 shadow-lg backdrop-blur;
+    grid-template-columns: repeat(var(--mobile-nav-count), minmax(44px, 1fr));
+  }
+
+  .mobile-bottom-navbar-item {
+    @apply relative flex h-12 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground;
+  }
+
+  .mobile-bottom-navbar-item-active {
+    @apply bg-primary text-primary-foreground shadow-sm;
+  }
+
+  .mobile-bottom-navbar-dot {
+    @apply absolute bottom-1.5 size-1 rounded-full bg-transparent;
+  }
+
+  .mobile-bottom-navbar-item-active .mobile-bottom-navbar-dot {
+    @apply bg-primary-foreground/90;
   }
 
   @keyframes home-loop-card-flow {

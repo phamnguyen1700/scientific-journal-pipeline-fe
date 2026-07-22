@@ -17,7 +17,7 @@ import {
   Activity,
   Radio,
 } from "lucide-react";
-import { Suspense, useMemo, memo } from "react";
+import { Suspense, useEffect, useMemo, memo } from "react";
 import { useState } from "react";
 import {
   Sidebar,
@@ -32,6 +32,7 @@ import {
   SidebarHeader,
   useSidebar,
 } from "./sidebar";
+import { MobileBottomNavbar } from "./mobileBottomNavbar";
 import { useLogout } from "@/hooks/auth";
 import { useAuthStore } from "@/store/auth";
 import { isAdminRole, type UserRole } from "@/types/role";
@@ -61,13 +62,13 @@ const studentNav: NavItem[] = [
     section: "Discover",
   },
   {
-    label: "Bookmarked Papers",
+    label: "Bookmark",
     icon: Bookmark,
     href: "/dashboard/bookmarks",
     section: "Library",
   },
   {
-    label: "Followed Topics",
+    label: "Followed",
     icon: BookMarked,
     href: "/dashboard/following",
     section: "Library",
@@ -171,12 +172,14 @@ function AppSidebarContent() {
       <SidebarHeader>
         <div className="flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-            SJ
+            SJT
           </div>
           {open && (
             <div className="flex flex-col">
-              <span className="font-bold">Journal</span>
-              <span className="text-xs text-muted-foreground">Pipeline</span>
+              <span className="font-bold">Scientific Journals</span>
+              <span className="text-xs text-muted-foreground">
+                Tracking System
+              </span>
             </div>
           )}
         </div>
@@ -250,11 +253,39 @@ function AppSidebarContent() {
 export const MemoizedAppSidebarContent = memo(AppSidebarContent);
 
 export function AppSidebar() {
-  return (
+  const pathname = usePathname();
+  const user = useAuthStore((state) => state.user);
+  const isMobile = useIsMobile();
+  const navigation = useMemo(
+    () => getNavigation(user?.roleName ?? "Student"),
+    [user?.roleName],
+  );
+
+  return isMobile ? (
+    <MobileBottomNavbar items={navigation} pathname={pathname} />
+  ) : (
     <Suspense
-      fallback={<div className="w-[84px] bg-card border-r border-border" />}
+      fallback={<div className="w-[72px] bg-card border-r border-border" />}
     >
       <MemoizedAppSidebarContent />
     </Suspense>
   );
+}
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateMobileState = () => setIsMobile(mediaQuery.matches);
+
+    updateMobileState();
+    mediaQuery.addEventListener("change", updateMobileState);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateMobileState);
+    };
+  }, []);
+
+  return isMobile;
 }

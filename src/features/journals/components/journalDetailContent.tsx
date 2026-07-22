@@ -11,7 +11,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 
 import { ResearchTopicBars, WorksByYearChart } from "@/components/common";
 
@@ -21,17 +20,21 @@ import type { Journal, JournalPaper, JournalTopic, JournalYearCount } from "@/ty
 
 export function JournalDetailContent({
   error,
+  followed = false,
   journal,
   loading,
+  savingFollow = false,
   showPapers = true,
+  onToggleFollow,
 }: {
   error: string | null;
+  followed?: boolean;
   journal: Journal | null;
   loading: boolean;
+  savingFollow?: boolean;
   showPapers?: boolean;
+  onToggleFollow?: () => void;
 }) {
-  const [isFollowingJournal, setIsFollowingJournal] = useState(false);
-
   if (loading) {
     return (
       <JournalDetailStatus
@@ -81,17 +84,20 @@ export function JournalDetailContent({
               {formatJournalSubtitle(journal.normalizedName, journal.firstPublicationYear, journal.lastPublicationYear)}
             </p>
           </div>
-          <Button
-            type="button"
-            variant={isFollowingJournal ? "soft" : "outline"}
-            size="sm"
-            className="journal-detail-follow-button"
-            aria-pressed={isFollowingJournal}
-            onClick={() => setIsFollowingJournal((value) => !value)}
-          >
-            {isFollowingJournal ? <Check /> : <Bell />}
-            {isFollowingJournal ? "Following journal" : "Follow journal"}
-          </Button>
+          {onToggleFollow ? (
+            <Button
+              type="button"
+              variant={followed ? "soft" : "default"}
+              size="sm"
+              className="journal-detail-follow-button"
+              aria-pressed={followed}
+              disabled={savingFollow}
+              onClick={onToggleFollow}
+            >
+              {followed ? <Check /> : <Bell />}
+              {followed ? "Followed" : "Follow"}
+            </Button>
+          ) : null}
         </div>
 
         <div className="paper-detail-meta">

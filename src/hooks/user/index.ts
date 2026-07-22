@@ -5,21 +5,30 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { dashboardQueryKeys } from "@/hooks/dashboard";
 import {
   addUserBookmarkService,
+  followJournalService,
   followTopicService,
   getUserBookmarksService,
+  getUserFollowingJournalsService,
   getUserFollowingTopicsService,
   getUserProfileService,
   removeUserBookmarkService,
+  updateDeviceTokenService,
   updateUserProfileService,
+  unfollowJournalService,
   unfollowTopicService,
 } from "@/service/user";
-import type { UpdateUserProfilePayload, UserApiResponse } from "@/types/user";
+import type {
+  UpdateDeviceTokenPayload,
+  UpdateUserProfilePayload,
+  UserApiResponse,
+} from "@/types/user";
 
 export const userQueryKeys = {
   all: ["user"] as const,
   profile: () => [...userQueryKeys.all, "profile"] as const,
   bookmarks: () => [...userQueryKeys.all, "bookmarks"] as const,
   followingTopics: () => [...userQueryKeys.all, "following", "topics"] as const,
+  followingJournals: () => [...userQueryKeys.all, "following", "journals"] as const,
 };
 
 export function useUserProfile() {
@@ -96,8 +105,46 @@ export function useUserFollowingTopics() {
   };
 }
 
+export function useUserFollowingJournals() {
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: userQueryKeys.followingJournals(),
+    queryFn: async () =>
+      unwrapUserResponse(
+        await getUserFollowingJournalsService(),
+        "Unable to load followed journals.",
+      ),
+  });
+
+  const followJournal = useMutation({
+    mutationFn: (id: string | number) => followJournalService(String(id)),
+    onSuccess: () => invalidateFollowingJournalQueries(queryClient),
+  });
+  const unfollowJournal = useMutation({
+    mutationFn: (id: string | number) => unfollowJournalService(String(id)),
+    onSuccess: () => invalidateFollowingJournalQueries(queryClient),
+  });
+
+  return {
+    ...query,
+    journals: query.data ?? [],
+    loading: query.isPending,
+    error: getErrorMessage(query.error),
+    followJournal: followJournal.mutate,
+    unfollowJournal: unfollowJournal.mutate,
+    saving: followJournal.isPending || unfollowJournal.isPending,
+  };
+}
+
 function invalidateBookmarkQueries(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: userQueryKeys.bookmarks() });
+  void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.all });
+}
+
+function invalidateFollowingJournalQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
+  void queryClient.invalidateQueries({ queryKey: userQueryKeys.followingJournals() });
   void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.all });
 }
 
@@ -124,5 +171,15 @@ export function useUpdateUserProfile() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: userQueryKeys.profile() });
     },
+  });
+}
+
+export function useUpdateDeviceToken() {
+  return useMutation({
+    mutationFn: async (payload: UpdateDeviceTokenPayload) =>
+      unwrapUserResponse(
+        await updateDeviceTokenService(payload),
+        "Unable to update device token.",
+      ),
   });
 }

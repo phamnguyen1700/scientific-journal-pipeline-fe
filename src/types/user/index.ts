@@ -22,6 +22,10 @@ export type UpdateUserProfilePayload = {
   newPassword?: string;
 };
 
+export type UpdateDeviceTokenPayload = {
+  deviceToken: string;
+};
+
 export type UserBookmark = {
   bookmarkId: string;
   userId: string;
@@ -77,4 +81,13 @@ export type UserFollowedTopic = {
   paperCount?: number;
   growthPercentage?: number;
   alertOn?: boolean;
+};
+
+export type UserFollowedJournal = {
+  followId: string;
+  userId: string;
+  journalId: string;
+  createdAt: string;
+  journalName: string;
+  normalizedName?: string | null;
 };

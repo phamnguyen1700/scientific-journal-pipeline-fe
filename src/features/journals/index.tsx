@@ -8,6 +8,7 @@ import {
   JournalDetailDrawer as JournalDetailDrawerView,
 } from "@/features/journals/components";
 import { useJournal } from "@/hooks/journals";
+import { useUserFollowingJournals } from "@/hooks/user";
 
 export function JournalDetailPage({
   id,
@@ -17,8 +18,13 @@ export function JournalDetailPage({
   returnTo?: string;
 }) {
   const journalQuery = useJournal(id);
+  const followingJournalsQuery = useUserFollowingJournals();
   const backHref = getJournalBackHref(returnTo);
   const backLabel = backHref === "/dashboard/papers" ? "Back to paper search" : "Back to paper detail";
+  const isFollowingJournal = isJournalFollowed(
+    followingJournalsQuery.journals,
+    id,
+  );
 
   return (
     <div className="paper-detail-page">
@@ -27,8 +33,17 @@ export function JournalDetailPage({
       </Link>
       <JournalDetailContent
         error={journalQuery.error}
+        followed={isFollowingJournal}
         journal={journalQuery.journal}
         loading={journalQuery.loading}
+        savingFollow={followingJournalsQuery.saving}
+        onToggleFollow={() => {
+          if (isFollowingJournal) {
+            followingJournalsQuery.unfollowJournal(id);
+          } else {
+            followingJournalsQuery.followJournal(id);
+          }
+        }}
       />
     </div>
   );
@@ -46,17 +61,39 @@ export function JournalDetailDrawer({
   showPapers?: boolean;
 }) {
   const journalQuery = useJournal(journalId);
+  const followingJournalsQuery = useUserFollowingJournals();
+  const isFollowingJournal = journalId
+    ? isJournalFollowed(followingJournalsQuery.journals, journalId)
+    : false;
 
   return (
     <JournalDetailDrawerView
       error={journalQuery.error}
+      followed={isFollowingJournal}
       journal={journalQuery.journal}
       loading={journalQuery.loading}
       open={open}
       onOpenChange={onOpenChange}
+      savingFollow={followingJournalsQuery.saving}
       showPapers={showPapers}
+      onToggleFollow={() => {
+        if (!journalId) return;
+
+        if (isFollowingJournal) {
+          followingJournalsQuery.unfollowJournal(journalId);
+        } else {
+          followingJournalsQuery.followJournal(journalId);
+        }
+      }}
     />
   );
+}
+
+function isJournalFollowed(
+  journals: Array<{ journalId: string }>,
+  journalId: string,
+) {
+  return journals.some((journal) => journal.journalId === journalId);
 }
 
 function getJournalBackHref(returnTo: string | undefined) {

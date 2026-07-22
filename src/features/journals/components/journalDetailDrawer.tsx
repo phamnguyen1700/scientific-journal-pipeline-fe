@@ -11,18 +11,24 @@ import { JournalDetailContent } from "@/features/journals/components/journalDeta
 
 export function JournalDetailDrawer({
   error,
+  followed,
   journal,
   loading,
   open,
   onOpenChange,
+  savingFollow,
   showPapers = true,
+  onToggleFollow,
 }: {
   error: string | null;
+  followed?: boolean;
   journal: Journal | null;
   loading: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  savingFollow?: boolean;
   showPapers?: boolean;
+  onToggleFollow?: () => void;
 }) {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -34,7 +40,15 @@ export function JournalDetailDrawer({
           </DrawerDescription>
         </DrawerHeader>
         <div className="author-drawer-body">
-          <JournalDetailContent error={error} journal={journal} loading={loading} showPapers={showPapers} />
+          <JournalDetailContent
+            error={error}
+            followed={followed}
+            journal={journal}
+            loading={loading}
+            savingFollow={savingFollow}
+            showPapers={showPapers}
+            onToggleFollow={onToggleFollow}
+          />
         </div>
       </DrawerContent>
     </Drawer>
