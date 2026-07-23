@@ -1,6 +1,7 @@
 import { apiEndpoints } from "@/config/apiEndpoints";
-import { get, put } from "@/service/apiClient";
+import { get, post, put } from "@/service/apiClient";
 import type {
+  AdminNotificationTriggerRequest,
   NotificationApiResponse,
   NotificationHistoryItem,
 } from "@/types/notifications";
@@ -19,9 +20,26 @@ export const markNotificationReadService = (id: string) =>
 export const markAllNotificationsReadService = () =>
   put<NotificationApiResponse<string>>(apiEndpoints.notifications.markAllRead);
 
+export const triggerAdminNotificationService = ({
+  eventType,
+  paperId,
+}: AdminNotificationTriggerRequest) => {
+  const endpoint = {
+    NewPaperInFollowedTopic:
+      apiEndpoints.notifications.triggerNewPaperTopic,
+    NewPaperInFollowedJournal:
+      apiEndpoints.notifications.triggerNewPaperJournal,
+    BookmarkedPaperUpdated:
+      apiEndpoints.notifications.triggerBookmarkedPaperUpdated,
+  }[eventType];
+
+  return post<NotificationApiResponse<string>>(endpoint(paperId));
+};
+
 export const notificationService = {
   list: getNotificationsService,
   unreadCount: getUnreadNotificationCountService,
   markRead: markNotificationReadService,
   markAllRead: markAllNotificationsReadService,
+  triggerAdmin: triggerAdminNotificationService,
 };

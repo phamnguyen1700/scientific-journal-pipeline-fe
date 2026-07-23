@@ -21,6 +21,16 @@ export type NotificationEventType =
   | "BookmarkedPaperUpdated"
   | string;
 
+export type AdminNotificationTriggerType =
+  | "NewPaperInFollowedTopic"
+  | "NewPaperInFollowedJournal"
+  | "BookmarkedPaperUpdated";
+
+export type AdminNotificationTriggerRequest = {
+  eventType: AdminNotificationTriggerType;
+  paperId: string;
+};
+
 export type FcmNotificationData = {
   paperId?: string;
   topicId?: string;

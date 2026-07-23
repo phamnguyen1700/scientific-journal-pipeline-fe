@@ -1,16 +1,15 @@
 "use client";
 import Link from "next/link";
-import { ArrowUpRight, BarChart2, Bell, Clock, FileText, Tag, TrendingUp } from "lucide-react";
+import { ArrowUpRight, Clock, FileText, TrendingUp } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useAuthStore } from "@/store/auth";
-import { useAnalyticsDashboard, useCitationsByYear, usePapersByYear, useTopTopics } from "@/hooks/analytics";
+import { useCitationsByYear, usePapersByYear, useTopTopics } from "@/hooks/analytics";
 import { topicPalette } from "@/features/researcher/components/researcherData";
 import { chartTooltip, ResearcherKpiCard, ResearcherLoadingState } from "@/features/researcher/components/researcherShared";
 
 export function ResearcherDashboardPage() {
   const user = useAuthStore((state) => state.user);
   const displayName = user?.username ?? "Researcher";
-  const dashboardQuery = useAnalyticsDashboard();
   const papersQuery = usePapersByYear();
   const citationsQuery = useCitationsByYear();
   const topicsQuery = useTopTopics(5);
@@ -20,7 +19,7 @@ export function ResearcherDashboardPage() {
   const topicData = topicsQuery.data?.map((topic) => ({ name: topic.key, papers: topic.value })) ?? [];
   const totalPapers = papersQuery.data?.reduce((total, item) => total + item.value, 0) ?? 0;
 
-  if ([dashboardQuery, papersQuery, citationsQuery, topicsQuery].some((query) => query.isPending)) {
+  if ([papersQuery, citationsQuery, topicsQuery].some((query) => query.isPending)) {
     return <div className="space-y-6 p-6"><h1 className="text-xl font-semibold text-foreground">Research Intelligence Dashboard</h1><ResearcherLoadingState label="Loading research dashboard" /></div>;
   }
 
@@ -36,11 +35,8 @@ export function ResearcherDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid max-w-sm grid-cols-1 gap-4">
         <ResearcherKpiCard icon={<FileText size={17} className="text-purple-600" />} label="Papers Indexed" value={totalPapers.toLocaleString()} delta="All years" color="bg-purple-100" />
-        <ResearcherKpiCard icon={<Tag size={17} className="text-blue-600" />} label="Followed Topics" value={(dashboardQuery.data?.followedTopics ?? 0).toLocaleString()} delta="Your library" color="bg-blue-100" />
-        <ResearcherKpiCard icon={<Bell size={17} className="text-amber-600" />} label="New Matching Papers" value={(dashboardQuery.data?.newPapersInFollowedTopics ?? 0).toLocaleString()} delta="Followed topics" color="bg-amber-100" />
-        <ResearcherKpiCard icon={<BarChart2 size={17} className="text-emerald-600" />} label="Bookmarked Papers" value={(dashboardQuery.data?.bookmarkedPapers ?? 0).toLocaleString()} delta="Saved" color="bg-emerald-100" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

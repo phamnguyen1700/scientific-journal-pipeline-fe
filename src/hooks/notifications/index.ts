@@ -7,6 +7,7 @@ import {
   getUnreadNotificationCountService,
   markAllNotificationsReadService,
   markNotificationReadService,
+  triggerAdminNotificationService,
 } from "@/service/notifications";
 import type { NotificationApiResponse } from "@/types/notifications";
 
@@ -53,6 +54,17 @@ export function useMarkAllNotificationsRead() {
   return useMutation({
     mutationFn: markAllNotificationsReadService,
     onSuccess: () => invalidateNotificationQueries(queryClient),
+  });
+}
+
+export function useTriggerAdminNotification() {
+  return useMutation({
+    mutationFn: async (request: Parameters<typeof triggerAdminNotificationService>[0]) =>
+      unwrapNotificationResponse(
+        await triggerAdminNotificationService(request),
+        "Unable to trigger the notification.",
+      ),
+    retry: false,
   });
 }
 

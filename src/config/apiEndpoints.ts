@@ -58,6 +58,12 @@ export const apiEndpoints = {
     unreadCount: "/Notification/unread-count",
     markRead: (id: string) => `/Notification/${id}/read`,
     markAllRead: "/Notification/read-all",
+    triggerNewPaperTopic: (paperId: string) =>
+      `/Notification/trigger/new-paper-topic/${paperId}`,
+    triggerNewPaperJournal: (paperId: string) =>
+      `/Notification/trigger/new-paper-journal/${paperId}`,
+    triggerBookmarkedPaperUpdated: (paperId: string) =>
+      `/Notification/trigger/bookmarked-paper-updated/${paperId}`,
   },
   topics: {
     list: "/Topic",

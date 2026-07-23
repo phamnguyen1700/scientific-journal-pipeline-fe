@@ -8,6 +8,9 @@ import { useAuthStore } from "@/store/auth";
 import { ProfileDrawer } from "@/features/profile";
 import { UserAvatar } from "@/components/common/userAvatar";
 import { useLogout } from "@/hooks/auth";
+import { AdminNotificationDrawer } from "@/features/admin/components";
+import { isAdminRole } from "@/types/role";
+import { useRouter } from "next/navigation";
 
 interface NavbarProps {
   onToggleSidebar?: () => void;
@@ -25,7 +28,10 @@ function NavbarContent({ onToggleSidebar }: NavbarProps) {
   const { open, setOpen } = useSidebar();
   const user = useAuthStore((state) => state.user);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [adminNotificationOpen, setAdminNotificationOpen] = useState(false);
   const logout = useLogout();
+  const router = useRouter();
+  const adminUser = isAdminRole(user?.roleName);
 
   const handleToggle = () => {
     setOpen(!open);
@@ -60,9 +66,21 @@ function NavbarContent({ onToggleSidebar }: NavbarProps) {
           {user?.roleName ?? currentRole.label}
         </span>
 
-        <button className="relative text-muted-foreground hover:text-foreground transition-colors">
+        <button
+          type="button"
+          className="relative text-muted-foreground transition-colors hover:text-foreground"
+          onClick={() => {
+            if (adminUser) {
+              setAdminNotificationOpen(true);
+              return;
+            }
+
+            router.push("/dashboard/notifications");
+          }}
+          aria-label={adminUser ? "Trigger notifications" : "Open notifications"}
+          title={adminUser ? "Trigger notifications" : "Open notifications"}
+        >
           <Bell className="h-5 w-5" />
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full" />
         </button>
         <button
           type="button"
@@ -75,6 +93,12 @@ function NavbarContent({ onToggleSidebar }: NavbarProps) {
         </button>
       </div>
       <ProfileDrawer open={profileOpen} onOpenChange={setProfileOpen} />
+      {adminUser ? (
+        <AdminNotificationDrawer
+          open={adminNotificationOpen}
+          onOpenChange={setAdminNotificationOpen}
+        />
+      ) : null}
     </header>
   );
 }
